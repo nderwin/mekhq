@@ -24,7 +24,6 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Aero;
-import megamek.common.Compute;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.TechConstants;
@@ -68,8 +67,7 @@ public class AeroHeatSink extends Part {
     }
         
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		int priorHits = hits;
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero && hits == 0) {
 			//ok this is really ugly, but we don't track individual heat sinks, so I have no idea of
 			//a better way to do it
@@ -87,26 +85,18 @@ public class AeroHeatSink extends Part {
 			} else {
 				hits = 0;
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 90;
-	}
-	
-	@Override
-	public int getDifficulty() {
+		if(hits > 0) {
+			time = 90;
+			difficulty = -1;
+		} else {
+			time = 0;
+			difficulty = 0;
+		}
 		if(isSalvaging()) {
-			return -2;
+			time = 90;
+			difficulty = -2;
 		}
-		return -1;
 	}
 
 	@Override
@@ -146,8 +136,9 @@ public class AeroHeatSink extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
@@ -205,7 +196,12 @@ public class AeroHeatSink extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_IS_TW_ALL;
+	}
+	
+	@Override 
+	public int getTechBase() {
+		return T_BOTH;	
 	}
 
 	@Override
@@ -257,29 +253,5 @@ public class AeroHeatSink extends Part {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-
-	@Override
-	public int getIntroDate() {
-		if(type == Aero.HEAT_DOUBLE) {
-			return 2567;
-		}
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		//TODO: we should distinguish clan and IS here for extinction purposes
-		/*if(type == Aero.HEAT_DOUBLE) {
-		 * if(!isClan()) {
-				return 2865;
-			}
-		}*/
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return 3040;
 	}
 }

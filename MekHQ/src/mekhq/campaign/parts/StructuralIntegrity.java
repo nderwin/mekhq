@@ -105,7 +105,7 @@ public class StructuralIntegrity extends Part {
 	
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -198,21 +198,18 @@ public class StructuralIntegrity extends Part {
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero) {
 			pointsNeeded = ((Aero)unit.getEntity()).get0SI() - ((Aero)unit.getEntity()).getSI();
+			if(pointsNeeded > 0) {
+				this.time = 600 * pointsNeeded;
+				this.difficulty = 1;
+			} else {
+				this.time = 0;
+				this.difficulty = 0;
+			}
 		}	
 		
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 600 * pointsNeeded;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 1;
 	}
 
 	@Override
@@ -229,7 +226,7 @@ public class StructuralIntegrity extends Part {
         int points = ((Aero)unit.getEntity()).getSI();
         points = Math.max(points - d, 1);
         ((Aero)unit.getEntity()).setSI(points);
-        updateConditionFromEntity(false);
+        updateConditionFromEntity();
     }
 
 	@Override
@@ -242,21 +239,5 @@ public class StructuralIntegrity extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

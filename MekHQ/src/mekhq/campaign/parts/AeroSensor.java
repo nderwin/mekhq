@@ -24,7 +24,6 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Aero;
-import megamek.common.Compute;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.TechConstants;
@@ -65,35 +64,22 @@ public class AeroSensor extends Part {
     }
         
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		int priorHits = hits;
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero) {
 			hits = ((Aero)unit.getEntity()).getSensorHits();
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits > 0) {
+			time = 120;
+			difficulty = -1;
+		} else {
+			time = 0;
+			difficulty = 0;
+		}
 		if(isSalvaging()) {
-			return 1200;
+			time = 1200;
+			difficulty = -2;
 		}
-		return 120;
 	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return -2;
-		}
-		return -1;
-	}
-
 
 	@Override
 	public void updateConditionFromPart() {
@@ -127,8 +113,9 @@ public class AeroSensor extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
@@ -173,7 +160,12 @@ public class AeroSensor extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_IS_TW_ALL;
+	}
+	
+	@Override 
+	public int getTechBase() {
+		return T_BOTH;	
 	}
 
 	@Override
@@ -236,21 +228,5 @@ public class AeroSensor extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

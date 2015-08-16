@@ -71,8 +71,6 @@ public class Force implements Serializable {
 	private Vector<UUID> units;
 	private Vector<Integer> oldUnits;
 	private int scenarioId;
-	
-	protected UUID techId;
 
 	//an ID so that forces can be tracked in Campaign hash
 	private int id;
@@ -117,14 +115,6 @@ public class Force implements Serializable {
 		for(Force sub : getSubForces()) {
 			sub.setScenarioId(i);
 		}
-	}
-	
-	public void setTechID(UUID tech) {
-		techId = tech;
-	}
-	
-	public UUID getTechID() {
-		return techId;
 	}
 	
 	public boolean isDeployed() {
@@ -360,12 +350,6 @@ public class Force implements Serializable {
 				+"<scenarioId>"
 				+scenarioId
 				+"</scenarioId>");
-		if (techId != null) {
-				pw1.println(MekHqXmlUtil.indentStr(indent+1)
-						+"<techId>"
-						+techId.toString()
-						+"</techId>");
-		}
 		if(units.size() > 0) {
 			pw1.println(MekHqXmlUtil.indentStr(indent+1)
 					+"<units>");
@@ -412,8 +396,6 @@ public class Force implements Serializable {
 					retVal.iconFileName = wn2.getTextContent();
 				} else if (wn2.getNodeName().equalsIgnoreCase("scenarioId")) {
 					retVal.scenarioId = Integer.parseInt(wn2.getTextContent());
-				} else if (wn2.getNodeName().equalsIgnoreCase("techId")) {
-					retVal.techId = UUID.fromString(wn2.getTextContent());	
 				} else if (wn2.getNodeName().equalsIgnoreCase("units")) {
 						processUnitNodes(retVal, wn2, version);
 				} else if (wn2.getNodeName().equalsIgnoreCase("subforces")) {

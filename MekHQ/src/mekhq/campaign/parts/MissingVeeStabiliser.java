@@ -49,19 +49,11 @@ public class MissingVeeStabiliser extends MissingPart {
     
     public MissingVeeStabiliser(int tonnage, int loc, Campaign c) {
     	super(0, c);
+    	this.time = 60;
+    	this.difficulty = 0;
     	this.name = "Vehicle Stabiliser";
     	this.loc = loc;
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
     
 	@Override
 	public String checkFixable() {
@@ -146,21 +138,5 @@ public class MissingVeeStabiliser extends MissingPart {
 	public String getLocationName() {
 		return unit.getEntity().getLocationName(loc);
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

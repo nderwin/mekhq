@@ -26,7 +26,7 @@
       <key>MainClass</key>
       <string>megameklab.com.MegaMekLab</string>
       <key>JVMVersion</key>
-      <string>1.7+</string>
+      <string>1.6+</string>
       <key>ClassPath</key>
       <array>
         <string>$JAVAROOT/../../../../MekHQ.app/Contents/Resources/Java/MegaMekLab.jar</string>
@@ -34,7 +34,7 @@
         <string>$JAVAROOT/../../../../MekHQ.app/Contents/Resources/Java/lib/TinyXML.jar</string>
       </array>
       <key>VMOptions</key>
-      <string>-Xmx512m</string>
+      <string>-Xmx256m</string>
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/../</string>
       <key>Properties</key>

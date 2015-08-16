@@ -50,17 +50,9 @@ public class MissingDropshipDockingCollar extends MissingPart {
     public MissingDropshipDockingCollar(int tonnage, Campaign c) {
         super(tonnage, c);
         this.name = "Dropship Docking Collar";
+        time = 2880;
+		difficulty = -2;
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 2880;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return -2;
-	}
 
 	@Override
 	public void updateConditionFromPart() {
@@ -138,21 +130,5 @@ public class MissingDropshipDockingCollar extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return 2304;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

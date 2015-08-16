@@ -57,6 +57,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
@@ -124,9 +125,7 @@ public class ContractMarketDialog extends JDialog {
 		campaign = c;
 		contractMarket = c.getContractMarket();
 		possibleRetainerContracts = new ArrayList<String>();
-		if (c.getFactionCode().equals("MERC")) {
-			countSuccessfulContracts();
-		}
+		countSuccessfulContracts();
 		
         initComponents();
         setLocationRelativeTo(frame);
@@ -313,9 +312,7 @@ public class ContractMarketDialog extends JDialog {
 		tblContracts.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		tblContracts.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-				if (!evt.getValueIsAdjusting()) {
-					contractChanged();
-				}
+				contractChanged(evt);
 			}
 		});
 
@@ -494,7 +491,7 @@ public class ContractMarketDialog extends JDialog {
 	    setVisible(false);
 	}
 	
-    private void contractChanged() {
+    private void contractChanged(ListSelectionEvent evt) {
         int view = tblContracts.getSelectedRow();
         if(view < 0) {
             //selection got filtered away
@@ -518,10 +515,8 @@ public class ContractMarketDialog extends JDialog {
              scrollContractView.setViewportView(null);
              return;
          }
-         contractView = new ContractSummaryPanel(selectedContract, campaign,
-        		 campaign.getCampaignOptions().getUseAtB() &&
-        		 selectedContract instanceof AtBContract &&
-        		 !((AtBContract)selectedContract).isSubcontract());
+         contractView = new ContractSummaryPanel(selectedContract,
+        		 campaign, true);
     	 scrollContractView.setViewportView(contractView);
  		//This odd code is to make sure that the scrollbar stays at the top
  		//I cant just call it here, because it ends up getting reset somewhere later

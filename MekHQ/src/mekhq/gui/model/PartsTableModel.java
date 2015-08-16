@@ -72,10 +72,10 @@ public class PartsTableModel extends DataTableModel {
         }
         DecimalFormat format = new DecimalFormat();
         if(col == COL_NAME) {
-            return "<html><nobr>"+part.getName()+"</nobr></html>";
+            return "<html>"+part.getName()+"</html>";
         }
         if(col == COL_DETAIL) {
-            return "<html><nobr>"+part.getDetails()+"</nobr></html>";
+            return "<html>"+part.getDetails()+"</html>";
         }
         if(col == COL_COST) {
             return format.format(part.getActualValue());
@@ -87,13 +87,13 @@ public class PartsTableModel extends DataTableModel {
             return Math.round(part.getTonnage() * 100) / 100.0;
         }
         if(col == COL_STATUS) {
-            return "<html><nobr>"+part.getStatus()+"</nobr></html>";
+            return "<html>"+part.getStatus()+"</html>";
         }
         if(col == COL_TECH_BASE) {
             return part.getTechBaseName();
         }
         if(col == COL_REPAIR) {
-            return "<html><nobr>"+part.getRepairDesc()+"</nobr></html>";
+            return "<html>"+part.getRepairDesc()+"</html>";
         }
         return "?";
     }

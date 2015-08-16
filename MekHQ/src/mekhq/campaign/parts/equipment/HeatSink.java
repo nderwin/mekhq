@@ -21,7 +21,6 @@
 
 package mekhq.campaign.parts.equipment;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.EquipmentType;
 import megamek.common.MiscType;
@@ -69,40 +68,28 @@ public class HeatSink extends EquipmentPart {
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			Mounted mounted = unit.getEntity().getEquipment(equipmentNum);
 			if(null != mounted) {
-				if(mounted.isMissing()) {
+				if(!mounted.isRepairable()) {
 					remove(false);
 					return;
 				} 
 				hits = unit.getEntity().getDamagedCriticals(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, mounted.getLocation());
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} else if(hits > 0) {
+			this.time = 120;
+			this.difficulty = -1;
+		}
 		if(isSalvaging()) {
-			return 90;
+			this.time = 90;
+			this.difficulty = -2;
 		}
-		return 120;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return -2;
-		}
-		return -1;
 	}
 
 	@Override

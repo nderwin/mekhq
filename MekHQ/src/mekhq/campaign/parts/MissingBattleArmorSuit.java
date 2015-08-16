@@ -1,20 +1,20 @@
 /*
  * MissingBattleArmorSuit.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,6 +24,7 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import megamek.common.Entity;
 import megamek.common.EntityMovementMode;
 import megamek.common.EntityWeightClass;
 import megamek.common.EquipmentType;
@@ -31,10 +32,8 @@ import megamek.common.IArmorState;
 import megamek.common.TargetRoll;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
-import mekhq.campaign.parts.equipment.BattleArmorEquipmentPart;
-import mekhq.campaign.parts.equipment.EquipmentPart;
 import mekhq.campaign.parts.equipment.MissingBattleArmorEquipmentPart;
-import mekhq.campaign.personnel.Person;
+import mekhq.campaign.unit.Unit;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -46,7 +45,7 @@ import org.w3c.dom.NodeList;
 public class MissingBattleArmorSuit extends MissingPart {
 
     /**
-     *
+     * 
      */
     private static final long serialVersionUID = -3028121751208423160L;
     protected String chassis;
@@ -62,8 +61,8 @@ public class MissingBattleArmorSuit extends MissingPart {
     public MissingBattleArmorSuit() {
         super(0, null);
     }
-
-
+  
+    
     public MissingBattleArmorSuit(String ch, String m, int ton, int t, int w, int gmp, int jmp, boolean q, boolean clan, EntityMovementMode mode, Campaign c) {
         super(ton, c);
         this.chassis = ch;
@@ -75,25 +74,13 @@ public class MissingBattleArmorSuit extends MissingPart {
         this.jumpMP = jmp;
         this.jumpType = mode;
         this.clan = clan;
-
+        
         this.name = chassis + " " + model + " Suit";
     }
-
-    @Override
-	public int getBaseTime() {
-		return 0;
-	}
-
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
-
+    
     @Override
     public void updateConditionFromPart() {
-    	if(null != unit) {
-    		unit.getEntity().setInternal(IArmorState.ARMOR_DESTROYED, trooper);
-    	}
+        unit.getEntity().setInternal(IArmorState.ARMOR_DESTROYED, trooper);        
     }
 
     @Override
@@ -104,27 +91,27 @@ public class MissingBattleArmorSuit extends MissingPart {
     public boolean isQuad() {
         return quad;
     }
-
+    
     public int getWeightClass() {
         return weightClass;
     }
-
+    
     public int getGroundMP() {
         return groundMP;
     }
-
+    
     public int getJumpMP() {
         return jumpMP;
     }
-
+    
     public String getChassis() {
         return chassis;
     }
-
+    
     public String getModel() {
         return model;
     }
-
+    
     @Override
     public boolean isAcceptableReplacement(Part part, boolean refit) {
         return part instanceof BattleArmorSuit
@@ -135,11 +122,28 @@ public class MissingBattleArmorSuit extends MissingPart {
     @Override
     public Part getNewPart() {
         BattleArmorSuit suit = new BattleArmorSuit(chassis, model, getUnitTonnage(), -1, weightClass, groundMP, jumpMP, quad, clan, jumpType, campaign);
+        long extraCost = 0;
+        double extraTonnage = 0;
+        for(Part part : unit.getParts()) {
+            if(part instanceof MissingBattleArmorEquipmentPart && ((MissingBattleArmorEquipmentPart)part).getTrooper() == trooper) {
+                Part newEquip = ((MissingBattleArmorEquipmentPart)part).getNewPart();
+                extraCost += newEquip.getStickerPrice();
+                extraTonnage += newEquip.getTonnage();
+            }
+            if(part instanceof BaArmor && ((BaArmor)part).getLocation() == trooper) {
+            	
+                extraCost += ((BaArmor)part).getAmountNeeded() * ((BaArmor)part).getPointCost();
+                extraTonnage += ((BaArmor)part).getTonnageNeeded();
+            }
+        }
+        suit.setExtraCost(extraCost);
+        suit.setExtraTonnage(extraTonnage);
+        suit.setArmorPoints(unit.getEntity().getOArmor(trooper));
         return suit;
     }
-
+    
     @Override
-    public TargetRoll getAllMods(Person tech) {
+    public TargetRoll getAllMods() {
         return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "BA suit removal");
     }
 
@@ -174,11 +178,11 @@ public class MissingBattleArmorSuit extends MissingPart {
         }
         return rating;
     }
-
+    
     public int getTrooper() {
         return trooper;
     }
-
+    
     @Override
     public void writeToXml(PrintWriter pw1, int indent) {
         writeToXmlBegin(pw1, indent);
@@ -224,7 +228,7 @@ public class MissingBattleArmorSuit extends MissingPart {
     @Override
     protected void loadFieldsFromXmlNode(Node wn) {
         NodeList nl = wn.getChildNodes();
-
+        
         for (int x=0; x<nl.getLength(); x++) {
             Node wn2 = nl.item(x);
             if (wn2.getNodeName().equalsIgnoreCase("trooper")) {
@@ -245,31 +249,24 @@ public class MissingBattleArmorSuit extends MissingPart {
                 model = MekHqXmlUtil.unEscape(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("jumpType")) {
                 jumpType = EntityMovementMode.type(MekHqXmlUtil.unEscape(wn2.getTextContent()));
-            }
+            } 
         }
     }
-
+    
     @Override
     public void fix() {
         Part replacement = findReplacement(false);
         if(null != replacement) {
-        	BattleArmorSuit newSuit = (BattleArmorSuit)replacement.clone();
-            //lets also clone the subparts
+            Unit u = unit;
+            BattleArmorSuit newSuit = (BattleArmorSuit)replacement.clone();
             unit.addPart(newSuit);
-            //this is admittedly hacky, but lets go ahead and add something to the newSuit
-            //so it doesnt generate a whole new set of parts
-            newSuit.childPartIds.add(1);
             campaign.addPart(newSuit, 0);
-            newSuit.childPartIds.clear();
+            replacement.decrementQuantity();          
             newSuit.setTrooper(trooper);
             newSuit.updateConditionFromPart();
             //cycle through MissingBattleArmorEquipmentPart for trooper and replace
             ArrayList<MissingBattleArmorEquipmentPart> missingStuff = new ArrayList<MissingBattleArmorEquipmentPart>();
-            BaArmor origArmor = null;
             for(Part p : unit.getParts()) {
-            	if(p instanceof BaArmor && ((BaArmor)p).getLocation()== trooper) {
-            		origArmor = (BaArmor)p;
-            	}
                 if(!(p instanceof MissingBattleArmorEquipmentPart)) {
                     continue;
                 }
@@ -279,29 +276,16 @@ public class MissingBattleArmorSuit extends MissingPart {
                 }
                 missingStuff.add(missingBaEquip);
             }
-            for(int childId : replacement.getChildPartIds()) {
-        		Part childPart = campaign.getPart(childId);
-        		if(childPart instanceof BaArmor && null != origArmor) {
-        			unit.getEntity().setArmor(((BaArmor)childPart).getAmount(), trooper);
-        			origArmor.updateConditionFromEntity(false);
-        		} else if(childPart instanceof BattleArmorEquipmentPart) {
-        			for(MissingBattleArmorEquipmentPart p : missingStuff) {
-	            		if(null != childPart && null != p.getUnit() && p.isAcceptableReplacement(childPart, false)) {
-	            			//then add child part and remove current part from unit and campaign
-	            			Part newPart = childPart.clone();
-	            			unit.addPart(newPart);
-	            			((EquipmentPart)newPart).setEquipmentNum(p.getEquipmentNum());
-	                        ((BattleArmorEquipmentPart)newPart).setTrooper(trooper);
-	            			p.remove(false);
-	            			newPart.updateConditionFromPart();
-	            			break;
-	            		}
-	            	}
-        		}
+            for(MissingBattleArmorEquipmentPart p : missingStuff) {
+                Part newBaEquip = p.getNewPart();
+                campaign.addPart(newBaEquip, 0);
+                p.fix();
             }
-            replacement.decrementQuantity();
+            unit.getEntity().setArmor(newSuit.getArmorPoints(), trooper);
             unit.getEntity().setInternal(0, trooper);
+            newSuit.resetExtras();
             remove(false);
+            u.runDiagnostic();
         }
     }
 
@@ -315,88 +299,7 @@ public class MissingBattleArmorSuit extends MissingPart {
 
 	@Override
 	public int getLocation() {
-		return trooper;
+		return Entity.LOC_NONE;
 	}
-
-	@Override
-    public String getDetails() {
-    	if(null == unit) {
-    		return super.getDetails();
-
-        }
-    	String toReturn = unit.getEntity().getLocationName(trooper) + "<br>";
-		return toReturn + super.getDetails();
-    }
-
-	@Override
-	public Part findReplacement(boolean refit) {
-		Part bestPart = null;
-
-		//check to see if we already have a replacement assigned
-		if(replacementId > -1) {
-			bestPart = campaign.getPart(replacementId);
-			if(null != bestPart) {
-				return bestPart;
-			}
-		}
-		// don't just return with the first part if it is damaged
-		for(Part part : campaign.getSpareParts()) {
-			if(part.isReservedForRefit() || part.isBeingWorkedOn() || part.isReservedForReplacement() || !part.isPresent() || part.hasParentPart()) {
-				continue;
-			}
-
-			if(isAcceptableReplacement(part, refit)) {
-				if(null == bestPart) {
-					bestPart = part;
-				} else {
-					int bestPartArmor = 0;
-					int currentPartArmor = 0;
-					int bestPartQuantity = 0;
-					int currentPartQuantity = 0;
-					for(int childId : bestPart.childPartIds) {
-						Part p = campaign.getPart(childId);
-						if(p != null) {
-							if(p instanceof BaArmor) {
-								bestPartArmor = ((BaArmor)p).getAmount();
-							} else {
-								bestPartQuantity++;
-							}
-						}
-					}
-					for(int childId : part.childPartIds) {
-						Part p = campaign.getPart(childId);
-						if(p != null) {
-							if(p instanceof BaArmor) {
-								currentPartArmor = ((BaArmor)p).getAmount();
-							} else {
-								currentPartQuantity++;
-							}
-						}
-					}
-					if(currentPartQuantity > bestPartQuantity) {
-						bestPart = part;
-					} else if(currentPartArmor > bestPartArmor) {
-						bestPart = part;
-					}
-				}
-			}
-		}
-		return bestPart;
-	}
-
-	@Override
-	public int getIntroDate() {
-    	return ((BattleArmorSuit)getNewPart()).getIntroDate();
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
+    
 }

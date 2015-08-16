@@ -1,24 +1,6 @@
-/*
- * RetirementDefectionTracker.java
- *
- * Copyright (c) 2014 Carl Spain. All rights reserved.
- *
- * This file is part of MekHQ.
- *
- * MekHQ is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * MekHQ is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * 
  */
-
 package mekhq.campaign.personnel;
 
 import java.io.PrintWriter;
@@ -101,8 +83,9 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
 			netWorth = (Long)(df.parse(m.group(1)));
 			if (campaign.getCampaignOptions().getSharesExcludeLargeCraft()) {
 				p = Pattern.compile("Large Craft\\D*(.*)");
-				m = p.matcher(financialReport);				
-				if (m.find() && null != m.group(1)) {
+				m = p.matcher(financialReport);
+				m.find();
+				if (null != m.group(1)) {
 					netWorth -= (Long)(df.parse(m.group(1)));
 				}
 			}
@@ -150,7 +133,7 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
     			if (p.getPrimaryRole() >= Person.T_MECH_TECH) {
     				support++;
     			} else if (null == p.getUnitId() ||
-    					(null != campaign.getUnit(p.getUnitId()) && campaign.getUnit(p.getUnitId()).isCommander(p))) {
+    					campaign.getUnit(p.getUnitId()).isCommander(p)) {
     				/* The AtB rules do not state that crews count as a 
     				 * single person for leadership purposes, but to do otherwise
     				 * would tax all but the most exceptional commanders of
@@ -182,13 +165,11 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
     	}
 
     	for (Person p : campaign.getPersonnel()) {
-    		if (!p.isActive() || p.isDependent()
-    				|| p.isPrisoner() || p.isBondsman()
-    				|| p.isDeployed()) {
+    		if (!p.isActive() || p.isDependent() || p.isPrisoner() || p.isBondsman()) {
     			continue;
     		}
     		/* Infantry units retire or defect by platoon */
-    		if (null != p.getUnitId() && null != campaign.getUnit(p.getUnitId()) && campaign.getUnit(p.getUnitId()).usesSoldiers() &&
+    		if (null != p.getUnitId() && campaign.getUnit(p.getUnitId()).usesSoldiers() &&
     				!campaign.getUnit(p.getUnitId()).isCommander(p)) {
     			continue;
     		}
@@ -200,10 +181,6 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
     				contract.getStatus() == Mission.S_FAILED ||
     				contract.getStatus() == Mission.S_BREACH)) {
     			target.addModifier(1, "Failed mission");
-    		}
-    		if (campaign.getCampaignOptions().getTrackUnitFatigue()
-    				&& campaign.getFatigueLevel() >= 10) {
-    			target.addModifier(campaign.getFatigueLevel() / 10, "Fatigue");
     		}
     		if (campaign.getFactionCode().equals("PIR")) {
     			target.addModifier(1, "Pirate");
@@ -246,7 +223,7 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
     			//Bonus payments handled by dialog
     		}
     		if (p.getPrimaryRole() == Person.T_INFANTRY) {
-    			target.addModifier(-1, "Infantry");
+    			target.addModifier(-1, "Infantry Platoon");
     		}
     		int injuryMod = 0;
     		for (Injury i : p.getInjuries()) {
@@ -316,18 +293,16 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
      * @param campaign
      * @param contract	If not null, the payout must be resolved before the
      * 					contract can be resolved.
-     * @return			true if the person is due a payout; otherwise false
      */
-    public boolean removeFromCampaign(Person person, boolean killed,
+    public void removeFromCampaign(Person person, boolean killed,
     		int shares, Campaign campaign, AtBContract contract) {
     	/* Payouts to Infantry/Battle armor platoons/squads/points are
     	 * handled as a unit in the AtB rules, so we're just going to ignore
     	 * them here. 
     	 */
     	if (person.getPrimaryRole() == Person.T_INFANTRY ||
-   			person.getPrimaryRole() == Person.T_BA ||
-    			person.isPrisoner() || person.isBondsman()) {
-    		return false;
+    			person.getPrimaryRole() == Person.T_BA) {
+    		return;
     	}
     	payouts.put(person.getId(), new Payout(person, getShareValue(campaign),
     			killed, campaign.getCampaignOptions().getSharesForAll()));
@@ -337,7 +312,6 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
     		}
     		unresolvedPersonnel.get(contract.getId()).add(person.getId());
     	}
-    	return true;
     }
     
     public void removePayout(Person person) {
@@ -477,9 +451,7 @@ public class RetirementDefectionTracker implements Serializable, MekHqXmlSeriali
 				stolenUnit = true;
 			} else {
 				if (p.getProfession() == Ranks.RPROF_INF) {
-					if (p.getUnitId() != null) {
-						cbills = 50000;
-					}
+					cbills = 50000;
 				} else {
 					cbills = getBonusCost(p);
 					if (p.getRank().isOfficer()) {

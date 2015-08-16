@@ -1,20 +1,20 @@
 /*
  * Refit.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -70,16 +70,16 @@ import org.w3c.dom.NodeList;
  * This object tracks the refit of a given unit into a new unit.
  * It has fields for the current entity and the new entity and it
  * uses these to calculate various characteristics of the refit.
- *
+ * 
  * It can then also be used to track the actual refit process, by
  * attaching it to a Unit.
- *
+ * 
  * @author Jay Lawson <jaylawson39 at yahoo.com>
  */
 public class Refit extends Part implements IPartWork, IAcquisitionWork {
-
+	
 	/**
-     *
+     * 
      */
     private static final long serialVersionUID = -1765098410743713570L;
     public static final int NO_CHANGE = 0;
@@ -90,10 +90,10 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public static final int CLASS_D = 5;
 	public static final int CLASS_E = 6;
 	public static final int CLASS_F = 7;
-
+	
 	private Unit oldUnit;
 	private Entity newEntity;
-
+	
 	private int refitClass;
 	private int time;
 	private int timeSpent;
@@ -102,26 +102,26 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	private boolean customJob;
 	private boolean kitFound;
 	private String fixableString;
-
+	
 	private ArrayList<Integer> oldUnitParts;
 	private ArrayList<Integer> newUnitParts;
 	private ArrayList<Part> shoppingList;
-
+	
 	private int armorNeeded;
 	private Armor newArmorSupplies;
 	private int newArmorSuppliesId;
 	private boolean sameArmorType;
-
+		
 	private UUID assignedTechId;
 	private int oldTechId = -1;
-
+	
 	public Refit() {
 		oldUnitParts = new ArrayList<Integer>();
 		newUnitParts = new ArrayList<Integer>();
 		shoppingList = new ArrayList<Part>();
 		fixableString = null;
 	}
-
+	
 	public Refit(Unit oUnit, Entity newEn, boolean custom) {
 		customJob = custom;
 		oldUnit = oUnit;
@@ -141,7 +141,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			suggestNewName();
 		}
 	}
-
+	
 	public static String getRefitClassName(int refitClass) {
 		switch(refitClass) {
 		case NO_CHANGE:
@@ -160,33 +160,33 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			return "Class F (Factory)";
 		case CLASS_OMNI:
 			return "Omni Repod";
-		default:
+		default:	
 			return "Unknown";
-
+				
 		}
 	}
-
+	
 	public String getRefitClassName() {
 		return getRefitClassName(refitClass);
 	}
-
+	
 	public int getRefitClass() {
 		return refitClass;
 	}
-
+	
 	public long getCost() {
 		return cost;
 	}
-
+	
 	public ArrayList<Part> getShoppingList() {
 		return shoppingList;
 	}
-
+	
 	public String[] getShoppingListDescription() {
 		Hashtable<String,Integer> tally = new Hashtable<String,Integer>();
 	    Hashtable<String,String> desc = new Hashtable<String,String>();
 		for(Part p : shoppingList) {
-		    if(p instanceof Armor) {
+		    if(p instanceof Armor || p instanceof ProtomekArmor || p instanceof BaArmor) {
 		        continue;
 		    }
 			if(null != tally.get(p.getName())) {
@@ -217,11 +217,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		}
 		return descs;
 	}
-
+	
 	public int getTime() {
 		return time;
 	}
-
+	
 	public void calculate() {
 		Unit newUnit = new Unit(newEntity, oldUnit.campaign);
 		newUnit.initializeParts(false);
@@ -235,23 +235,23 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		Arrays.fill(locationHasNewStuff, Boolean.FALSE);
 		HashMap<EquipmentType,Integer> ammoNeeded = new HashMap<EquipmentType,Integer>();
 		ArrayList<Part> newPartList = new ArrayList<Part>();
-
+		
 		//Step 1: put all of the parts from the current unit into a new arraylist so they can
 		//be removed when we find a match.
 		for(Part p : oldUnit.getParts()) {
 			oldUnitParts.add(p.getId());
 		}
-
-		//Step 2: loop through the parts arraylist in the newUnit and attempt to find the
-		//corresponding part of missing part in the parts arraylist we just created. Depending on
+		
+		//Step 2: loop through the parts arraylist in the newUnit and attempt to find the 
+		//corresponding part of missing part in the parts arraylist we just created. Depending on 
 		//what we find, we may have:
-		//a) An exact copy in the same location - we move the part from the oldunit parts to the
+		//a) An exact copy in the same location - we move the part from the oldunit parts to the 
 		//newunit parts. Nothing needs to be changed in terms of refit class, time, or anything.
-		//b) An exact copy in a different location - move this part to the newunit part list, but
+		//b) An exact copy in a different location - move this part to the newunit part list, but 
 		//change its location id. Change refit class to C and add time for removing and reinstalling
 		//part.
 		//c) We dont find the part in the oldunit part list.  That means this is a new part.  Add
-		//this to the newequipment arraylist from step 3.  Don't change anything in terms of refit
+		//this to the newequipment arraylist from step 3.  Don't change anything in terms of refit 
 		//stats yet, that will happen later.
 		for(Part part : newUnit.getParts()) {
 			boolean partFound = false;
@@ -261,32 +261,42 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			for(int pid : oldUnitParts) {
 				Part oPart = oldUnit.campaign.getPart(pid);
 				i++;
-				if(((oPart instanceof MissingPart && ((MissingPart)oPart).isAcceptableReplacement(part, true))
+				if(((oPart instanceof MissingPart && ((MissingPart)oPart).isAcceptableReplacement(part, true)) 
 						|| oPart.isSamePartType(part))) {
 					//need a special check for location and armor amount for armor
-					if(oPart instanceof Armor
+					if(oPart instanceof Armor 
 							&& (((Armor)oPart).getLocation() != ((Armor)part).getLocation()
 									|| ((Armor)oPart).getTotalAmount() != ((Armor)part).getTotalAmount())) {
 						continue;
-					}
+					}				
+					if(oPart instanceof ProtomekArmor 
+							&& (((ProtomekArmor)oPart).getLocation() != ((ProtomekArmor)part).getLocation()
+									|| ((ProtomekArmor)oPart).getTotalAmount() != ((ProtomekArmor)part).getTotalAmount())) {
+						continue;
+					}				
+					if(oPart instanceof BaArmor 
+							&& (((BaArmor)oPart).getLocation() != ((BaArmor)part).getLocation()
+									|| ((BaArmor)oPart).getTotalAmount() != ((BaArmor)part).getTotalAmount())) {
+						continue;
+					}				
 					if(part instanceof EquipmentPart) {
-						//check the location to see if this moved. If so, then don't break, but
+						//check the location to see if this moved. If so, then don't break, but 
 						//save this in case we fail to find equipment in the same location.
 						int loc = ((EquipmentPart)part).getLocation();
 						boolean rear = ((EquipmentPart)part).isRearFacing();
-						if((oPart instanceof EquipmentPart
+						if((oPart instanceof EquipmentPart 
 								&& (((EquipmentPart)oPart).getLocation() != loc || ((EquipmentPart)oPart).isRearFacing() != rear))
-								|| (oPart instanceof MissingEquipmentPart
+								|| (oPart instanceof MissingEquipmentPart 
 										&& (((MissingEquipmentPart)oPart).getLocation() != loc || ((MissingEquipmentPart)oPart).isRearFacing() != rear))) {
 							movedPart = oPart;
 							moveIndex = i;
 							continue;
-						}
+						} 
 					}
 					newUnitParts.add(pid);
 					partFound = true;
 					break;
-				}
+				} 
 			}
 			if(partFound) {
 				oldUnitParts.remove(i);
@@ -299,18 +309,17 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 					updateRefitClass(CLASS_C);
 				}
 				if(movedPart instanceof EquipmentPart) {
-					//TODO: set this as salvaging
-					//boolean isSalvaging = movedPart.isSalvaging();
-					//movedPart.setSalvaging(true);
-					//movedPart.updateConditionFromEntity(false);
+					boolean isSalvaging = movedPart.isSalvaging();
+					movedPart.setSalvaging(true);
+					movedPart.updateConditionFromEntity();
 					time += movedPart.getBaseTime();
-					//movedPart.setSalvaging(isSalvaging);
+					movedPart.setSalvaging(isSalvaging);
 				}
 			} else {
 				//its a new part
 				//dont actually add the part iself but rather its missing equivalent
 				//except in the case of armor
-				if(part instanceof Armor || part instanceof AmmoBin) {
+				if(part instanceof Armor || part instanceof ProtomekArmor || part instanceof BaArmor || part instanceof AmmoBin) {
 					newPartList.add(part);
 				} else {
 					Part mPart = part.getMissingPart();
@@ -320,28 +329,25 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 						MekHQ.logError("null missing part for " + part.getName() + " during refit calculations");
 					}
 				}
-			}
+			}		
 		}
-
+		
 		//Step 3: loop through the newequipment list and determine what class of refit it entails,
 		//add time for both installing this part.
 		//This may involve taking a look at remaining oldunit parts to determine whether this item
 		//replaces another item of the same or fewer crits. Also add cost for new equipment.
 		//at the same time, check spare parts for new equipment
-
+		
 		//first put oldUnitParts in a new arraylist so they can be removed as we find them
 		ArrayList<Integer> tempParts = new ArrayList<Integer>();
 		tempParts.addAll(oldUnitParts);
-
+		
 		armorNeeded = 0;
 		int atype = 0;
 		boolean aclan = false;
 		HashMap<Integer,Integer> partQuantity = new HashMap<Integer,Integer>();
 		for(Part nPart : newPartList) {
-			//TODO: I don't think we need this here anymore 
 			nPart.setUnit(oldUnit);
-			
-			/*ADD TIMES AND COSTS*/
 			if(nPart instanceof MissingPart) {
 				time += nPart.getBaseTime();
 				Part replacement = ((MissingPart)nPart).findReplacement(true);
@@ -361,7 +367,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 					cost += replacement.getActualValue();
 					shoppingList.add(nPart);
 				}
-			}
+			} 
 			else if(nPart instanceof Armor) {
 				int totalAmount = ((Armor)nPart).getTotalAmount();
 				time += totalAmount * ((Armor)nPart).getBaseTimeFor(newEntity);
@@ -369,8 +375,25 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				atype = ((Armor)nPart).getType();
 				aclan = ((Armor)nPart).isClanTechBase();
 				//armor always gets added to the shopping list - it will be checked for differently
-				//NOT ANYMORE - I think this is overkill, lets just reuse existing armor parts
-				//shoppingList.add(nPart);
+				shoppingList.add(nPart);
+			}
+			else if(nPart instanceof ProtomekArmor) {
+				int totalAmount = ((ProtomekArmor)nPart).getTotalAmount();
+				time += totalAmount * ((ProtomekArmor)nPart).getBaseTimeFor(newEntity);
+				armorNeeded += totalAmount;
+				atype = 0; //((ProtomekArmor)nPart).getType();
+				aclan = ((ProtomekArmor)nPart).isClanTechBase();
+				//armor always gets added to the shopping list - it will be checked for differently
+				shoppingList.add(nPart);
+			}
+			else if(nPart instanceof BaArmor) {
+				int totalAmount = ((BaArmor)nPart).getTotalAmount();
+				time += totalAmount * ((BaArmor)nPart).getBaseTimeFor(newEntity);
+				armorNeeded += totalAmount;
+				atype = ((BaArmor)nPart).getType();
+				aclan = ((BaArmor)nPart).isClanTechBase();
+				//armor always gets added to the shopping list - it will be checked for differently
+				shoppingList.add(nPart);
 			}
 			else if(nPart instanceof AmmoBin) {
 				EquipmentType type = ((AmmoBin)nPart).getType();
@@ -382,8 +405,6 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				time += 120;
 				shoppingList.add(nPart);
 			}
-			
-			/*CHECK REFIT CLASS*/
 			if(nPart instanceof MissingEnginePart) {
 				if(oldUnit.getEntity().getEngine().getRating() != newUnit.getEntity().getEngine().getRating()) {
 					updateRefitClass(CLASS_D);
@@ -404,7 +425,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				} else {
 					updateRefitClass(CLASS_F);
 				}
-			} else if(nPart instanceof Armor) {
+			} else if(nPart instanceof Armor || nPart instanceof ProtomekArmor || nPart instanceof BaArmor) {
 				updateRefitClass(CLASS_C);
 				locationHasNewStuff[((Armor)nPart).getLocation()] = true;
 			} else if(nPart instanceof MissingMekCockpit) {
@@ -463,7 +484,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 						if(loc != oLoc) {
 							continue;
 						}
-						if(crits == oCrits
+						if(crits == oCrits 
 								&& (type.hasFlag(WeaponType.F_LASER) == oType.hasFlag(WeaponType.F_LASER))
 								&& (type.hasFlag(WeaponType.F_MISSILE) == oType.hasFlag(WeaponType.F_MISSILE))
 								&& (type.hasFlag(WeaponType.F_BALLISTIC) == oType.hasFlag(WeaponType.F_BALLISTIC))
@@ -494,7 +515,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				}
 			}
 		}
-
+				
 		//Step 4: loop through remaining equipment on oldunit parts and add time for removing.
 		for(int pid : oldUnitParts) {
 			Part oPart = oldUnit.campaign.getPart(pid);
@@ -505,23 +526,33 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				if(((AmmoBin)oPart).getShotsNeeded() < ((AmmoBin)oPart).getFullShots()) {
 					time += 120;
 				}
-				continue;
+				continue;	
 			}
 			if(oPart instanceof Armor && sameArmorType) {
 				recycledArmorPoints += ((Armor)oPart).getAmount();
 				continue;
 			}
-			boolean isSalvaging = oldUnit.isSalvage();
-			oldUnit.setSalvage(true);
+			if(oPart instanceof ProtomekArmor && sameArmorType) {
+				recycledArmorPoints += ((ProtomekArmor)oPart).getAmount();
+				continue;
+			}
+			if(oPart instanceof BaArmor && sameArmorType) {
+				recycledArmorPoints += ((BaArmor)oPart).getAmount();
+				continue;
+			}
+			boolean isSalvaging = oPart.isSalvaging();
+			oPart.setSalvaging(true);
+			oPart.updateConditionFromEntity();
 			time += oPart.getBaseTime();
-			oldUnit.setSalvage(isSalvaging);
+			oPart.setSalvaging(isSalvaging);
+			oPart.updateConditionFromEntity();
 		}
-
+		
 		if(sameArmorType) {
 			//if this is the same armor type then we can recyle armor
 			armorNeeded -= recycledArmorPoints;
 		}
-		if(armorNeeded > 0) {
+		if(armorNeeded > 0) {		
 			newArmorSupplies = new Armor(0, atype, 0, 0, false, aclan, oldUnit.campaign);
 			newArmorSupplies.setAmountNeeded(armorNeeded);
 			newArmorSupplies.setRefitId(oldUnit.getId());
@@ -535,29 +566,29 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			cost += (long)(Math.ceil(((double)amountNeeded)/(5*newArmorSupplies.getArmorPointsPerTon())) * 5 * EquipmentType.getArmorCost(atype));
 			newArmorSupplies.setUnit(null);
 		}
-
+		
 		for(EquipmentType type : ammoNeeded.keySet()) {
 			int shotsNeeded = Math.max(ammoNeeded.get(type) - getAmmoAvailable(type), 0);
 			int shotsPerTon = ((AmmoType)type).getShots();
 			cost += type.getCost(newEntity, false, -1) * ((double)shotsNeeded/shotsPerTon);
 		}
-
+		
 		//deal with integral heat sinks
 		//TODO: heat sinks on other units?
-		if(newEntity instanceof Mech
+		if(newEntity instanceof Mech 
 				&& (((Mech)newEntity).hasDoubleHeatSinks() != ((Mech)oldUnit.getEntity()).hasDoubleHeatSinks()
 						|| ((Mech)newEntity).hasLaserHeatSinks() != ((Mech)oldUnit.getEntity()).hasLaserHeatSinks())) {
 			time += newEntity.getEngine().integralHeatSinkCapacity(((Mech)newEntity).hasCompactHeatSinks()) * 90;
 			time += oldUnit.getEntity().getEngine().integralHeatSinkCapacity(((Mech)newEntity).hasCompactHeatSinks()) * 90;
 			updateRefitClass(CLASS_D);
 		}
-
+		
 		//check for CASE
 		//TODO: we still dont have to order the part, we need to get the CASE issues sorted out
 		for(int loc = 0; loc < newEntity.locations(); loc++) {
-			if((newEntity.locationHasCase(loc) != oldUnit.getEntity().locationHasCase(loc)
+			if((newEntity.locationHasCase(loc) != oldUnit.getEntity().locationHasCase(loc) 
 					&& !(newEntity.isClan() && newEntity instanceof Mech))
-					|| (newEntity instanceof Mech
+					|| (newEntity instanceof Mech 
 							&& ((Mech)newEntity).hasCASEII(loc) != ((Mech)oldUnit.getEntity()).hasCASEII(loc))) {
 				if(isOmni) {
 					updateRefitClass(CLASS_OMNI);
@@ -567,13 +598,13 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				}
 			}
 		}
-
+		
 		//multiply time by refit class
 		time *= getTimeMultiplier();
 		if(!customJob) {
 			cost *= 1.1;
 		}
-
+		
 		//TODO: track the number of locations changed so we can get stuff for omnis
 		//TODO: some class D stuff is not omnipodable
 		if(refitClass == CLASS_OMNI) {
@@ -585,22 +616,22 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			}
 			time = 30 * nloc;
 		}
-
+		
 		//infantry take zero time to re-organize
 		//also check for squad size and number changes
 		if(oldUnit.getEntity() instanceof Infantry && !(oldUnit.getEntity() instanceof BattleArmor)) {
-			if(((Infantry)oldUnit.getEntity()).getSquadN() != ((Infantry)newEntity).getSquadN()
+			if(((Infantry)oldUnit.getEntity()).getSquadN() != ((Infantry)newEntity).getSquadN() 
 					||((Infantry)oldUnit.getEntity()).getSquadSize() != ((Infantry)newEntity).getSquadSize()) {
 				updateRefitClass(CLASS_A);
 			}
 			time = 0;
 		}
-
+		
 		//figure out if we are putting new stuff on a missing location
 		if(!replacingLocations) {
 			for(int loc = 0; loc < newEntity.locations(); loc++) {
 				if(locationHasNewStuff[loc] && oldUnit.isLocationDestroyed(loc)) {
-					String problem = "Can't add new equipment to a missing " + newEntity.getLocationAbbr(loc);
+					String problem = "Can't add new equipment to a missing " + newEntity.getLocationAbbr(loc); 
 					if(null == fixableString) {
 						fixableString = problem;
 					} else {
@@ -610,7 +641,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			}
 		}
 	}
-
+	
 	public void begin() throws EntityLoadingException, IOException {
 	    if(customJob) {
             saveCustomization();
@@ -622,14 +653,13 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		    //add the stuff on the shopping list to the master shopping list
 		    ArrayList<Part> newShoppingList = new ArrayList<Part>();
     		for(Part part : shoppingList) {
-    			part.setUnit(null);
-    			if(part instanceof Armor) {
-                    //Taharqa: WE shouldn't be here anymore, given that I am no longer adding
-    				//armor by location to the shopping list but instead changing it all via
-    				//the newArmorSupplies object, but commented out for completeness
-                    //oldUnit.campaign.addPart(part, 0);
-                    //part.setRefitId(oldUnit.getId());
-                    //newUnitParts.add(part.getId());
+    			if(part instanceof Armor || part instanceof ProtomekArmor || part instanceof BaArmor) {
+                    //automatically add armor by location, we will check for the lump sum of
+                    //armor using newArmorSupplies
+                    oldUnit.campaign.addPart(part, 0);
+                    part.setUnit(oldUnit);
+                    part.setRefitId(oldUnit.getId());
+                    newUnitParts.add(part.getId());
                 }
                 else if(part instanceof AmmoBin) {
                     //ammo bins are free - bleh
@@ -638,12 +668,14 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                     oldUnit.campaign.addPart(part, 0);
                     part.setRefitId(oldUnit.getId());
                     newUnitParts.add(part.getId());
-                    bin.loadBin();
+                    part.setUnit(oldUnit);
+                    bin.loadBin(false);
                     if(bin.needsFixing()) {
                         oldUnit.campaign.getShoppingList().addShoppingItem(bin, 1, oldUnit.campaign);
                         //need to call it a second time to use up if found
-                        bin.loadBin();
-                    }
+                        bin.loadBin(false);
+                    }             
+                    part.setUnit(null);
                 }
                 else if(part instanceof IAcquisitionWork) {
     		        oldUnit.campaign.getShoppingList().addShoppingItem(((IAcquisitionWork)part), 1, oldUnit.campaign);
@@ -664,15 +696,12 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                 }
             }
 		} else {
-			for(Part part : shoppingList) {
-    			part.setUnit(null);
-			}
 		    checkForArmorSupplies();
 		    oldUnit.campaign.getShoppingList().addShoppingItem(this, 1, oldUnit.campaign);
 		}
-
+		
 	}
-
+	
 	public void reserveNewParts() {
 		//we need to loop through the new parts and
 	    //if they are not on a unit already, then we need
@@ -695,10 +724,10 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			} else {
 				newNewUnitParts.add(id);
 			}
-		}
-		newUnitParts = newNewUnitParts;
+		}		
+		newUnitParts = newNewUnitParts;	
 	}
-
+	
 	public boolean partsInTransit() {
 		boolean retVal = false;
 		for (int pid : newUnitParts) {
@@ -716,7 +745,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		}
 		return retVal;
 	}
-
+	
 	public boolean acquireParts() {
 	    if(!customJob && !kitFound) {
 	        return false;
@@ -748,13 +777,15 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			Part part = oldUnit.campaign.getPart(pid);
 			if(part instanceof AmmoBin && null == part.getUnit()) {
 				AmmoBin bin = (AmmoBin)part;
-				bin.loadBin();
+				bin.setUnit(oldUnit);
+				bin.loadBin(false);
 				if(bin.needsFixing()) {
 					missingAmmo = true;
 				}
+                bin.setUnit(null);
 			}
 		}
-
+		
 		checkForArmorSupplies();
 		shoppingList = newShoppingList;
 
@@ -762,10 +793,10 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		if (partsInTransit()) {
 			return false;
 		}
-
+		
 		return shoppingList.size() == 0 && !missingAmmo && (null == newArmorSupplies || (armorNeeded - newArmorSupplies.getAmount()) <= 0);
 	}
-
+	
 	public void checkForArmorSupplies() {
 	    if(null == newArmorSupplies) {
 	        return;
@@ -775,36 +806,35 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		if(null != existingArmorSupplies && actualNeed > 0) {
 			if(existingArmorSupplies.getAmount() > actualNeed) {
 				newArmorSupplies.setAmount(armorNeeded);
-				newArmorSupplies.setAmountNeeded(0);
 				existingArmorSupplies.setAmount(existingArmorSupplies.getAmount() - actualNeed);
 			} else {
 				newArmorSupplies.setAmount(newArmorSupplies.getAmount() + existingArmorSupplies.getAmount());
-				newArmorSupplies.setAmountNeeded(newArmorSupplies.getAmountNeeded() - existingArmorSupplies.getAmount());
 				oldUnit.campaign.removePart(existingArmorSupplies);
 			}
 			if(newArmorSupplies.getId() <= 0) {
 	             oldUnit.campaign.addPart(newArmorSupplies, 0);
 			}
+			oldUnit.campaign.updateAllArmorForNewSpares();
 		}
 	}
-
+	
 	public Armor getExistingArmorSupplies() {
 		Armor existingArmorSupplies = null;
 		if(null == newArmorSupplies) {
 			return null;
 		}
 		for(Part part : oldUnit.campaign.getSpareParts()) {
-			if(part instanceof Armor && ((Armor)part).getType() == newArmorSupplies.getType()
-					&& ((Armor)part).isClanTechBase() == newArmorSupplies.isClanTechBase()
+			if(part instanceof Armor && ((Armor)part).getType() == newArmorSupplies.getType() 
+					&& ((Armor)part).isClanTechBase() == newArmorSupplies.isClanTechBase() 
 					&& !part.isReservedForRefit()
 					&& part.isPresent()) {
-				existingArmorSupplies = (Armor)part;
+				existingArmorSupplies = (Armor)part;				
 				break;
 			}
 		}
 		return existingArmorSupplies;
 	}
-
+	
 	public int getAmmoAvailable(EquipmentType type) {
 		for(Part part : oldUnit.campaign.getSpareParts()) {
 			if(part instanceof AmmoStorage) {
@@ -816,27 +846,25 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		}
 		return 0;
 	}
-
+	
 	private void updateRefitClass(int rClass) {
 		if(rClass > refitClass) {
 			refitClass = rClass;
 		}
 	}
-
+	
 	public void cancel() {
 		oldUnit.setRefit(null);
 		for(int pid : newUnitParts) {
 			Part part = oldUnit.campaign.getPart(pid);
-			if(null == part) {
-				MekHQ.logMessage("part with id " + pid + " not found for refit of " + getDesc());
-				continue;
-			}
 			part.setRefitId(null);
-			if(part instanceof Armor) {
+			if(part instanceof Armor || part instanceof ProtomekArmor || part instanceof BaArmor) {
 				oldUnit.campaign.removePart(part);
 			}
 			else if(part instanceof AmmoBin) {
-				((AmmoBin) part).unload();
+				part.setUnit(oldUnit);
+				((AmmoBin) part).unload(false);
+				part.setUnit(null);
 				oldUnit.campaign.removePart(part);
 			} else {
 				Part spare = oldUnit.campaign.checkForExistingSparePart(part);
@@ -845,7 +873,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 					oldUnit.campaign.removePart(part);
 				}
 			}
-		}
+		}	
 		if(null != newArmorSupplies) {
 			newArmorSupplies.setRefitId(null);
 			newArmorSupplies.setUnit(oldUnit);
@@ -853,7 +881,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			newArmorSupplies.changeAmountAvailable(newArmorSupplies.getAmount());
 		}
 	}
-
+	
 	private void complete() {
 		int atype = -1;
 		boolean aclan = false;
@@ -867,11 +895,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				oldUnit.remove(soldier, true);
 			}
 		}
+		oldUnit.setEntity(newEntity);
 		//add old parts to the warehouse
 		for(int pid : oldUnitParts) {
 			Part part = oldUnit.campaign.getPart(pid);
 			if(null == part) {
-				MekHQ.logMessage("old part with id " + pid + " not found for refit of " + getDesc());
 				continue;
 			}
 			if(part instanceof MekLocation && ((MekLocation)part).getLoc() == Mech.LOC_CT) {
@@ -887,18 +915,36 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			}
 			else if(part instanceof Armor) {
 				Armor a = (Armor)part;
-				//lets just re-use this armor part
 				if(!sameArmorType) {
-					//give the amount back to the warehouse since we are switching types
 					a.changeAmountAvailable(a.getAmount());
-					if(null != newArmorSupplies) {
-						a.changeType(newArmorSupplies.getType(), newArmorSupplies.isClanTechBase());
-					}
-				} 
-				newUnitParts.add(pid);
+				} else {
+					atype = a.getType();
+					aclan = a.isClanTechBase();
+				}
+				oldUnit.campaign.removePart(part);
+			}
+			else if(part instanceof ProtomekArmor) {
+				ProtomekArmor a = (ProtomekArmor)part;
+				if(!sameArmorType) {
+					a.changeAmountAvailable(a.getAmount());
+				} else {
+					atype = 0; //a.getType();
+					aclan = a.isClanTechBase();
+				}
+				oldUnit.campaign.removePart(part);
+			}
+			else if(part instanceof BaArmor) {
+				BaArmor a = (BaArmor)part;
+				if(!sameArmorType) {
+					a.changeAmountAvailable(a.getAmount());
+				} else {
+					atype = a.getType();
+					aclan = a.isClanTechBase();
+				}
+				oldUnit.campaign.removePart(part);
 			}
 			else if(part instanceof AmmoBin) {
-				((AmmoBin) part).unload();
+				((AmmoBin) part).unload(false);
 			}
 			else {
 				Part spare = oldUnit.campaign.checkForExistingSparePart(part);
@@ -909,10 +955,6 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			}
 			part.setUnit(null);
 		}
-		
-		//dont forget to switch entities!
-		oldUnit.setEntity(newEntity);
-
 		//set up new parts
 		ArrayList<Part> newParts = new ArrayList<Part>();
 		for(int pid : newUnitParts) {
@@ -924,10 +966,6 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			part.setUnit(oldUnit);
 			part.setRefitId(null);
 			newParts.add(part);
-			if(part instanceof Armor) {
-				//get amounts correct for armor
-				part.updateConditionFromEntity(false);
-			}
 		}
 		oldUnit.setParts(newParts);
 		Utilities.unscrambleEquipmentNumbers(oldUnit);
@@ -958,11 +996,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		}
 		oldUnit.resetPilotAndEntity();
 	}
-
+	
 	public void saveCustomization() throws EntityLoadingException, IOException {
 		UnitUtil.compactCriticals(newEntity);
 	    //UnitUtil.reIndexCrits(newEntity); Method is gone?
-
+	
 		String fileName = MhqFileUtil.escapeReservedCharacters(newEntity.getChassis() + " " + newEntity.getModel());
 	    String sCustomsDir = "data"+File.separator+"mechfiles"+File.separator+"customs";
 		String sCustomsDirCampaign = sCustomsDir+File.separator+oldUnit.campaign.getName();
@@ -974,7 +1012,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	    if(!customsDirCampaign.exists()) {
 	    	customsDirCampaign.mkdir();
 	    }
-
+	    
 	    try {
 	        if (newEntity instanceof Mech) {
 			    //if this file already exists then don't overwrite it or we will end up with a bunch of copies
@@ -1014,9 +1052,9 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			Logger.getLogger(CampaignGUI.class.getName())
 					.log(Level.SEVERE, null, ex);
 		}*/
-
+	    
 	}
-
+	
 	private int getTimeMultiplier() {
 		int mult = 0;
 		switch(refitClass) {
@@ -1039,27 +1077,27 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		case CLASS_F:
 			mult = 5;
 			break;
-		default:
-			mult = 1;
+		default:	
+			mult = 1;	
 		}
 		if(customJob) {
 			mult *= 2;
 		}
 		return mult;
 	}
-
+	
 	public Entity getOriginalEntity() {
 		return oldUnit.getEntity();
 	}
-
+	
 	public Entity getNewEntity() {
 		return newEntity;
 	}
-
+	
 	public Unit getOriginalUnit() {
 		return oldUnit;
 	}
-
+	
 	public boolean hasFailedCheck() {
 		return failedCheck;
 	}
@@ -1088,13 +1126,13 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			return 4;
 		case CLASS_OMNI:
 			return -2;
-		default:
+		default:	
 			return 1;
 		}
 	}
 
 	@Override
-	public TargetRoll getAllMods(Person tech) {
+	public TargetRoll getAllMods() {
 		TargetRoll mods = new TargetRoll(getDifficulty(), "difficulty");
 		mods.append(oldUnit.getSiteMod());
 		if(oldUnit.getEntity().hasQuirk("easy_maintain")) {
@@ -1126,7 +1164,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public int getMode() {
 		return Modes.MODE_NORMAL;
 	}
-
+	
 	@Override
 	public void resetTimeSpent() {
 		timeSpent = 0;
@@ -1140,7 +1178,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			return newEntity.getShortName() + " Refit Kit";
 		}
 	}
-
+	
 	@Override
 	public String getAcquisitionName() {
 		return getPartName();
@@ -1205,11 +1243,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	@Override
 	public void setShorthandedMod(int i) {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		//do nothing
 	}
 
@@ -1258,7 +1296,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public String checkFixable() {
 		return fixableString;
 	}
-
+	
 	@Override
 	public void writeToXml(PrintWriter pw1, int indentLvl) {
 		pw1.println(MekHqXmlUtil.indentStr(indentLvl) + "<refit>");
@@ -1322,17 +1360,17 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		}
 		pw1.println(MekHqXmlUtil.indentStr(indentLvl) + "</refit>");
 	}
-
+	
 	public static Refit generateInstanceFromXML(Node wn, Unit u, Version version) {
 		Refit retVal = new Refit();
 		retVal.oldUnit = u;
-
+		
 		NodeList nl = wn.getChildNodes();
-
+		
 		try {
 			for (int x=0; x<nl.getLength(); x++) {
 				Node wn2 = nl.item(x);
-
+				
 				if (wn2.getNodeName().equalsIgnoreCase("time")) {
 					retVal.time = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("refitClass")) {
@@ -1403,14 +1441,14 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			// Doh!
 			MekHQ.logError(ex);
 		}
-
+		
 		return retVal;
 	}
-
+	
 	private static void processShoppingList(Refit retVal, Node wn, Unit u, Version version) {
 
 		NodeList wList = wn.getChildNodes();
-
+		
 		// Okay, lets iterate through the children, eh?
 		for (int x = 0; x < wList.getLength(); x++) {
 			Node wn2 = wList.item(x);
@@ -1418,7 +1456,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			// If it's not an element node, we ignore it.
 			if (wn2.getNodeType() != Node.ELEMENT_NODE)
 				continue;
-
+			
 			if (!wn2.getNodeName().equalsIgnoreCase("part")) {
 				// Error condition of sorts!
 				// Errr, what should we do here?
@@ -1428,17 +1466,17 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			}
 			Part p = Part.generateInstanceFromXML(wn2, version);
 			p.setUnit(u);
-
+			
 			if (p != null) {
 				retVal.shoppingList.add(p);
 			}
 		}
 	}
-
+	
 	private static void processArmorSupplies(Refit retVal, Node wn, Version version) {
 
 		NodeList wList = wn.getChildNodes();
-
+		
 		// Okay, lets iterate through the children, eh?
 		for (int x = 0; x < wList.getLength(); x++) {
 			Node wn2 = wList.item(x);
@@ -1446,7 +1484,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			// If it's not an element node, we ignore it.
 			if (wn2.getNodeType() != Node.ELEMENT_NODE)
 				continue;
-
+			
 			if (!wn2.getNodeName().equalsIgnoreCase("part")) {
 				// Error condition of sorts!
 				// Errr, what should we do here?
@@ -1455,14 +1493,14 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				continue;
 			}
 			Part p = Part.generateInstanceFromXML(wn2, version);
-
+			
 			if (p != null && p instanceof Armor) {
 				retVal.newArmorSupplies = (Armor)p;
 				break;
 			}
 		}
 	}
-
+	
 	public void reCalc() {
 	    setCampaign(oldUnit.campaign);
 		for(Part p : shoppingList) {
@@ -1487,7 +1525,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public long getStickerPrice() {
 		return cost;
 	}
-
+	
 	@Override
 	public long getBuyCost() {
 	    return getStickerPrice();
@@ -1496,40 +1534,39 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	@Override
 	public String find(int transitDays) {
 	    //TODO: check somewhere before this if they can afford it
+        ArrayList<Part> newShoppingList = new ArrayList<Part>();
 		for(Part part : shoppingList) {
-			if(part instanceof Armor) {
-				//Taharqa: WE shouldn't be here anymore, given that I am no longer adding
-				//armor by location to the shopping list but instead changing it all via
-				//the newArmorSupplies object, but commented out for completeness
-				//oldUnit.campaign.addPart(part, transitDays);
-				//part.setUnit(oldUnit);
-				//part.setRefitId(oldUnit.getId());
-				//newUnitParts.add(part.getId());
-			}
+			if(part instanceof Armor || part instanceof ProtomekArmor || part instanceof BaArmor) {
+				oldUnit.campaign.addPart(part, transitDays);
+				part.setUnit(oldUnit);
+				part.setRefitId(oldUnit.getId());
+				newUnitParts.add(part.getId());
+			} 
 			else if(part instanceof AmmoBin) {
 				oldUnit.campaign.addPart(part, 0);
 				newUnitParts.add(part.getId());
-                part.setRefitId(oldUnit.getId());
 				AmmoBin bin = (AmmoBin)part;
+                part.setRefitId(oldUnit.getId());
+				part.setUnit(oldUnit);
 				bin.setShotsNeeded(bin.getFullShots());
-				bin.loadBin();
+				bin.loadBin(false);
 				if(bin.needsFixing()) {
 	                oldUnit.campaign.buyPart(bin.getNewPart(), 1.1, transitDays);
-					bin.loadBin();
+					bin.loadBin(false);
 				}
+				part.setUnit(null);
 			}
 			else if(part instanceof MissingPart) {
-				Part newPart = (Part)((IAcquisitionWork)part).getNewEquipment();
-				newPart.setRefitId(oldUnit.getId());
-				oldUnit.campaign.buyPart(newPart, 1.1, transitDays);
-				newUnitParts.add(newPart.getId());
+				oldUnit.campaign.buyPart((Part)((IAcquisitionWork)part).getNewEquipment(), 1.1, transitDays); 
+				newShoppingList.add((MissingPart)part);
 			}
 		}
+		shoppingList = newShoppingList;
 		if(null != newArmorSupplies) {
 		    int amount = armorNeeded - newArmorSupplies.getAmount();
 		    if(amount > 0) {
     		    Armor a = (Armor)newArmorSupplies.getNewPart();
-    		    a.setAmount(amount);
+    		    a.setAmount(amount);    		    
     			oldUnit.campaign.buyPart(a, 1.1, transitDays);
 		    }
 		}
@@ -1547,7 +1584,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 
 	@Override
 	public TargetRoll getAllAcquisitionMods() {
-        TargetRoll roll = new TargetRoll();
+        TargetRoll roll = new TargetRoll();   
 		int avail = EquipmentType.RATING_A;
 		int techBaseMod = 0;
 		for(Part part : shoppingList) {
@@ -1563,7 +1600,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	                techBaseMod = penalty;
 	            }
 	        }
-		    avail = Math.max(avail, part.getAvailability(campaign.getEra()));
+		    avail = Math.max(avail, part.getAvailability(campaign.getEra()));	        
 		}
 		if(techBaseMod > 0) {
             roll.addModifier(techBaseMod, "tech limit");
@@ -1572,15 +1609,15 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
         roll.addModifier(availabilityMod, "availability (" + EquipmentType.getRatingName(avail) + ")");
 		return roll;
 	}
-
+	
 	public Armor getNewArmorSupplies() {
 		return newArmorSupplies;
 	}
-
+	
 	public void setNewArmorSupplies(Armor a) {
 		newArmorSupplies = a;
 	}
-
+	
 	public int getNewArmorSuppliesId() {
 		return newArmorSuppliesId;
 	}
@@ -1588,7 +1625,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	@Override
 	public void resetOvertime() {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
@@ -1596,12 +1633,12 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	
 	@Override
 	public int getTechBase() {
 	    return Part.T_BOTH;
 	}
-
+	
 	public void fixIdReferences(Hashtable<Integer, UUID> uHash, Hashtable<Integer, UUID> pHash) {
 		assignedTechId = pHash.get(oldTechId);
 		if(null != newArmorSupplies) {
@@ -1613,11 +1650,17 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	}
 
 	@Override
+	public void resetRepairStatus() {
+		// do nothing
+		
+	}
+
+	@Override
 	public boolean isRightTechType(String skillType) {
 		// TODO Auto-generated method stub
 		return true;
 	}
-
+	
 	public void suggestNewName() {
 		if(newEntity instanceof Infantry && !(newEntity instanceof BattleArmor)) {
 			Infantry infantry = (Infantry)newEntity;
@@ -1661,7 +1704,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			//newEntity.setModel(oldUnit.getEntity().getModel() + " Mk II");
 		}
 	}
-
+	
 	private void assignArmActuators() {
 	    if(!(oldUnit.getEntity() instanceof BipedMech)) {
 	        return;
@@ -1707,7 +1750,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                     } else if(part instanceof MekActuator) {
                         missingHand2 = (MekActuator)part;
                     }
-                }
+                } 
 	        }
 	    }
 	    //ok now check all the conditions, assign right hand stuff first
@@ -1717,7 +1760,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	            part = missingHand2;
 	        }
 	        if(null != part) {
-	            part.setLocation(Mech.LOC_RARM);
+	            part.setLocation(Mech.LOC_RARM);	            
 	        }
 	    }
 	    if(null == leftHand && m.hasSystem(Mech.ACTUATOR_HAND, Mech.LOC_LARM)) {
@@ -1726,7 +1769,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                 part = missingHand2;
             }
             if(null != part) {
-                part.setLocation(Mech.LOC_LARM);
+                part.setLocation(Mech.LOC_LARM);                
             }
         }
 	    if(null == rightLowerArm && m.hasSystem(Mech.ACTUATOR_LOWER_ARM, Mech.LOC_RARM)) {
@@ -1735,7 +1778,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                 part = missingArm2;
             }
             if(null != part) {
-                part.setLocation(Mech.LOC_RARM);
+                part.setLocation(Mech.LOC_RARM);                
             }
         }
         if(null == leftLowerArm && m.hasSystem(Mech.ACTUATOR_LOWER_ARM, Mech.LOC_LARM)) {
@@ -1744,7 +1787,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
                 part = missingArm2;
             }
             if(null != part) {
-                part.setLocation(Mech.LOC_LARM);
+                part.setLocation(Mech.LOC_LARM);                
             }
         }
 	}
@@ -1781,7 +1824,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
     @Override
     protected void loadFieldsFromXmlNode(Node wn) {
         // TODO Auto-generated method stub
-
+        
     }
 
     @Override
@@ -1789,11 +1832,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
         // TODO Auto-generated method stub
         return null;
     }
-
+    
     public boolean isCustomJob() {
         return customJob;
     }
-
+    
     public boolean kitFound() {
         return kitFound;
     }
@@ -1808,20 +1851,4 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

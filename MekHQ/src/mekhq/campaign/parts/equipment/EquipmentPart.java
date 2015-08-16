@@ -1,20 +1,20 @@
 /*
  * EquipmentPart.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -22,10 +22,7 @@ package mekhq.campaign.parts.equipment;
 
 import java.io.PrintWriter;
 import java.util.GregorianCalendar;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
@@ -65,19 +62,19 @@ public class EquipmentPart extends Part {
     public EquipmentType getType() {
         return type;
     }
-
+    
     public int getEquipmentNum() {
     	return equipmentNum;
     }
-
+    
     public void setEquipmentNum(int n) {
     	this.equipmentNum = n;
     }
-
+    
     public EquipmentPart() {
     	this(0, null, -1, null);
     }
-
+    
     public EquipmentPart(int tonnage, EquipmentType et, int equipNum, Campaign c) {
         super(tonnage, c);
         this.type =et;
@@ -85,11 +82,7 @@ public class EquipmentPart extends Part {
         	this.name = type.getName();
         	this.typeName = type.getInternalName();
         }
-        if (equipNum != -1) {
-            this.equipmentNum = equipNum;
-        } else {
-            equipmentNum = -1;
-        }
+        this.equipmentNum = equipNum;
         if(null != type) {
 	        try {
 	        	equipTonnage = type.getTonnage(null);
@@ -98,7 +91,7 @@ public class EquipmentPart extends Part {
 	        }
         }
     }
-
+    
     @Override
     public void setUnit(Unit u) {
     	super.setUnit(u);
@@ -106,7 +99,7 @@ public class EquipmentPart extends Part {
     		equipTonnage = type.getTonnage(unit.getEntity());
     	}
     }
-
+    
     public void setEquipTonnage(double ton) {
     	equipTonnage = ton;
     }
@@ -119,12 +112,12 @@ public class EquipmentPart extends Part {
         }
     	return clone;
     }
-
+    
     @Override
     public double getTonnage() {
         return equipTonnage;
     }
-
+    
     /**
      * Restores the equipment from the name
      */
@@ -150,34 +143,22 @@ public class EquipmentPart extends Part {
 
     @Override
     public boolean isSamePartType(Part part) {
-    	//According to official answer, if sticker prices are different then 
-    	//they are not acceptable substitutes, so we need to check for that as
-    	//well
-    	//http://bg.battletech.com/forums/strategic-operations/(answered)-can-a-lance-for-a-35-ton-mech-be-used-on-a-40-ton-mech-and-so-on/
         return part instanceof EquipmentPart
         		&& getType().equals(((EquipmentPart)part).getType())
-        		&& getTonnage() == part.getTonnage()
-        		&& getStickerPrice() == part.getStickerPrice();
+        		&& getTonnage() == part.getTonnage();
     }
 
     @Override
     public int getTechLevel() {
-        int techLevel = getType().getTechLevel(campaign.getCalendar().get(GregorianCalendar.YEAR));
-        if(techLevel == TechConstants.T_TECH_UNKNOWN && !getType().getTechLevels().isEmpty()) {
-        	//If this is tech unknown we are probably using a part before its date of introduction
-        	//in this case, try to give it the date of the earliest entry if it exists
-        	SortedSet<Integer> keys = new TreeSet<Integer>(getType().getTechLevels().keySet());
-        	techLevel = getType().getTechLevels().get(keys.first());
-        }
-        if ((techLevel != TechConstants.T_ALLOWED_ALL && techLevel < 0) || techLevel >= TechConstants.T_ALL)
-            return TechConstants.T_TECH_UNKNOWN;
+        if (getType().getTechLevel(campaign.getCalendar().get(GregorianCalendar.YEAR)) < 0 || getType().getTechLevel(campaign.getCalendar().get(GregorianCalendar.YEAR)) >= TechConstants.SIZE)
+            return TechConstants.T_INTRO_BOXSET;
         else
-            return techLevel;
+            return getType().getTechLevel(campaign.getCalendar().get(GregorianCalendar.YEAR));
     }
 
 	@Override
 	public void writeToXml(PrintWriter pw1, int indent) {
-		writeToXmlBegin(pw1, indent);
+		writeToXmlBegin(pw1, indent);		
 		pw1.println(MekHqXmlUtil.indentStr(indent+1)
 				+"<equipmentNum>"
 				+equipmentNum
@@ -196,7 +177,7 @@ public class EquipmentPart extends Part {
 	@Override
 	protected void loadFieldsFromXmlNode(Node wn) {
 		NodeList nl = wn.getChildNodes();
-
+		
 		for (int x=0; x<nl.getLength(); x++) {
 			Node wn2 = nl.item(x);
 			if (wn2.getNodeName().equalsIgnoreCase("equipmentNum")) {
@@ -213,24 +194,9 @@ public class EquipmentPart extends Part {
 	}
 
 	@Override
-	public int getAvailability(int era) {
+	public int getAvailability(int era) {		
 		return type.getAvailability(Era.convertEra(era));
 	}
-	
-	@Override
-    public int getIntroDate() {
-    	return getType().getIntroductionDate();
-    }
-    
-    @Override
-    public int getExtinctDate() {
-    	return getType().getExtinctionDate();
-    }
-    
-    @Override
-    public int getReIntroDate() {
-    	return getType().getReintruductionDate();
-    }
 
 	@Override
 	public int getTechRating() {
@@ -264,7 +230,7 @@ public class EquipmentPart extends Part {
 				mounted.setHit(true);
 		        mounted.setDestroyed(true);
 		        mounted.setRepairable(false);
-		        unit.destroySystem(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, mounted.getLocation());
+		        unit.destroySystem(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, mounted.getLocation());	
 			}
 			Part spare = campaign.checkForExistingSparePart(this);
 			if(!salvage) {
@@ -282,18 +248,18 @@ public class EquipmentPart extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 		equipmentNum = -1;
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			Mounted mounted = unit.getEntity().getEquipment(equipmentNum);
 			if(null != mounted) {
-				if(mounted.isMissing()) {
+				if(!mounted.isRepairable()) {
 					remove(false);
 					return;
 				}
@@ -302,54 +268,34 @@ public class EquipmentPart extends Part {
 				hits += unit.getEntity().getDamagedCriticals(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, mounted.getSecondLocation());
 				}
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 120;
-		}
-		if(hits == 1) {
-			return 100;
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} else if(hits == 1) {
+			time = 100;
+			difficulty = -3;
 		} else if(hits == 2) {
-			return 150;
+			time = 150;
+			difficulty = -2;
 		} else if(hits == 3) {
-			return 200;
+			time = 200;
+			difficulty = 0;
 		} else if(hits > 3) {
-			return 250;
+			time = 250;
+			difficulty = 2;
 		}
-		return 0;
-	}
-	
-	@Override
-	public int getDifficulty() {
 		if(isSalvaging()) {
-			return 0;
+			this.time = 120;
+			this.difficulty = 0;
 		}
-		if(hits == 1) {
-			return -3;
-		} else if(hits == 2) {
-			return -2;
-		} else if(hits == 3) {
-			return 0;
-		} else if(hits > 3) {
-			return 2;
-		}
-		return 0;
 	}
 
 	@Override
 	public boolean needsFixing() {
 		return hits > 0;
 	}
-
+	
 
     @Override
     public String getDetails() {
@@ -361,7 +307,7 @@ public class EquipmentPart extends Part {
     	}
     	return super.getDetails();
     }
-
+    
     public int getLocation() {
     	if(null != unit) {
     		Mounted mounted = unit.getEntity().getEquipment(equipmentNum);
@@ -371,7 +317,7 @@ public class EquipmentPart extends Part {
     	}
     	return -1;
     }
-
+    
     public boolean isRearFacing() {
     	if(null != unit) {
     		Mounted mounted = unit.getEntity().getEquipment(equipmentNum);
@@ -392,7 +338,7 @@ public class EquipmentPart extends Part {
 					mounted.setDestroyed(true);
 					mounted.setHit(true);
 					mounted.setRepairable(true);
-			        unit.damageSystem(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, hits);
+			        unit.damageSystem(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, hits);	
 				} else {
 					mounted.setHit(false);
 			        mounted.setDestroyed(false);
@@ -402,7 +348,7 @@ public class EquipmentPart extends Part {
 			}
 		}
 	}
-
+	
 	@Override
     public String checkFixable() {
 		if(isSalvaging()) {
@@ -433,7 +379,7 @@ public class EquipmentPart extends Part {
         }
         return null;
     }
-
+	
 	@Override
 	public boolean isMountedOnDestroyedLocation() {
 		// This should do the exact same as the big loop commented out below - Dylan
@@ -449,7 +395,7 @@ public class EquipmentPart extends Part {
 		for(int loc = 0; loc < unit.getEntity().locations(); loc++) {
             for (int i = 0; i < unit.getEntity().getNumberOfCriticals(loc); i++) {
                 CriticalSlot slot = unit.getEntity().getCritical(loc, i);
-
+                
                 // ignore empty & system slots
                 if ((slot == null) || (slot.getType() != CriticalSlot.TYPE_EQUIPMENT)) {
                     continue;
@@ -462,19 +408,19 @@ public class EquipmentPart extends Part {
                 }
                 if (slot.getIndex() == equipmentNum || (equip.equals(m1) || equip.equals(m2))) {
                     return unit.isLocationDestroyed(loc);
-                }
+                }             
             }
-        }
+        }     
 		return false;*/
 	}
-
+	
 	@Override
 	public boolean onBadHipOrShoulder() {
 		if(null != unit) {
 			for(int loc = 0; loc < unit.getEntity().locations(); loc++) {
 	            for (int i = 0; i < unit.getEntity().getNumberOfCriticals(loc); i++) {
 	                CriticalSlot slot = unit.getEntity().getCritical(loc, i);
-
+	                
 	                // ignore empty & system slots
 	                if ((slot == null) || (slot.getType() != CriticalSlot.TYPE_EQUIPMENT)) {
 	                    continue;
@@ -491,7 +437,7 @@ public class EquipmentPart extends Part {
 	                    }
 	                }
 	            }
-	        }
+	        }    
 		}
 		return false;
 	}
@@ -503,18 +449,18 @@ public class EquipmentPart extends Part {
     @Override
     public long getStickerPrice() {
     	//OK, we cant use the resolveVariableCost methods from megamek, because they
-    	//rely on entity which may be null if this is a spare part. So we use our
+    	//rely on entity which may be null if this is a spare part. So we use our 
     	//own resolveVariableCost method
     	//TODO: we need a static method that returns whether this equipment type depends upon
     	// - unit tonnage
     	// - item tonnage
     	// - engine
-    	// use that to determine how to add things to the parts store and to
+    	// use that to determine how to add things to the parts store and to 
     	// determine whether what can be used as a replacement
     	//why does all the proto ammo have no cost?
     	Entity en = null;
     	boolean isArmored = false;
-        double itemCost = type.getRawCost();
+        double itemCost = type.getRawCost();   
         if (itemCost == EquipmentType.COST_VARIABLE) {
             itemCost = resolveVariableCost(isArmored);
         }
@@ -533,7 +479,7 @@ public class EquipmentPart extends Part {
         }
         return finalCost;
     }
-
+    
     private int resolveVariableCost(boolean isArmored) {
     	double varCost = 0;
     	Entity en = null;
@@ -604,9 +550,9 @@ public class EquipmentPart extends Part {
         }
         return (int) Math.ceil(varCost);
     }
-
+    
     /*
-     * The following static functions help the parts store determine how to handle
+     * The following static functions help the parts store determine how to handle 
      * variable weight equipment. If the type returns true to hasVariableTonnage
      * then the parts store will use a for loop to create equipment of the given tonnage
      * using the other helper functions. Note that this should not be used for supclassed
@@ -615,13 +561,13 @@ public class EquipmentPart extends Part {
     public static boolean hasVariableTonnage(EquipmentType type) {
     	return (type instanceof MiscType && (type.hasFlag(MiscType.F_TARGCOMP) ||
     			type.hasFlag(MiscType.F_CLUB) ||
-    			type.hasFlag(MiscType.F_TALON)));
+    			type.hasFlag(MiscType.F_TALON)));    			
     }
-
+    
     public static double getStartingTonnage(EquipmentType type) {
     	return 1;
     }
-
+    
     public static double getMaxTonnage(EquipmentType type) {
     	if (type.hasFlag(MiscType.F_TALON)|| (type.hasFlag(MiscType.F_CLUB) && (type.hasSubType(MiscType.S_HATCHET) || type.hasSubType(MiscType.S_MACE_THB)))) {
             return 7;
@@ -637,19 +583,19 @@ public class EquipmentPart extends Part {
         }
     	return 1;
     }
-
+    
     public static double getTonnageIncrement(EquipmentType type) {
     	if((type.hasFlag(MiscType.F_CLUB) && type.hasSubType(MiscType.S_RETRACTABLE_BLADE))) {
     		return 0.5;
     	}
     	return 1;
     }
-
+    
     @Override
     public boolean isPartForEquipmentNum(int index, int loc) {
     	return equipmentNum == index;
     }
-
+    
     @Override
     public boolean isOmniPoddable() {
     	//TODO: is this on equipment type?

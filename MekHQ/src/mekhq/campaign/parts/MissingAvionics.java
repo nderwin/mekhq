@@ -45,18 +45,10 @@ public class MissingAvionics extends MissingPart {
     
     public MissingAvionics(int tonnage, Campaign c) {
     	super(0, c);
+    	this.time = 4800;
+    	this.difficulty = 1;
     	this.name = "Avionics";
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 4800;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 1;
-	}
     
 	@Override
 	public String checkFixable() {
@@ -118,20 +110,4 @@ public class MissingAvionics extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

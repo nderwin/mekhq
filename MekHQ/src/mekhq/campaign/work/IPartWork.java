@@ -43,6 +43,7 @@ public interface IPartWork extends IWork {
 	public void addTimeSpent(int time);
 	public void resetTimeSpent();
 	public void resetOvertime();
+	public void resetRepairStatus();
 	public boolean isRightTechType(String skillType);
 	
 	public TargetRoll getAllModsForMaintenance();
@@ -54,7 +55,7 @@ public interface IPartWork extends IWork {
 	public int getShorthandedMod();
 	public void setShorthandedMod(int i);
 	
-	public void updateConditionFromEntity(boolean checkForDestruction);
+	public void updateConditionFromEntity();
 	public void updateConditionFromPart();
 	public void fix();
 	public void remove(boolean salvage);
@@ -69,6 +70,4 @@ public interface IPartWork extends IWork {
 	
 	public String checkFixable();
 	
-	public void reservePart();
-	public void cancelReservation();
 }

@@ -142,9 +142,7 @@ public class SelectUnusedAbilityDialog extends JDialog {
     		SpecialAbility spa = new SpecialAbility(name, displayName, desc);
         	EditSpecialAbilityDialog esad = new EditSpecialAbilityDialog(null, spa, currentSPA);
         	esad.setVisible(true);
-        	if(!esad.wasCancelled()) {
-        		currentSPA.put(spa.getName(), spa);
-        	}
+        	currentSPA.put(spa.getName(), spa);
     	}
     	this.setVisible(false);
     }

@@ -34,11 +34,14 @@ Hover
 
 <transporters>
 insulatedcargobay:3.48:1:1
+</transporters>
+
+<transporters>
 insulatedcargobay:1.74:1:1
 </transporters>
 
 <cruiseMP>
-8
+7
 </cruiseMP>
 
 <engine_type>
@@ -76,7 +79,7 @@ Vehicle Flamer
 </Turret Equipment>
 
 <source>
-RS 3039 Unabriged
+Star League
 </source>
 
 <tonnage>

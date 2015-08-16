@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Calendar;
 import java.util.UUID;
 
 import megamek.common.EquipmentType;
@@ -86,8 +85,8 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
 	}
 	
 	public String getDesc() {
-		String bonus = getAllMods(null).getValueAsString();
-		if (getAllMods(null).getValue() > -1) {
+		String bonus = getAllMods().getValueAsString();
+		if (getAllMods().getValue() > -1) {
 			bonus = "+" + bonus;
 		}
 		bonus = "(" + bonus + ")";
@@ -163,7 +162,7 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
 		}
 		// don't just return with the first part if it is damaged
 		for(Part part : campaign.getSpareParts()) {
-			if(part.isReservedForRefit() || part.isBeingWorkedOn() || part.isReservedForReplacement() || !part.isPresent() || part.hasParentPart()) {
+			if(part.isReservedForRefit() || part.isBeingWorkedOn() || part.isReservedForReplacement() || !part.isPresent()) {
 				continue;
 			}
 			
@@ -196,7 +195,7 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
 	public boolean needsFixing() {
 		//missing parts always need fixing
 		if(null != unit) {
-			return (!unit.isSalvage() || null != getAssignedTeamId()) && unit.isRepairable();
+			return !unit.isSalvage() && unit.isRepairable();
 		}
 		return false;
 	}
@@ -208,7 +207,7 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
 	}
 	
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		//do nothing
 	}
 	
@@ -246,9 +245,6 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
         }
         //availability mod
         int avail = getAvailability(campaign.getEra());
-        if(this.isExtinctIn(campaign.getCalendar().get(Calendar.YEAR))) {
-        	avail = EquipmentType.RATING_X;
-        }
         int availabilityMod = Availability.getAvailabilityModifier(avail);
         target.addModifier(availabilityMod, "availability (" + EquipmentType.getRatingName(avail) + ")");
         
@@ -348,42 +344,44 @@ public abstract class MissingPart extends Part implements Serializable, MekHqXml
 	}
 	
 	@Override
-	public void reservePart() {
-		//this is being set as an overnight repair, so
-		//we also need to reserve the replacement. If the 
-		//quantity of the replacement is more than one, we will 
-		//also need to split off a separate one
-		//shouldn't be null, but it never hurts to check
+	public void setTeamId(UUID i) {
+		super.setTeamId(i);
 		Part replacement = findReplacement(false);
-		UUID teamId = getAssignedTeamId();
-		if(null != replacement && null != teamId) {
-			if(replacement.getQuantity() > 1) {
-				Part actualReplacement = replacement.clone();
-				actualReplacement.setReserveId(teamId);
-				campaign.addPart(actualReplacement, 0);
-				replacementId = actualReplacement.getId();
-				replacement.decrementQuantity();
-			} else {
-				replacement.setReserveId(teamId);
-				replacementId = replacement.getId();
+		if(null != i) {
+			//this is being set as an overnight repair, so
+			//we also need to reserve the replacement. If the 
+			//quantity of the replacement is more than one, we will 
+			//also need to split off a separate one
+			//shouldn't be null, but it never hurts to check
+			if(null != replacement) {
+				if(replacement.getQuantity() > 1) {
+					Part actualReplacement = replacement.clone();
+					actualReplacement.setReserveId(i);
+					campaign.addPart(actualReplacement, 0);
+					replacementId = actualReplacement.getId();
+					replacement.decrementQuantity();
+				} else {
+					replacement.setReserveId(i);
+					replacementId = replacement.getId();
+				}
 			}
-		}
-	}
-	
-	@Override
-	public void cancelReservation() {
-		Part replacement = findReplacement(false);
-		if(replacementId > -1 && null != replacement) {
-			replacementId = -1;
-			replacement.setReserveId(null);
-			if(replacement.isSpare()) {
-				Part spare = campaign.checkForExistingSparePart(replacement);
-				if(null != spare) {
-					spare.incrementQuantity();
-					campaign.removePart(replacement);
+		} else {
+			//the replacement either succeeded or failed. Either way, we need
+			//to be sure to clear out the reservation status of the replacement
+			//part
+			if(replacementId > -1 && null != replacement) {
+				replacementId = -1;
+				replacement.setReserveId(null);
+				if(replacement.isSpare()) {
+					Part spare = campaign.checkForExistingSparePart(replacement);
+					if(null != spare) {
+						spare.incrementQuantity();
+						campaign.removePart(replacement);
+					}
 				}
 			}
 		}
+		
 	}
 	
 	@Override

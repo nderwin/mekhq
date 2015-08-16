@@ -172,31 +172,6 @@ public class RandomFactionGenerator implements Serializable {
 		}
 	}
 	
-	public void dispose() {
-		if (initialized){
-			clear();
-		}
-	}
-
-	public void clear() {
-		rfg = null;
-		currentFactions.clear();
-		employers.clear();
-		borders.clear();
-		deepPeriphery.clear();
-		neutralFactions.clear();
-		majorPowers.clear();		
-		wars.clear();
-		alliances.clear();
-		rivals.clear();
-		neutralExceptions.clear();
-		containedFactions.clear();
-		
-		initialized = false;
-		initializing = false;
-	}	
-
-	
 	private void loadFactionHints() throws DOMException, ParseException {
 		MekHQ.logMessage("Starting load of faction hint data from XML...");
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -229,27 +204,15 @@ public class RandomFactionGenerator implements Serializable {
 				
 				if (nodeName.equalsIgnoreCase("neutral")) {
 					String f = wn.getAttributes().getNamedItem("faction").getTextContent().trim();
-					if (Faction.getFaction(f) != null) {
-						neutralFactions.add(f);
-						addNeutralExceptions(f, wn);
-					} else {
-						MekHQ.logError("Invalid faction code in factionhints.xml: " + f);
-					}
+					neutralFactions.add(f);
+					addNeutralExceptions(f, wn);
 				} else if (nodeName.equalsIgnoreCase("deepPeriphery")) {
 					for (String f : wn.getTextContent().trim().split(",")) {
-						if (Faction.getFaction(f) != null) {
-							deepPeriphery.add(f);
-						} else {
-							MekHQ.logError("Invalid faction code in factionhints.xml: " + f);
-						}
+						deepPeriphery.add(f);
 					}
 				} else if (nodeName.equalsIgnoreCase("majorPowers")) {
 					for (String f : wn.getTextContent().trim().split(",")) {
-						if (Faction.getFaction(f) != null) {
-							majorPowers.add(f);
-						} else {
-							MekHQ.logError("Invalid faction code in factionhints.xml: " + f);
-						}
+						majorPowers.add(f);
 					}
 				} else if (nodeName.equalsIgnoreCase("rivals")) {
 					setFactionHint(rivals, wn);
@@ -281,23 +244,17 @@ public class RandomFactionGenerator implements Serializable {
 						} else if (wn2.getNodeName().equalsIgnoreCase("opponents")) {
 							opponents = new ArrayList<String>();
 							for (String faction : wn2.getTextContent().trim().split(",")) {
-								if (Faction.getFaction(faction) != null) {
-									opponents.add(faction);
-								}
+								opponents.add(faction);
 							}
 						}
 					}
-					if (Faction.getFaction(outer) != null && Faction.getFaction(inner) != null) {
-						if (containedFactions.get(outer) == null) {
-							containedFactions.put(outer, new HashMap<String, ArrayList<AltLocation>>());
-						}
-						if (containedFactions.get(outer).get(inner) == null) {
-							containedFactions.get(outer).put(inner, new ArrayList<AltLocation>());
-						}
-						containedFactions.get(outer).get(inner).add(new AltLocation(start, end, fraction, opponents));
-					} else {
-						MekHQ.logError("Invalid faction code in factionhints.xml: " + outer + "/" + inner);
+					if (containedFactions.get(outer) == null) {
+						containedFactions.put(outer, new HashMap<String, ArrayList<AltLocation>>());
 					}
+					if (containedFactions.get(outer).get(inner) == null) {
+						containedFactions.get(outer).put(inner, new ArrayList<AltLocation>());
+					}
+					containedFactions.get(outer).get(inner).add(new AltLocation(start, end, fraction, opponents));
 				}
 			}
 		}
@@ -336,15 +293,7 @@ public class RandomFactionGenerator implements Serializable {
 				String[] parties = wn.getTextContent().trim().split(",");
 				
 				for (int i = 0; i < parties.length - 1; i++) {
-					if (Faction.getFaction(parties[i]) == null) {
-						MekHQ.logError("Invalid faction code in factionhints.xml: " + parties[i]);
-						continue;
-					}
 					for (int j = i + 1; j < parties.length; j++) {
-						if (Faction.getFaction(parties[j]) == null) {
-							MekHQ.logError("Invalid faction code in factionhints.xml: " + parties[j]);
-							continue;
-						}
 						if (hint.get(parties[i]) == null) {
 							hint.put(parties[i], new HashMap<String, ArrayList<FactionHint>>());
 						}
@@ -383,10 +332,6 @@ public class RandomFactionGenerator implements Serializable {
 				String[] parties = wn.getTextContent().trim().split(",");
 				
 				for (int i = 0; i < parties.length; i++) {
-					if (Faction.getFaction(parties[i]) == null) {
-						MekHQ.logError("Invalid faction code in factionhints.xml: " + parties[i]);
-						continue;
-					}
 					if (neutralExceptions.get(faction) == null) {
 						neutralExceptions.put(faction, new HashMap<String, ArrayList<FactionHint>>());
 					}

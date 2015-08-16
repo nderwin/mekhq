@@ -148,25 +148,23 @@ public class UnitMarket implements Serializable {
 						UnitTableData.QUALITY_D, 7);
 			}
 
-			if (!campaign.getFaction().isClan()) {
-				addOffers(campaign, Compute.d6(3) - 9,
-						MARKET_MERCENARY,
-						UnitTableData.UNIT_MECH, "MERC",
-						UnitTableData.QUALITY_C, 5);
-				addOffers(campaign, Compute.d6(3) - 6,
-						MARKET_MERCENARY,
-						UnitTableData.UNIT_VEHICLE, "MERC",
-						UnitTableData.QUALITY_C, 5);
-				addOffers(campaign, Compute.d6(3) - 9,
-						MARKET_MERCENARY,
-						UnitTableData.UNIT_AERO, "MERC",
-						UnitTableData.QUALITY_C, 5);
-			}
+			addOffers(campaign, Compute.d6(3) - 9,
+					MARKET_MERCENARY,
+					UnitTableData.UNIT_MECH, "MERC",
+					UnitTableData.QUALITY_C, 5);
+			addOffers(campaign, Compute.d6(3) - 6,
+					MARKET_MERCENARY,
+					UnitTableData.UNIT_VEHICLE, "MERC",
+					UnitTableData.QUALITY_C, 5);
+			addOffers(campaign, Compute.d6(3) - 9,
+					MARKET_MERCENARY,
+					UnitTableData.UNIT_AERO, "MERC",
+					UnitTableData.QUALITY_C, 5);
 
 			if (campaign.getUnitRatingMod() >= IUnitRating.DRAGOON_B) {
 				ArrayList<Faction> factions = campaign.getCurrentPlanet().getCurrentFactions(campaign.getDate());
 				String faction = factions.get(Compute.randomInt(factions.size())).getShortName();
-				if (campaign.getFaction().isClan() ||
+				if (Faction.getFaction(campaign.getFactionCode()).isClan() ||
 						!Faction.getFaction(faction).isClan()) {
 					addOffers(campaign, Compute.d6() - 3,
 							MARKET_FACTORY,
@@ -183,20 +181,18 @@ public class UnitMarket implements Serializable {
 				}
 			}
 
-			if (!campaign.getFaction().isClan()) {
-				addOffers(campaign, Compute.d6(2) - 6,
-						MARKET_BLACK,
-						UnitTableData.UNIT_MECH, null,
-						UnitTableData.QUALITY_C, 6);
-				addOffers(campaign, Compute.d6(2) - 4,
-						MARKET_BLACK,
-						UnitTableData.UNIT_VEHICLE, null,
-						UnitTableData.QUALITY_C, 6);
-				addOffers(campaign, Compute.d6(2) - 6,
-						MARKET_BLACK,
-						UnitTableData.UNIT_AERO, null,
-						UnitTableData.QUALITY_C, 6);
-			}
+			addOffers(campaign, Compute.d6(2) - 6,
+					MARKET_BLACK,
+					UnitTableData.UNIT_MECH, null,
+					UnitTableData.QUALITY_C, 6);
+			addOffers(campaign, Compute.d6(2) - 4,
+					MARKET_BLACK,
+					UnitTableData.UNIT_VEHICLE, null,
+					UnitTableData.QUALITY_C, 6);
+			addOffers(campaign, Compute.d6(2) - 6,
+					MARKET_BLACK,
+					UnitTableData.UNIT_AERO, null,
+					UnitTableData.QUALITY_C, 6);
 
 			if (campaign.getCampaignOptions().getUnitMarketReportRefresh()) {
 				campaign.addReport("<a href='UNIT_MARKET'>Unit market updated</a>");
@@ -209,10 +205,6 @@ public class UnitMarket implements Serializable {
 		if (faction == null) {
 			faction = RandomFactionGenerator.getInstance().getEmployer();
 		}
-		if (faction == null) {
-			faction = campaign.getFactionCode();
-			market = MARKET_EMPLOYER;
-		}
 		FactionTables ft = UnitTableData.getInstance().getBestRAT(campaign.getCampaignOptions().getRATs(),
 				campaign.getCalendar().get(Calendar.YEAR),
 				faction, unitType);
@@ -224,25 +216,17 @@ public class UnitMarket implements Serializable {
 			int weight = getRandomWeight(unitType, faction,
 					campaign.getCampaignOptions().getRegionalMechVariations());
 			String rat = ft.getTable(unitType, weight, quality);
-			if (rat == null) {
-				continue;
-			}
 			MechSummary ms = null;
-			RandomUnitGenerator.getInstance().setChosenRAT(rat);
-			ArrayList<MechSummary> msl = RandomUnitGenerator.getInstance().generate(1);
-			if (msl.size() > 0) {
-				ms = msl.get(0);
-				if (campaign.getCampaignOptions().limitByYear() &&
-						campaign.getCalendar().get(Calendar.YEAR) < ms.getYear()) {
-					continue;
-				}
-				if ((campaign.getCampaignOptions().allowClanPurchases() && ms.isClan())
-						|| (campaign.getCampaignOptions().allowISPurchases() && !ms.isClan())) {
-					int pct = 100 - (Compute.d6(2) - priceTarget) * 5;
-					offers.add(new MarketOffer(market, unitType, weight,
-							ms, pct));
+			if (null != rat) {
+				RandomUnitGenerator.getInstance().setChosenRAT(rat);
+				ArrayList<MechSummary> msl = RandomUnitGenerator.getInstance().generate(1);
+				if (msl.size() > 0) {
+					ms = msl.get(0);
 				}
 			}
+			int pct = 100 - (Compute.d6(2) - priceTarget) * 5;
+			offers.add(new MarketOffer(market, unitType, weight,
+					ms, pct));
 		}
 	}
 

@@ -25,7 +25,6 @@ import java.io.PrintWriter;
 
 import megamek.common.Entity;
 import megamek.common.EntityMovementMode;
-import megamek.common.EquipmentType;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
 
@@ -84,20 +83,10 @@ public class InfantryMotiveType extends Part {
 	}
 	
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		//nothing to do here
 	}
 
-	@Override 
-	public int getBaseTime() {
-		return 0;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
-	
 	@Override
 	public void updateConditionFromPart() {
 		//nothing to do here
@@ -119,6 +108,7 @@ public class InfantryMotiveType extends Part {
 			}
 			unit.removePart(this);
 		}	
+		setSalvaging(false);
 		setUnit(null);
 	}
 
@@ -237,20 +227,5 @@ public class InfantryMotiveType extends Part {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 }

@@ -23,7 +23,6 @@ package mekhq.campaign.unit;
 
 
 import java.io.PrintWriter;
-import java.util.Calendar;
 import java.util.UUID;
 
 import megamek.common.Aero;
@@ -48,7 +47,6 @@ import mekhq.MekHqXmlUtil;
 import mekhq.Version;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.parts.Availability;
-import mekhq.campaign.personnel.Person;
 import mekhq.campaign.work.IAcquisitionWork;
 
 import org.w3c.dom.Node;
@@ -88,7 +86,7 @@ public class UnitOrder extends Unit implements IAcquisitionWork, MekHqXmlSeriali
     }
 
     @Override
-    public TargetRoll getAllMods(Person admin) {
+    public TargetRoll getAllMods() {
         // TODO Auto-generated method stub
         return null;
     }
@@ -281,9 +279,6 @@ public class UnitOrder extends Unit implements IAcquisitionWork, MekHqXmlSeriali
         }
         //parts need to be initialized for this to work
         int avail = getAvailability(campaign.getEra());
-        if(this.isExtinctIn(campaign.getCalendar().get(Calendar.YEAR))) {
-        	avail = EquipmentType.RATING_X;
-        }
         int availabilityMod = Availability.getAvailabilityModifier(avail);
         target.addModifier(availabilityMod, "availability (" + EquipmentType.getRatingName(avail) + ")");      
         return target;

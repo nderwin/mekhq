@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.EquipmentType;
 import megamek.common.Tank;
 import megamek.common.TechConstants;
@@ -99,7 +98,7 @@ public class VeeStabiliser extends Part {
 
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -131,39 +130,31 @@ public class VeeStabiliser extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Tank) {
-			int priorHits = hits;
 			if(((Tank)unit.getEntity()).isStabiliserHit(loc)) {
 				hits = 1;
 			} else {
 				hits = 0;
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
+		if(hits > 0) {
+			time = 60;
+			difficulty = 1;
+		} else {
+			time = 0;
+			difficulty = 0;
+		}
 		if(isSalvaging()) {
-			return 0;
+			time = 60;
+			difficulty = 0;
 		}
-		return 1;
 	}
 
 	@Override
@@ -228,20 +219,4 @@ public class VeeStabiliser extends Part {
 	public String getLocationName() {
 		return unit.getEntity().getLocationName(loc);
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

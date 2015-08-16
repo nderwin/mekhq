@@ -1,20 +1,20 @@
 /*
  * EnginePart.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -42,7 +42,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- *
+ * 
  * @author Jay Lawson <jaylawson39 at yahoo.com>
  */
 public class EnginePart extends Part {
@@ -60,7 +60,7 @@ public class EnginePart extends Part {
 		this.forHover = hover;
 		this.name = engine.getEngineName() + " Engine";
 	}
-
+	
 	public EnginePart clone() {
 		EnginePart clone = new EnginePart(getUnitTonnage(), new Engine(engine.getRating(), engine.getEngineType(), engine.getFlags()), campaign, forHover);
         clone.copyBaseData(this);
@@ -70,7 +70,7 @@ public class EnginePart extends Part {
 	public Engine getEngine() {
 		return engine;
 	}
-
+	
 	@Override
 	public double getTonnage() {
 		float weight = Engine.ENGINE_RATINGS[(int) Math.ceil(engine.getRating() / 5.0)];
@@ -114,12 +114,12 @@ public class EnginePart extends Part {
         }
         return toReturn;
 	}
-
-	@Override
+	
+	@Override 
 	public long getStickerPrice() {
 		return (long)Math.round((getEngine().getBaseCost()/75.0) * getEngine().getRating() * getUnitTonnage());
 	}
-
+	
 	public void fixTankFlag(boolean hover) {
 		int flags = engine.getFlags();
 		if(!engine.hasFlag(Engine.TANK_ENGINE)) {
@@ -129,7 +129,7 @@ public class EnginePart extends Part {
 		this.name = engine.getEngineName() + " Engine";
 		this.forHover = hover;
 	}
-
+	
 	public void fixClanFlag() {
 		int flags = engine.getFlags();
 		if(!engine.hasFlag(Engine.CLAN_ENGINE)) {
@@ -153,12 +153,12 @@ public class EnginePart extends Part {
 				&& getUnitTonnage() == ((EnginePart) part).getUnitTonnage()
 				&& getTonnage() == ((EnginePart)part).getTonnage();
 	}
-
+	
 	@Override
 	public int getTechLevel() {
 		if (getEngine().getTechType() < 0
 				|| getEngine().getTechType() >= TechConstants.SIZE)
-			return TechConstants.T_TECH_UNKNOWN;
+			return TechConstants.T_IS_TW_NON_BOX;
 		else
 			return getEngine().getTechType();
 	}
@@ -190,10 +190,10 @@ public class EnginePart extends Part {
 		int engineType = -1;
 		int engineRating = -1;
 		int engineFlags = 0;
-
+		
 		for (int x=0; x<nl.getLength(); x++) {
 			Node wn2 = nl.item(x);
-
+			
 			if (wn2.getNodeName().equalsIgnoreCase("engineType")) {
 				engineType = Integer.parseInt(wn2.getTextContent());
 			} else if (wn2.getNodeName().equalsIgnoreCase("engineRating")) {
@@ -206,15 +206,14 @@ public class EnginePart extends Part {
 				} else {
 					forHover = false;
 				}
-			}
+			} 
 		}
-
+		
 		engine = new Engine(engineRating, engineType, engineFlags);
 	}
 
 	@Override
 	public int getAvailability(int era) {
-		//TODO: this needs to be updated once we get DA era in
 		switch(engine.getTechType()) {
 		case Engine.COMBUSTION_ENGINE:
 			if(era == EquipmentType.ERA_SL) {
@@ -279,30 +278,19 @@ public class EnginePart extends Part {
 	@Override
 	public int getTechRating() {
 		switch(engine.getTechType()) {
-		case Engine.XL_ENGINE:
-			if(engine.hasFlag(Engine.CLAN_ENGINE)) {
-				return EquipmentType.RATING_F;
-			}
+		case Engine.COMBUSTION_ENGINE:
+			return EquipmentType.RATING_C;
+		case Engine.FUEL_CELL:
+		case Engine.FISSION:
+			return EquipmentType.RATING_D;
+		case Engine.XL_ENGINE:	
 		case Engine.LIGHT_ENGINE:
 		case Engine.COMPACT_ENGINE:
 			return EquipmentType.RATING_E;
 		case Engine.XXL_ENGINE:
 			return EquipmentType.RATING_F;
-		case Engine.FUEL_CELL:
-		case Engine.FISSION:
-			if(engine.hasFlag(Engine.SUPPORT_VEE_ENGINE)) {
-				return EquipmentType.RATING_C;
-			}
-		case Engine.NORMAL_ENGINE:
-			return EquipmentType.RATING_D;
-		case Engine.STEAM:
-			return EquipmentType.RATING_A;
-		case Engine.COMBUSTION_ENGINE:
-			if(engine.hasFlag(Engine.SUPPORT_VEE_ENGINE)) {
-				return EquipmentType.RATING_B;
-			}
 		default:
-			return EquipmentType.RATING_C;
+			return EquipmentType.RATING_D;
 		}
 	}
 
@@ -357,11 +345,13 @@ public class EnginePart extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
 			int engineHits = 0;
 			int engineCrits = 0;
@@ -388,60 +378,40 @@ public class EnginePart extends Part {
 			    engineCrits = 1;
 			    if(unit.getEntity().getInternal(Protomech.LOC_TORSO) == IArmorState.ARMOR_DESTROYED) {
 			        engineHits = 1;
-			    } else {
-			    	engineHits = ((Protomech)unit.getEntity()).getEngineHits();
-			    }
+			    } 
 			}
 			if(engineHits >= engineCrits) {
 				remove(false);
 				return;
-			}
+			} 
 			else if(engineHits > 0) {
 				hits = engineHits;
 			} else {
 				hits = 0;
 			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		this.time = 0;
+		this.difficulty = 0;
+		if (hits == 1) {
+			this.time = 100;
+			this.difficulty = -1;
+		} else if (hits == 2) {
+			this.time = 200;
+			this.difficulty = 0;
+		} else if (hits > 2) {
+			this.time = 300;
+			this.difficulty = 2;
+		}
 		//TODO: keep an aero flag here, so we dont need the unit
 		if(null != unit && unit.getEntity() instanceof Aero && hits > 0) {
-			return 300;
+			this.time = 300;
+			this.difficulty = 1;
 		}
 		if(isSalvaging()) {
-			return 360;
-		}
-		if (hits == 1) {
-			return 100;
-		} else if (hits == 2) {
-			return 200;
-		} else if (hits > 2) {
-			return 300;
-		}
-		return 0;
+			this.time = 360;
+			this.difficulty = -1;
+		}	
 	}
-	
-	@Override
-	public int getDifficulty() {
-		//TODO: keep an aero flag here, so we dont need the unit
-		if(null != unit && unit.getEntity() instanceof Aero && hits > 0) {
-			return 1;
-		}
-		if(isSalvaging()) {
-			return -1;
-		}
-		if (hits == 1) {
-			return -1;
-		} else if (hits == 2) {
-			return 0;
-		} else if (hits > 2) {
-			return 2;
-		}
-		return 0;
-	}
-
 
 	@Override
 	public boolean needsFixing() {
@@ -480,7 +450,7 @@ public class EnginePart extends Part {
 			}
 		}
 	}
-
+	
 	@Override
 	 public String checkFixable() {
 		if(isSalvaging()) {
@@ -497,7 +467,7 @@ public class EnginePart extends Part {
 		 }
 		 return null;
 	 }
-
+	
 	@Override
 	public boolean isMountedOnDestroyedLocation() {
 		if(null == unit) {
@@ -511,7 +481,7 @@ public class EnginePart extends Part {
 		 }
 		return false;
 	}
-
+	
 	 @Override
 	 public String getDetails() {
 		 if(null != unit) {
@@ -523,12 +493,12 @@ public class EnginePart extends Part {
 		 }
 		 return super.getDetails() + ", " + getUnitTonnage() + " tons" + hvrString;
 	 }
-
+	 
 	 @Override
 	 public boolean isPartForEquipmentNum(int index, int loc) {
 		 return Mech.SYSTEM_ENGINE == index;
 	 }
-
+	 
 	 @Override
 		public boolean isRightTechType(String skillType) {
 		 	if(getEngine().hasFlag(Engine.TANK_ENGINE)) {
@@ -549,98 +519,4 @@ public class EnginePart extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		switch(engine.getEngineType()) {
-		case Engine.XL_ENGINE:
-			if(engine.hasFlag(Engine.CLAN_ENGINE)) {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 2850;
-				} else {
-					return 2824;
-				}
-			} else {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 2635;
-				} else {
-					return 2556;
-				}
-			}
-		case Engine.XXL_ENGINE:
-			if(engine.hasFlag(Engine.CLAN_ENGINE)) {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 3055;
-				} else {
-					return 2954;
-				}
-			} else {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 3058;
-				} else {
-					return 3055;
-				}
-			}
-		case Engine.LIGHT_ENGINE:
-			if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-				return 3064;
-			} else {
-				return 3055;
-			}
-		case Engine.COMPACT_ENGINE:
-			return 3065;
-		case Engine.FUEL_CELL:
-			if(!engine.hasFlag(Engine.SUPPORT_VEE_ENGINE)) {
-				return 2300;
-			}
-		case Engine.FISSION:
-			if(!engine.hasFlag(Engine.SUPPORT_VEE_ENGINE)) {
-				return 2470;
-			}
-		case Engine.MAGLEV:
-		case Engine.BATTERY:
-		case Engine.SOLAR:
-		case Engine.NORMAL_ENGINE:
-		case Engine.COMBUSTION_ENGINE:
-			if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-				return 2630;
-			}
-		case Engine.STEAM:
-		default:
-			return EquipmentType.DATE_NONE; 
-		}		
-	}
-
-	@Override
-	public int getExtinctDate() {
-		switch(engine.getEngineType()) {
-		case Engine.XL_ENGINE:
-			if(!engine.hasFlag(Engine.CLAN_ENGINE)) {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 2822;
-				} else {
-					return 2865;
-				}
-			}
-		default:
-			return EquipmentType.DATE_NONE;
-		}
-	}
-
-	@Override
-	public int getReIntroDate() {
-		switch(engine.getEngineType()) {
-		case Engine.XL_ENGINE:
-			if(!engine.hasFlag(Engine.CLAN_ENGINE)) {
-				if(engine.hasFlag(Engine.LARGE_ENGINE)) {
-					return 3054;
-				} else {
-					return 3035;
-				}
-			}
-		default:
-			return EquipmentType.DATE_NONE;
-		}
-	}
-	
 }

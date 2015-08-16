@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
@@ -75,10 +74,15 @@ public class MekSensor extends Part {
         return part instanceof MekSensor
                 && getUnitTonnage() == part.getUnitTonnage();
     }
+
+    @Override
+	public int getTechBase() {
+		return T_BOTH;
+	}
     
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -131,18 +135,18 @@ public class MekSensor extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			Entity entity = unit.getEntity();
 			for (int i = 0; i < entity.locations(); i++) {
 				if (entity.getNumberOfCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_SENSORS, i) > 0) {
-					if (!unit.isSystemMissing(Mech.SYSTEM_SENSORS, i)) {					
+					if (entity.isSystemRepairable(Mech.SYSTEM_SENSORS, i)) {					
 						hits = entity.getDamagedCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_SENSORS, i);	
 						break;
 					} else {
@@ -151,37 +155,25 @@ public class MekSensor extends Part {
 					}
 				}
 			}
-			if(checkForDestruction 
-					&& hits > priorHits && hits >= 2
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} 
+		else if(hits == 1) {
+			time = 75;
+			difficulty = 0;
+		}
+		else if(hits > 1) {
+			time = 150;
+			difficulty = 3;
+		}
 		if(isSalvaging()) {
-			return 260;
-		}
-		if(hits > 1) {
-			return 150;
-		}
-		return 75;
+			this.time = 260;
+			this.difficulty = 0;
+		}		
 	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
-		}
-		if(hits > 1) {
-			return 3;
-		}
-		return 0;
-	}
-		
+
 	@Override
 	public boolean needsFixing() {
 		return hits > 0;
@@ -256,20 +248,4 @@ public class MekSensor extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

@@ -7,7 +7,6 @@
 package mekhq.gui.dialog;
 
 import java.awt.BorderLayout;
-import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,29 +17,23 @@ import java.util.ResourceBundle;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  *
  * @author natit
  */
-public class PopupValueChoiceDialog extends JDialog implements WindowListener, ChangeListener {
+public class PopupValueChoiceDialog extends JDialog implements WindowListener {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private JButton btnDone;
-    private JButton btnCancel;
-    private JPanel pnlButton;
-    private JSpinner value;
-    private SpinnerNumberModel model;
-    private boolean validData = true;
-    private int max;
-    private int min;
+    private javax.swing.JButton btnDone;
+    private javax.swing.JButton btnCancel;
+    private javax.swing.JPanel pnlButton;
+    private javax.swing.JSpinner value;
+    private javax.swing.SpinnerNumberModel model;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -53,21 +46,8 @@ public class PopupValueChoiceDialog extends JDialog implements WindowListener, C
 	 */
 	private static final long serialVersionUID = 8376874926997734492L;
 	/** Creates new form */
-	public PopupValueChoiceDialog(Frame parent, boolean modal, String title, int current, int min) {
-		super(parent, modal);
-        this.min = min;
-        model = new SpinnerNumberModel(current, min, null, 1);
-        setTitle(title);
-        initComponents();
-        setLocationRelativeTo(parent);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(this);
-	}
-	
-    public PopupValueChoiceDialog(Frame parent, boolean modal, String title, int current, int min, int max) {
+    public PopupValueChoiceDialog(java.awt.Frame parent, boolean modal, String title, int current, int min, int max) {
         super(parent, modal);
-        this.max = max;
-        this.min = min;
         model = new SpinnerNumberModel(current, min, max, 1);
         setTitle(title);
         initComponents();
@@ -87,9 +67,6 @@ public class PopupValueChoiceDialog extends JDialog implements WindowListener, C
         btnDone = new JButton();
         btnCancel = new JButton();
         value = new JSpinner(model);
-
-        // Verifier so people get limited to the 1-100 range when using manual input
-        value.addChangeListener(this);
 
 		ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.PopupValueChoiceDialog");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -125,11 +102,7 @@ public class PopupValueChoiceDialog extends JDialog implements WindowListener, C
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnDoneActionPerformed(ActionEvent evt) {//GEN-FIRST:event_btnDoneActionPerformed
-        if (validData) {
-            this.setVisible(false);
-        } else {
-            showInvalidPopup();
-        }
+        this.setVisible(false);
     }//GEN-LAST:event_btnDoneActionPerformed
 
     private void btnCancelActionPerformed(ActionEvent evt) {//GEN-FIRST:event_btnDoneActionPerformed
@@ -191,23 +164,4 @@ public class PopupValueChoiceDialog extends JDialog implements WindowListener, C
     public void windowOpened(WindowEvent arg0) {
     }
 
-    @Override
-    public void stateChanged(ChangeEvent arg0) {
-        if (value != null) {
-            Integer val = (Integer)((JSpinner)value).getModel().getValue();
-            if ((max > 0 && val > max) || val < min) {
-                validData = false;
-            } else {
-                validData = true;
-            }
-        }
-    }
-
-    private void showInvalidPopup() {
-        JOptionPane.showMessageDialog(null,
-                "Accepted values for bulk purchases are "+min+"-"+max
-                    +System.lineSeparator()+"You've entered: "+((Integer)((JSpinner)value).getModel().getValue()),
-                "Invalid value",
-                JOptionPane.ERROR_MESSAGE);
-    }
 }

@@ -198,12 +198,13 @@ public class SpacecraftEngine extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
 			int engineHits = 0;
 			int engineCrits = 0;
@@ -221,19 +222,16 @@ public class SpacecraftEngine extends Part {
 				hits = 0;
 			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 43200;
+		this.time = 0;
+		this.difficulty = 0;
+		if (hits > 0) {
+			this.time = 300;
+			this.difficulty = 1;
 		}
-		return 300;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 1;
+		if(isSalvaging()) {
+			this.time = 43200;
+			this.difficulty = 1;
+		}	
 	}
 
 	@Override
@@ -274,20 +272,5 @@ public class SpacecraftEngine extends Part {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 }

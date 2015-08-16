@@ -24,7 +24,6 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Aero;
-import megamek.common.Compute;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.TechConstants;
@@ -60,33 +59,21 @@ public class Avionics extends Part {
     }
         
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		int priorHits = hits;
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero) {
 			hits = ((Aero)unit.getEntity()).getAvionicsHits();
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits > 0) {
+			time = 480;
+			difficulty = 0;
+		} else {
+			time = 0;
+			difficulty = 0;
+		}
 		if(isSalvaging()) {
-			return 4800;
+			time = 4800;
+			difficulty = 1;
 		}
-		return 480;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 1;
-		}
-		return 0;
 	}
 
 	@Override
@@ -121,8 +108,9 @@ public class Avionics extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
@@ -171,7 +159,12 @@ public class Avionics extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_IS_TW_ALL;
+	}
+	
+	@Override 
+	public int getTechBase() {
+		return T_BOTH;	
 	}
 
 	@Override
@@ -205,21 +198,5 @@ public class Avionics extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

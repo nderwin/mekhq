@@ -1,20 +1,20 @@
 /*
  * ProtomekActuator.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,8 +23,8 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
+import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.Protomech;
 import megamek.common.TechConstants;
@@ -43,26 +43,26 @@ public class ProtomekSensor extends Part {
     public ProtomekSensor() {
         this(0, null);
     }
-
+    
     public ProtomekSensor clone() {
         ProtomekSensor clone = new ProtomekSensor(getUnitTonnage(), campaign);
         clone.copyBaseData(this);
         return clone;
     }
-
-
+   
+    
     public ProtomekSensor(int tonnage, Campaign c) {
         super(tonnage, c);
         this.name = "Protomech Sensors";
     }
-
+   
     @Override
     public double getTonnage() {
         //TODO: how much do sensors weight?
         //apparently nothing
         return 0;
     }
-
+    
     @Override
     public long getStickerPrice() {
         return getUnitTonnage() * 2000;
@@ -73,7 +73,7 @@ public class ProtomekSensor extends Part {
         return part instanceof ProtomekSensor
                 && getUnitTonnage() == ((ProtomekSensor)part).getUnitTonnage();
     }
-
+    
     @Override
     public void writeToXml(PrintWriter pw1, int indent) {
         writeToXmlBegin(pw1, indent);
@@ -93,7 +93,7 @@ public class ProtomekSensor extends Part {
     public int getTechRating() {
         return EquipmentType.RATING_C;
     }
-
+    
     @Override
     public void fix() {
         super.fix();
@@ -101,12 +101,12 @@ public class ProtomekSensor extends Part {
             unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Protomech.SYSTEM_HEADCRIT, Protomech.LOC_HEAD);
         }
     }
-
+    
     @Override
     public int getTechBase() {
         return T_CLAN;
     }
-
+    
     @Override
     public int getTechLevel() {
         return TechConstants.T_CLAN_TW;
@@ -133,62 +133,40 @@ public class ProtomekSensor extends Part {
             Part missing = getMissingPart();
             unit.addPart(missing);
             campaign.addPart(missing, 0);
-        }
+        }   
+        setSalvaging(false);
         setUnit(null);
-        updateConditionFromEntity(false);
+        updateConditionFromEntity();
     }
 
     @Override
-    public void updateConditionFromEntity(boolean checkForDestruction) {
-        if(null != unit) {
-        	int priorHits = hits;
+    public void updateConditionFromEntity() {
+        if(null != unit) {           
             hits = unit.getEntity().getDamagedCriticals(CriticalSlot.TYPE_SYSTEM, Protomech.SYSTEM_HEADCRIT, Protomech.LOC_HEAD);
-            if(checkForDestruction
-					&& hits > priorHits
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
+            if(hits > 1) {
+                remove(false);
+                return;
+            }
+        }
+        if(hits == 0) {
+            time = 0;
+            difficulty = 0;
+        } 
+        else if(hits >= 1) {
+            time = 100;
+            difficulty = 0;
+        }
+        if(isSalvaging()) {
+            time = 120;
+            difficulty = 0;
         }
     }
-
-    @Override
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 120;
-		}
-        if(hits <= 1) {
-            return 100;
-        }
-        else if(hits == 2) {
-            return 150;
-        }
-        else {
-        	return 200;
-        }
-	}
-
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
-		}
-		if(hits <= 1) {
-            return 0;
-        }
-        else if(hits == 2) {
-            return 1;
-        }
-        else {
-        	return 3;
-        }
-	}
 
     @Override
     public boolean needsFixing() {
         return hits > 0;
     }
-
+    
     @Override
     public String getDetails() {
         if(null != unit) {
@@ -205,9 +183,9 @@ public class ProtomekSensor extends Part {
             } else {
                 unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Protomech.SYSTEM_HEADCRIT, Protomech.LOC_HEAD);
             }
-        }
+        }   
     }
-
+    
     @Override
     public String checkFixable() {
         if(isSalvaging()) {
@@ -221,27 +199,27 @@ public class ProtomekSensor extends Part {
         }
         return null;
     }
-
+    
     @Override
     public boolean isMountedOnDestroyedLocation() {
         return null != unit && unit.isLocationDestroyed(Protomech.LOC_HEAD);
     }
-
+    
     @Override
     public boolean onBadHipOrShoulder() {
         return false;
     }
-
+    
     @Override
     public boolean isPartForEquipmentNum(int index, int loc) {
         return false;//index == type && loc == location;
     }
-
+    
     @Override
     public boolean isRightTechType(String skillType) {
         return skillType.equals(SkillType.S_TECH_MECH);
     }
-
+    
     @Override
     public boolean isOmniPoddable() {
         return false;
@@ -250,31 +228,17 @@ public class ProtomekSensor extends Part {
     @Override
     protected void loadFieldsFromXmlNode(Node wn) {
         // TODO Auto-generated method stub
-
+        
     }
 
-    @Override
+	@Override
 	public String getLocationName() {
-		return unit.getEntity().getLocationName(getLocation());
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public int getLocation() {
-		return Protomech.LOC_HEAD;
-	}
-
-	@Override
-	public int getIntroDate() {
-		return 3055;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
+		return Entity.LOC_NONE;
 	}
 }

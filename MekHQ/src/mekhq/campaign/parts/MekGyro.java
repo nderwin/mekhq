@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
@@ -190,10 +189,19 @@ public class MekGyro extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		if(type == Mech.GYRO_STANDARD) {
-			return TechConstants.T_ALLOWED_ALL;
-		}
 		return TechConstants.T_IS_TW_ALL;
+	}
+	
+	@Override 
+	public int getTechBase() {
+		switch(type) {
+		case Mech.GYRO_COMPACT:
+		case Mech.GYRO_HEAVY_DUTY:
+		case Mech.GYRO_XL:
+			return T_IS;
+		default:
+			return T_BOTH;	
+		}
 	}
 
 	@Override
@@ -226,44 +234,36 @@ public class MekGyro extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}	
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			hits = unit.getEntity().getDamagedCriticals(CriticalSlot.TYPE_SYSTEM,Mech.SYSTEM_GYRO, Mech.LOC_CT);
-			if(checkForDestruction 
-					&& hits > priorHits && hits >= 3
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
+			if(!unit.getEntity().isSystemRepairable(Mech.SYSTEM_GYRO, Mech.LOC_CT)) {
 				remove(false);
 				return;
 			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		}
+		else if(hits == 1) {
+			time = 120;
+			difficulty = 1;
+		} 
+		else if(hits >= 2) {
+			time = 240;
+			difficulty = 4;
+		}
 		if(isSalvaging()) {
-			return 200;
+			this.time = 200;
+			this.difficulty = 0;
 		}
-		if(hits >= 2) {
-			return 240;
-		}
-		return 120;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
-		}
-		if(hits >= 2) {
-			return 4;
-		}
-		return 1;
 	}
 
 	@Override
@@ -277,7 +277,10 @@ public class MekGyro extends Part {
 			if(hits == 0) {
 				unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_GYRO, Mech.LOC_CT);
 			} else {
-				unit.damageSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_GYRO, hits);
+				//I need to repair all crit slots first, in order to get the 
+				//right number of hits
+				unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_ENGINE);
+				unit.damageSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_GYRO, Mech.LOC_CT, hits);
 			}
 		}
 	}
@@ -306,40 +309,8 @@ public class MekGyro extends Part {
 		return null;
 	}
 
-	public static final int GYRO_STANDARD = 0;
-
-    public static final int GYRO_XL = 1;
-
-    public static final int GYRO_COMPACT = 2;
-
-    public static final int GYRO_HEAVY_DUTY = 3;
-
-	
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		switch(type) {
-		case Mech.GYRO_COMPACT:
-			return 3068;
-		case Mech.GYRO_HEAVY_DUTY:
-		case Mech.GYRO_XL:
-			return 3067;
-		default:
-			return EquipmentType.DATE_NONE;	
-		}
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 }

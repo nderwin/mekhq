@@ -58,17 +58,9 @@ public class MissingAeroLifeSupport extends MissingPart {
 		 if(!fighter) {
 			 this.name = "Spacecraft Life Support";
 		 }
+		 this.time = 6720;
+		 this.difficulty = 0;
 	 }
-	 
-	 @Override 
-		public int getBaseTime() {
-			return 6720;
-		}
-		
-		@Override
-		public int getDifficulty() {
-			return 0;
-		}
     
 	@Override
 	public String checkFixable() {
@@ -152,21 +144,5 @@ public class MissingAeroLifeSupport extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

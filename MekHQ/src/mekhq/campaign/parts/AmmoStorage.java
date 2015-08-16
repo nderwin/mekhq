@@ -32,7 +32,6 @@ import mekhq.MekHqXmlUtil;
 import mekhq.Utilities;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.parts.equipment.EquipmentPart;
-import mekhq.campaign.personnel.Person;
 import mekhq.campaign.universe.Era;
 import mekhq.campaign.work.IAcquisitionWork;
 
@@ -202,13 +201,13 @@ public class AmmoStorage extends EquipmentPart implements IAcquisitionWork {
     }
 	
 	@Override
-	public TargetRoll getAllMods(Person tech) {
+	public TargetRoll getAllMods() {
 		//nothing to do here
 		return null;
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		//nothing to do here
 		return;
 	}

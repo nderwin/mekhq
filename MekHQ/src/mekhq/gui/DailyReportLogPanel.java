@@ -32,26 +32,25 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
 
 /**
- * This is a panel for displaying the reporting log for each day. We are putting it into
+ * This is a panel for displaying the reporting log for each day. We are putting it into 
  * its own panel so that we can later extend this to include chat and maybe break up the log
  * into different sections
- *
+ * 
  * @author Jay Lawson
  *
  */
 public class DailyReportLogPanel extends JPanel {
 
     /**
-     *
+     * 
      */
     private static final long serialVersionUID = -6512675362473724385L;
     JTextPane txtLog;
-    String logText = new String();
-
+    
     public DailyReportLogPanel(ReportHyperlinkListener listener) {
         txtLog = new JTextPane() {
             /**
-             *
+             * 
              */
             private static final long serialVersionUID = 9000659006965230883L;
 
@@ -62,7 +61,7 @@ public class DailyReportLogPanel extends JPanel {
         txtLog.addHyperlinkListener(listener);
         initComponents();
     }
-
+    
     private void initComponents() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Daily Log"));
@@ -73,14 +72,11 @@ public class DailyReportLogPanel extends JPanel {
         JScrollPane scrLog = new JScrollPane(txtLog);
         scrLog.setBorder(new EmptyBorder(2,10,2,2));
         add(scrLog, BorderLayout.CENTER);
+        //setBackground(Color.WHITE);
     }
 
     public void refreshLog(String s) {
-        logText = s;
-        txtLog.setText(logText);
+        txtLog.setText(s);
     }
 
-    public String getLogText() {
-        return logText;
-    }
 }

@@ -68,15 +68,15 @@ NAC35 Ammo:20
 Autocannon/5
 Autocannon/5
 Autocannon/5
-IS Ammo AC/5:60
+IS Ammo AC/5:80
 Autocannon/5
 Autocannon/5
 Autocannon/5
-IS Ammo AC/5:60
+IS Ammo AC/5:80
 ISMG
 ISMG
 ISMG
-IS Machine Gun Ammo:300
+IS Machine Gun Ammo:400
 </Front Left Side Equipment>
 <Front Right Side Equipment>
 NAC20
@@ -92,17 +92,21 @@ NAC35 Ammo:20
 Autocannon/5
 Autocannon/5
 Autocannon/5
-IS Ammo AC/5:60
+IS Ammo AC/5:80
 Autocannon/5
 Autocannon/5
 Autocannon/5
-IS Ammo AC/5:60
+IS Ammo AC/5:80
 ISMG
 ISMG
 ISMG
-IS Machine Gun Ammo:300
+IS Machine Gun Ammo:400
 </Front Right Side Equipment>
 <Left Broadside Equipment>
+NAC20
+NAC20
+NAC20
+NAC20 Ammo:60
 NAC20
 NAC20
 NAC20
@@ -112,14 +116,11 @@ NAC35 Ammo:20
 Autocannon/5
 Autocannon/5
 Autocannon/5
-Autocannon/5
 IS Ammo AC/5:80
 Autocannon/5
 Autocannon/5
 Autocannon/5
-Autocannon/5
 IS Ammo AC/5:80
-ISMG
 ISMG
 ISMG
 ISMG
@@ -130,19 +131,20 @@ NAC20
 NAC20
 NAC20
 NAC20 Ammo:60
+NAC20
+NAC20
+NAC20
+NAC20 Ammo:60
 NAC35
 NAC35 Ammo:20
 Autocannon/5
 Autocannon/5
 Autocannon/5
-Autocannon/5
 IS Ammo AC/5:80
 Autocannon/5
 Autocannon/5
 Autocannon/5
-Autocannon/5
 IS Ammo AC/5:80
-ISMG
 ISMG
 ISMG
 ISMG
@@ -219,6 +221,7 @@ ISMG
 IS Machine Gun Ammo:1000
 </Aft Right Side Equipment>
 <Aft Equipment>
+NAC20
 Autocannon/5
 Autocannon/5
 Autocannon/5

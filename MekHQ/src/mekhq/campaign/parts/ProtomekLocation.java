@@ -1,20 +1,20 @@
 /*
  * ProtomekLocation.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -33,7 +33,6 @@ import megamek.common.TargetRoll;
 import megamek.common.TechConstants;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
-import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.work.Modes;
 
@@ -54,7 +53,7 @@ public class ProtomekLocation extends Part {
     boolean breached;
     boolean blownOff;
     boolean forQuad;
-
+    
     //system components for head
     //protected boolean sensors;
     //protected boolean lifeSupport;
@@ -62,7 +61,7 @@ public class ProtomekLocation extends Part {
     public ProtomekLocation() {
         this(0, 0, 0, false, false, null);
     }
-
+    
     public ProtomekLocation(int loc, int tonnage, int structureType, boolean hasBooster, boolean quad, Campaign c) {
         super(tonnage, c);
         this.loc = loc;
@@ -99,7 +98,7 @@ public class ProtomekLocation extends Part {
             this.name += " (Myomer Booster)";
         }
     }
-
+    
     public ProtomekLocation clone() {
         ProtomekLocation clone = new ProtomekLocation(loc, getUnitTonnage(), structureType, booster, forQuad, campaign);
         clone.copyBaseData(this);
@@ -108,7 +107,7 @@ public class ProtomekLocation extends Part {
         clone.blownOff = this.blownOff;
         return clone;
     }
-
+    
     public int getLoc() {
         return loc;
     }
@@ -120,13 +119,13 @@ public class ProtomekLocation extends Part {
     public int getStructureType() {
         return structureType;
     }
-
-
-
+    
+   
+    
     public double getTonnage() {
         return 0;
     }
-
+    
     @Override
     public long getStickerPrice() {
         double nloc = 7.0;
@@ -148,25 +147,25 @@ public class ProtomekLocation extends Part {
         }
         return (long) Math.round(cost);
     }
-
+    
     public boolean forQuad() {
         return forQuad;
     }
-
+    
     @Override
     public boolean isSamePartType(Part part) {
         return part instanceof ProtomekLocation
                 && getLoc() == ((ProtomekLocation)part).getLoc()
                 && getUnitTonnage() == ((ProtomekLocation)part).getUnitTonnage()
                 && hasBooster() == ((ProtomekLocation)part).hasBooster()
-                && (!isLegs() || forQuad == ((ProtomekLocation)part).forQuad);
+                && (!isLegs() || forQuad == ((MekLocation)part).forQuad);
                // && getStructureType() == ((ProtomekLocation) part).getStructureType();
     }
-
+    
     private boolean isLegs() {
         return loc == Protomech.LOC_LEG;
     }
-
+    
     @Override
     public boolean isSameStatus(Part part) {
         return super.isSameStatus(part) && this.getPercent() == ((ProtomekLocation)part).getPercent();
@@ -209,10 +208,10 @@ public class ProtomekLocation extends Part {
     @Override
     protected void loadFieldsFromXmlNode(Node wn) {
         NodeList nl = wn.getChildNodes();
-
+        
         for (int x=0; x<nl.getLength(); x++) {
             Node wn2 = nl.item(x);
-
+            
             if (wn2.getNodeName().equalsIgnoreCase("loc")) {
                 loc = Integer.parseInt(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("structureType")) {
@@ -234,7 +233,7 @@ public class ProtomekLocation extends Part {
                     breached = true;
                 else
                     breached = false;
-            }
+            } 
         }
     }
 
@@ -249,17 +248,17 @@ public class ProtomekLocation extends Part {
 
     @Override
     public int getTechRating() {
-       return EquipmentType.RATING_E;
+       return EquipmentType.RATING_E;      
     }
-
+    
     @Override
     public int getTechLevel() {
         return TechConstants.T_CLAN_TW;
     }
-
+    
     @Override
     public int getTechBase() {
-        return T_CLAN;
+        return T_CLAN;        
     }
 
     @Override
@@ -332,7 +331,7 @@ public class ProtomekLocation extends Part {
                 final CriticalSlot cs = unit.getEntity().getCritical(loc, i);
                 if(null == cs || !cs.isEverHittable()) {
                     continue;
-                }
+                }        
                 cs.setHit(true);
                 cs.setDestroyed(true);
                 cs.setRepairable(false);
@@ -350,13 +349,15 @@ public class ProtomekLocation extends Part {
                     m.setRepairable(false);
                 }
             }
+            unit.runDiagnostic();
         }
+        setSalvaging(false);
         setUnit(null);
-        updateConditionFromEntity(false);
+        updateConditionFromEntity();
     }
-
+    
     @Override
-    public void updateConditionFromEntity(boolean checkForDestruction) {
+    public void updateConditionFromEntity() {
         if(null != unit) {
             blownOff = unit.getEntity().isLocationBlownOff(loc);
             breached = unit.isLocationBreached(loc);
@@ -364,71 +365,52 @@ public class ProtomekLocation extends Part {
             if(percent <= 0.0) {
                 remove(false);
                 return;
-            }
+            } 
         }
+        if(blownOff) {        
+            this.time = 200;
+            this.difficulty = 3;
+        } else if(breached) {
+            breached = true;
+            this.time = 60;
+            this.difficulty = 0;
+        } else if (percent < 0.25) {
+            this.time = 270;
+            this.difficulty = 2;
+        } else if (percent < 0.5) {
+            this.time = 180;
+            this.difficulty = 1;
+        } else if (percent < 0.75) {
+            this.time = 135;
+            this.difficulty = 0;
+        } else {
+            this.time = 90;
+            this.difficulty = -1;
+        }
+        if(isSalvaging()) {
+            if(isBlownOff()) {
+                this.time = 0;
+                this.difficulty = 0;
+            } else {
+                this.time = 240;
+                this.difficulty = 3;
+            }
+        }       
     }
-
-    @Override
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			if(blownOff) {
-				return 0;
-			}
-			return 240;
-		}
-		if(blownOff) {
-			return 200;
-		}
-		if(breached) {
-			return 60;
-		}
-		if (percent < 0.25) {
-			return 270;
-		} else if (percent < 0.5) {
-			return 180;
-		} else if (percent < 0.75) {
-			return 135;
-		}
-		return 90;
-	}
-
-    @Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			if(isBlownOff()) {
-				return 0;
-			}
-			return 3;
-		}
-		if(blownOff) {
-			return 1;
-		}
-		if(breached) {
-			return 0;
-		}
-		if (percent < 0.25) {
-			return 2;
-		} else if (percent < 0.5) {
-			return 1;
-		} else if (percent < 0.75) {
-			return 0;
-		}
-		return -1;
-	}
 
     public boolean isBreached() {
         return breached;
     }
-
+    
     public boolean isBlownOff() {
         return blownOff;
     }
-
+    
     @Override
     public boolean needsFixing() {
         return percent < 1.0 || breached || blownOff;
     }
-
+    
     @Override
     public String getDetails() {
         String toReturn = "";
@@ -447,46 +429,25 @@ public class ProtomekLocation extends Part {
         return toReturn;
     }
 
-    private int getAppropriateSystemIndex() {
-    	switch(loc) {
-    	case(Protomech.LOC_LEG):
-    		return Protomech.SYSTEM_LEGCRIT;
-    	case(Protomech.LOC_LARM):
-    	case(Protomech.LOC_RARM):
-    		return Protomech.SYSTEM_ARMCRIT;
-    	case(Protomech.LOC_HEAD):
-    		return Protomech.SYSTEM_HEADCRIT;
-    	case(Protomech.LOC_TORSO):
-    		return Protomech.SYSTEM_TORSOCRIT;
-    	default:
-    		return -1;
-    	}
-    }
-
     @Override
     public void updateConditionFromPart() {
         if(null != unit) {
             unit.getEntity().setInternal((int)Math.round(percent * unit.getEntity().getOInternal(loc)), loc);
-            //if all the system crits are marked off on the entity in this location, then we need to
-            //fix one of them, because the last crit on protomechs is always location destruction
-            int systemIndx = getAppropriateSystemIndex();
-            if(loc != -1 && unit.getEntity().getGoodCriticals(CriticalSlot.TYPE_SYSTEM, systemIndx, loc) <= 0) {
-            	//Because the last crit for protomechs is always location destruction we need to
-                //clear the first system crit we find
-                for (int i = 0; i < unit.getEntity().getNumberOfCriticals(loc); i++) {
-                    CriticalSlot slot = unit.getEntity().getCritical(loc, i);
-                    if ((slot != null) && slot.getType() == CriticalSlot.TYPE_SYSTEM) {
-                        slot.setDestroyed(false);
-                        slot.setHit(false);
-                        slot.setRepairable(true);
-                        slot.setMissing(false);
-                        break;
-                    }
+            //Because the last crit for protomechs is always location destruction we need to 
+            //clear the first system crit we find
+            for (int i = 0; i < unit.getEntity().getNumberOfCriticals(loc); i++) {
+                CriticalSlot slot = unit.getEntity().getCritical(loc, i);
+                if ((slot != null) && slot.getType() == CriticalSlot.TYPE_SYSTEM) {
+                    slot.setDestroyed(false);
+                    slot.setHit(false);
+                    slot.setRepairable(true);
+                    slot.setMissing(false);
+                    break;
                 }
             }
         }
     }
-
+    
     @Override
     public String checkFixable() {
         if(isSalvaging()) {
@@ -516,7 +477,7 @@ public class ProtomekLocation extends Part {
                 }
                 else if (slot.isRepairable()) {
                     return "Repairable parts in " + unit.getEntity().getLocationName(loc) + " must be salvaged or scrapped first.";
-                }
+                } 
             }
             //protomechs only have system stuff in the crits, so we need to also
             //check for mounted equipment separately
@@ -525,10 +486,10 @@ public class ProtomekLocation extends Part {
                     return "Repairable parts in " + unit.getEntity().getLocationName(loc) + " must be salvaged or scrapped first." + m.getName();
                 }
             }
-        }
+        } 
         return null;
     }
-
+    
     @Override
     public boolean isSalvaging() {
         //cant salvage a center torso
@@ -537,7 +498,7 @@ public class ProtomekLocation extends Part {
         }
         return super.isSalvaging();
     }
-
+    
     @Override
     public String checkScrappable() {
         //cant scrap a center torso
@@ -570,7 +531,7 @@ public class ProtomekLocation extends Part {
             }
             else if (slot.isRepairable()) {
                 return "Repairable parts in " + unit.getEntity().getLocationName(loc) + " must be salvaged or scrapped first.";
-            }
+            } 
         }
         //protomechs only have system stuff in the crits, so we need to also
         //check for mounted equipment separately
@@ -581,18 +542,18 @@ public class ProtomekLocation extends Part {
         }
         return null;
     }
-
+    
     @Override
-    public TargetRoll getAllMods(Person tech) {
+    public TargetRoll getAllMods() {
         if(isBreached() && !isSalvaging()) {
             return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "fixing breach");
         }
         if(isBlownOff() && isSalvaging()) {
             return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "salvaging blown-off location");
         }
-        return super.getAllMods(tech);
+        return super.getAllMods();
     }
-
+    
     public String getDesc() {
         if((!isBreached() && !isBlownOff()) || isSalvaging()) {
             return super.getDesc();
@@ -602,7 +563,7 @@ public class ProtomekLocation extends Part {
         if (getAssignedTeamId() != null) {
             scheduled = " (scheduled) ";
         }
-
+    
         toReturn += ">";
         if(isBlownOff()) {
             toReturn += "<b>Re-attach " + getName() + "</b><br/>";
@@ -615,8 +576,8 @@ public class ProtomekLocation extends Part {
         } else {
             toReturn += "" + getTimeLeft() + " minutes" + scheduled;
             if(isBlownOff()) {
-                String bonus = getAllMods(null).getValueAsString();
-                if (getAllMods(null).getValue() > -1) {
+                String bonus = getAllMods().getValueAsString();
+                if (getAllMods().getValue() > -1) {
                     bonus = "+" + bonus;
                 }
                 bonus = "(" + bonus + ")";
@@ -632,22 +593,22 @@ public class ProtomekLocation extends Part {
         toReturn += "</font></html>";
         return toReturn;
     }
-
+    
     @Override
     public boolean onBadHipOrShoulder() {
         return false;
     }
-
+    
     @Override
     public boolean isRightTechType(String skillType) {
         return skillType.equals(SkillType.S_TECH_MECH);
     }
-
+    
     public void doMaintenanceDamage(int d) {
         int points = unit.getEntity().getInternal(loc);
         points = Math.max(points -d, 1);
         unit.getEntity().setInternal(points, loc);
-        updateConditionFromEntity(false);
+        updateConditionFromEntity();
     }
 
 	@Override
@@ -658,20 +619,5 @@ public class ProtomekLocation extends Part {
 	@Override
 	public int getLocation() {
 		return loc;
-	}
-
-	@Override
-	public int getIntroDate() {
-		return 3055;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 }

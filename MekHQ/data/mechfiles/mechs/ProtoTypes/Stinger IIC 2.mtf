@@ -5,12 +5,11 @@ Stinger IIC
 Config:Biped
 TechBase:Clan
 Era:3086
-Rules Level:5
-History:Based off the Fluff, crit placement is likely wrong.
+Rules Level:4
 
 Mass:20
 Engine:100 Fusion (Clan) Engine(IS)
-Structure:Clan Endo Steel
+Structure:Endo Steel
 Myomer:Standard
 
 Heat Sinks:10 Double
@@ -20,20 +19,19 @@ Jump MP:5
 Armor:Ferro-Fibrous(Clan)
 LA Armor:6
 RA Armor:6
-LT Armor:7
-RT Armor:7
-CT Armor:8
-HD Armor:7
+LT Armor:8
+RT Armor:8
+CT Armor:9
+HD Armor:9
 LL Armor:8
 RL Armor:8
-RTL Armor:3
-RTR Armor:3
-RTC Armor:4
+RTL Armor:2
+RTR Armor:2
+RTC Armor:3
 
-Weapons:3
+Weapons:2
 Improved Heavy Medium Laser, Left Arm
 Improved Heavy Large Laser, Right Arm
-Improved Heavy Medium Laser, Right Arm
 
 Left Arm:
 Shoulder
@@ -42,9 +40,9 @@ Lower Arm Actuator
 Hand Actuator
 CLImprovedMediumHeavyLaser
 CLImprovedMediumHeavyLaser
-Clan Endo Steel
-Clan Ferro-Fibrous
-Clan Ferro-Fibrous
+Endo Steel
+Ferro-Fibrous
+Ferro-Fibrous
 -Empty-
 -Empty-
 -Empty-
@@ -57,11 +55,11 @@ Hand Actuator
 CLImprovedHeavyLargeLaser
 CLImprovedHeavyLargeLaser
 CLImprovedHeavyLargeLaser
-CLImprovedMediumHeavyLaser
-CLImprovedMediumHeavyLaser
-Clan Endo Steel
-Clan Endo Steel
-Clan Ferro-Fibrous
+Endo Steel
+Endo Steel
+Ferro-Fibrous
+Ferro-Fibrous
+-Empty-
 
 Left Torso:
 CLDoubleHeatSink
@@ -70,10 +68,10 @@ CLDoubleHeatSink
 CLDoubleHeatSink
 Jump Jet
 Jump Jet
-Clan Endo Steel
-Clan Endo Steel
-Clan Ferro-Fibrous
-Clan Ferro-Fibrous
+Endo Steel
+Endo Steel
+Ferro-Fibrous
+-Empty-
 -Empty-
 -Empty-
 
@@ -84,10 +82,10 @@ CLDoubleHeatSink
 CLDoubleHeatSink
 Jump Jet
 Jump Jet
-Clan Endo Steel
-Clan Endo Steel
-Clan Ferro-Fibrous
-Clan Ferro-Fibrous
+Endo Steel
+Endo Steel
+Ferro-Fibrous
+-Empty-
 -Empty-
 -Empty-
 
@@ -103,7 +101,7 @@ Fusion Engine
 Fusion Engine
 Fusion Engine
 Jump Jet
--Empty-
+Ferro-Fibrous
 
 Head:
 Life Support

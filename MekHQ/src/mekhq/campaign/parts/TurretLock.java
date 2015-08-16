@@ -45,16 +45,8 @@ public class TurretLock extends Part {
 	public TurretLock(Campaign c) {
 		super(0, c);
 		this.name = "Turret Lock";
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 90;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return -1;
+		this.time = 90;
+		this.difficulty = -1;
 	}
 	
 	public TurretLock clone() {
@@ -75,7 +67,7 @@ public class TurretLock extends Part {
 	
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -131,7 +123,7 @@ public class TurretLock extends Part {
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		//nothing to do here because we are just going to check directly in needsFixing()
 		//since this "part" can never be removed
 	}
@@ -174,22 +166,6 @@ public class TurretLock extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 			
 	
 }

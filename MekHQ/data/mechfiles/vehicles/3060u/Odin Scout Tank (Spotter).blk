@@ -40,14 +40,6 @@ Wheeled
 6
 </engine_type>
 
-<armor_type>
-1
-</armor_type>
-
-<armor_tech>
-6
-</armor_tech>
-
 <armor>
 6
 6
@@ -57,11 +49,6 @@ Wheeled
 </armor>
 
 <Body Equipment>
-CLActiveProbe
-CLECMSuite
-CLAPGaussRifle Ammo
-CLNarc Pods
-CLNarc Pods
 </Body Equipment>
 
 <Front Equipment>
@@ -77,10 +64,6 @@ CLNarc Pods
 </Rear Equipment>
 
 <Turret Equipment>
-CLAPGaussRifle
-CLAPGaussRifle
-CLTAG
-CLNarcBeacon
 </Turret Equipment>
 
 <source>

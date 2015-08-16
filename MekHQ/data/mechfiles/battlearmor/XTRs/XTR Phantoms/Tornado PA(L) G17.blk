@@ -48,6 +48,7 @@ VTOL
 BAArmoredGlove:LA
 BAArmoredGlove:RA
 BAExtendedLifeSupport:Body
+Infantry Auto Rifle:RA
 SwarmMek
 SwarmWeaponMek
 StopSwarm
@@ -57,7 +58,6 @@ Clan BA Stealth (Improved):Body
 Clan BA Stealth (Improved):LA
 Clan BA Stealth (Improved):LA
 Clan BA Stealth (Improved):RA
-Infantry Auto Rifle:APM
 </Squad Equipment>
 
 <Trooper 1 Equipment>

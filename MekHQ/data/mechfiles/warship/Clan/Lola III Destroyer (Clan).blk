@@ -55,8 +55,7 @@ NAC10
 NAC10 Ammo:100
 NL45
 Barracuda
-Barracuda
-Barracuda Ammo:20
+Barracuda Ammo:10
 </Left Broadside Equipment>
 <Right Broadside Equipment>
 NAC10
@@ -66,8 +65,7 @@ NAC10
 NAC10 Ammo:100
 NL45
 Barracuda
-Barracuda
-Barracuda Ammo:20
+Barracuda Ammo:10
 </Right Broadside Equipment>
 <Aft Left Side Equipment>
 NAC10
@@ -126,7 +124,7 @@ aerodyne
 <transporters>
 ASFBay:10:1
 SmallCraftBay:10:1
-CargoBay:108613.5:1
+CargoBay:101554:1
 </transporters>
 <docking_collar>
 0

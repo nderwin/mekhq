@@ -78,18 +78,10 @@ public class MissingEquipmentPart extends MissingPart {
         	this.typeName = type.getInternalName();
         }
         this.equipmentNum = equipNum;
+        this.time = 120;
+        this.difficulty = 0;
         this.equipTonnage = eTonnage;
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 120;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
     
     /**
      * Restores the equipment from the name
@@ -152,21 +144,6 @@ public class MissingEquipmentPart extends MissingPart {
 	public int getAvailability(int era) {		
 		return type.getAvailability(Era.convertEra(era));
 	}
-	
-	@Override
-    public int getIntroDate() {
-    	return getType().getIntroductionDate();
-    }
-    
-    @Override
-    public int getExtinctDate() {
-    	return getType().getExtinctionDate();
-    }
-    
-    @Override
-    public int getReIntroDate() {
-    	return getType().getReintruductionDate();
-    }
 
 	@Override
 	public int getTechRating() {
@@ -190,16 +167,10 @@ public class MissingEquipmentPart extends MissingPart {
 	
 	@Override
 	public boolean isAcceptableReplacement(Part part, boolean refit) {
-		//According to official answer, if sticker prices are different then 
-		//they are not acceptable substitutes, so we need to check for that as
-		//well
-		//http://bg.battletech.com/forums/strategic-operations/(answered)-can-a-lance-for-a-35-ton-mech-be-used-on-a-40-ton-mech-and-so-on/
-		Part newPart = getNewPart();
-		newPart.setUnit(unit);
 		if(part instanceof EquipmentPart) {
 			EquipmentPart eqpart = (EquipmentPart)part;
 			EquipmentType et = eqpart.getType();
-			return type.equals(et) && getTonnage() == part.getTonnage() && part.getStickerPrice() == newPart.getStickerPrice();
+			return type.equals(et) && getTonnage() == part.getTonnage();
 		}
 		return false;
 	}

@@ -43,17 +43,9 @@ public class MissingMekLifeSupport extends MissingPart {
 	public MissingMekLifeSupport(int tonnage, Campaign c) {
         super(tonnage, c);
         this.name = "Mech Life Support System";
+        this.time = 180;
+        this.difficulty = -1;
     }
-	
-	@Override 
-	public int getBaseTime() {
-		return 180;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return -1;
-	}
 
 	@Override
 	public double getTonnage() {
@@ -119,20 +111,4 @@ public class MissingMekLifeSupport extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

@@ -1011,12 +1011,10 @@ public class AtBContract extends Contract implements Serializable {
     public void checkForFollowup(Campaign campaign) {
     	if ((getMissionType() == AtBContract.MT_DIVERSIONARYRAID ||
     			getMissionType() == AtBContract.MT_RECONRAID ||
-    			getMissionType() == AtBContract.MT_RIOTDUTY)) {
-    		int roll = Compute.d6();
-    		if (roll == 6) {
-    			campaign.getContractMarket().addFollowup(campaign, this);
-    			campaign.addReport("Your employer has offered a follow-up contract (available on the <a href=\"CONTRACT_MARKET\">contract market</a>).");
-    		}
+    			getMissionType() == AtBContract.MT_RIOTDUTY) &&
+    			Compute.d6() == 6) {
+    		campaign.getContractMarket().addFollowup(campaign, this);
+    		campaign.addReport("Your employer has offered a follow-up contract (available on the <a href=\"CONTRACT_MARKET\">contract market</a>).");
     	}
     }
 

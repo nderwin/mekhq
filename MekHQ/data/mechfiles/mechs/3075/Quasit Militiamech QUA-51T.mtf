@@ -5,13 +5,14 @@ QUA-51T
 Config:Biped
 TechBase:Inner Sphere
 Era:2517
-Source:TRO 3075
+Source:Star League
 Rules Level:2
 
 Mass:45
 Engine:225 Fusion Engine
 Structure:Industrial
 Myomer:Standard
+Cockpit:Industrial Cockpit
 Gyro:Standard Gyro
 
 Heat Sinks:10 Single

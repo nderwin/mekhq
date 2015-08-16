@@ -41,6 +41,8 @@ public class Rotor extends TankLocation {
         super(VTOL.LOC_ROTOR, tonnage, c);
         this.name = "Rotor";
         this.damage = 0;
+        this.time = 120;
+        this.difficulty = 2;
     }
     
     public Rotor clone() {
@@ -83,10 +85,7 @@ public class Rotor extends TankLocation {
 		super.fix();
 		damage--;
 		if(null != unit && unit.getEntity() instanceof VTOL) {
-		    int currIsVal = unit.getEntity().getInternal(VTOL.LOC_ROTOR); 
-		    int maxIsVal = unit.getEntity().getOInternal(VTOL.LOC_ROTOR); 
-		    int repairedIsVal = Math.min(maxIsVal, currIsVal + 1);
-			unit.getEntity().setInternal(repairedIsVal, VTOL.LOC_ROTOR);
+			unit.getEntity().setInternal(unit.getEntity().getInternal(VTOL.LOC_ROTOR)+1, VTOL.LOC_ROTOR);
 		}
 	}
 
@@ -113,27 +112,20 @@ public class Rotor extends TankLocation {
 			((VTOL)unit.getEntity()).resetMovementDamage();
 			for(Part part : unit.getParts()) {
 				if(part instanceof MotiveSystem) {
-					part.updateConditionFromEntity(false);
+					part.updateConditionFromEntity();
 				}
 			}
 		}
 		setUnit(null);
 	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 300;
-		}
-		return 120;
-	}
-	
+
 	@Override
-	public int getDifficulty() {
+	public void updateConditionFromEntity() {
+		super.updateConditionFromEntity();
 		if(isSalvaging()) {
-			return 0;
+			this.time = 300;
+			this.difficulty = 2;
 		}
-		return 2;
 	}
 	
 	@Override
@@ -141,6 +133,11 @@ public class Rotor extends TankLocation {
 		if(null != unit && unit.getEntity() instanceof VTOL) {
 			unit.getEntity().setInternal(unit.getEntity().getOInternal(VTOL.LOC_ROTOR) - damage, VTOL.LOC_ROTOR);
 		}
+	}
+	
+	@Override
+	public boolean isSalvaging() {
+		return salvaging;
 	}
 	
 	@Override 

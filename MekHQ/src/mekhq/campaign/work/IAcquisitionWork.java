@@ -61,12 +61,6 @@ public interface IAcquisitionWork extends IWork {
 	
 	public long getBuyCost();
 	
-	public boolean isIntroducedBy(int year);
-	
-	public boolean isExtinctIn(int year);
-	
-	public int getAvailability(int era);
-	
 	public String getShoppingListReport(int quantity);
 	
 }

@@ -33,13 +33,13 @@ import mekhq.MekHQ;
 import mekhq.MekHqXmlUtil;
 import mekhq.Version;
 import mekhq.campaign.Campaign;
-import mekhq.campaign.JumpPath;
 import mekhq.campaign.mission.AtBContract;
 import mekhq.campaign.mission.Contract;
 import mekhq.campaign.mission.Mission;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.rating.IUnitRating;
+import mekhq.campaign.universe.Era;
 import mekhq.campaign.universe.Faction;
 import mekhq.campaign.universe.Planets;
 import mekhq.campaign.universe.RandomFactionGenerator;
@@ -49,22 +49,22 @@ import org.w3c.dom.NodeList;
 
 /**
  * Contract offers that are generated monthly under AtB rules.
- *
+ * 
  * Based on PersonnelMarket
- *
+ * 
  * @author Neoancient
  *
  */
 public class ContractMarket implements Serializable {
-
+	
 	/**
-	 *
+	 * 
 	 */
 	private static final long serialVersionUID = 1303462872220110093L;
-
+	
 	public static int TYPE_ATBMONTHLY = 0;
 	//TODO: Implement a method that rolls each day to see whether a new contract appears or an offer disappears
-
+	
 	public final static int CLAUSE_COMMAND = 0;
 	public final static int CLAUSE_SALVAGE = 1;
 	public final static int CLAUSE_SUPPORT = 2;
@@ -72,12 +72,12 @@ public class ContractMarket implements Serializable {
 	public final static int CLAUSE_NUM = 4;
 
 	private int method = TYPE_ATBMONTHLY;
-
+	
 	private ArrayList<Contract> contracts;
 	private int lastId = 0;
 	private HashMap<Integer, Contract> contractIds;
 	private HashMap<Integer, ClauseMods> clauseMods;
-
+	
 	/* It is possible to call addFollowup more than once for the
 	 * same contract by canceling the dialog and running it again;
 	 * this is the easiest place to track it to prevent
@@ -93,35 +93,34 @@ public class ContractMarket implements Serializable {
 		clauseMods = new HashMap<Integer, ClauseMods>();
 		followupContracts = new HashMap<Integer, Integer>();
 	}
-
+	
 	public ArrayList<Contract> getContracts() {
 		return contracts;
 	}
-
+	
 	public void removeContract(Contract c) {
 		contracts.remove(c);
 		contractIds.remove(c.getId());
 		clauseMods.remove(c.getId());
 		followupContracts.remove(c.getId());
 	}
-
+	
 	public AtBContract addAtBContract(Campaign campaign) {
 		AtBContract c = generateAtBContract(campaign, campaign.getUnitRatingMod());
-		if (c != null) {
-			contracts.add(c);
-		}
+		contracts.add(c);
 		return c;
 	}
-
-	public int getRerollsUsed(Contract c, int clause) {
+	
+	public int getRerolls(Contract c, int clause) {
 		if (null != clauseMods.get(c.getId())) {
-			return clauseMods.get(c.getId()).rerollsUsed[clause];
+			return clauseMods.get(c.getId()).rerolls[clause];
 		}
 		return 0;
 	}
-
+	
 	public void rerollClause(AtBContract c, int clause, Campaign campaign) {
-		if (null != clauseMods.get(c.getId())) {
+		if (null != clauseMods.get(c.getId()) &&
+				clauseMods.get(c.getId()).rerolls[clause] > 0) {
 			switch (clause) {
 			case CLAUSE_COMMAND:
 				rollCommandClause(c, clauseMods.get(c.getId()).mods[clause]);
@@ -136,15 +135,15 @@ public class ContractMarket implements Serializable {
 				rollSupportClause(c, clauseMods.get(c.getId()).mods[clause]);
 				break;
 			}
-			clauseMods.get(c.getId()).rerollsUsed[clause]++;
+			clauseMods.get(c.getId()).rerolls[clause]--;
 			c.calculateContract(campaign);
 		}
 	}
-
+	
 	public void generateContractOffers(Campaign campaign) {
 		generateContractOffers(campaign, false);
 	}
-
+	
 	public void generateContractOffers(Campaign campaign, boolean newCampaign) {
 		if ((method == TYPE_ATBMONTHLY && campaign.getCalendar().get(Calendar.DAY_OF_MONTH) == 1) ||
 				newCampaign) {
@@ -154,7 +153,7 @@ public class ContractMarket implements Serializable {
 			}
 
 			int unitRatingMod = campaign.getUnitRatingMod();
-
+			
 			for (Mission m : campaign.getMissions()) {
 				if (m instanceof AtBContract && m.isActive()) {
 					checkForSubcontracts(campaign, (AtBContract)m,
@@ -198,56 +197,50 @@ public class ContractMarket implements Serializable {
 				numContracts--;
 			}
 
+			//TODO: add hiring halls beyond planets that are starting points for Mercs
 			if (campaign.getFactionCode().equals("MERC") || campaign.getFactionCode().equals("PIR")) {
-				if (campaign.getAtBConfig().isHiringHall(campaign.getCurrentPlanet().getName(), campaign.getDate())) {
-					numContracts++;
-					/* Though the rules do not state these modifiers are mutually exclusive, the fact that the
-					 * distance of Galatea from a border means that it has no advantage for Mercs over border
-					 * worlds. Common sense dictates that worlds with hiring halls should not be
-					 * subject to the -1 for backwater/interior.
-					 */
-					if (inBackwater) {
-						numContracts++;
+				boolean hasHiringHall = false;
+				for (int era = 0; era < Era.E_NUM; era++) {
+					if (campaign.getCurrentPlanet().getName().equals(Faction.factions.get("MERC").getStartingPlanet(era))) {
+						hasHiringHall = true;
 					}
+				}
+				if (hasHiringHall) {
+					numContracts++;
 				}
 			} else {
 				/* Per IOps Beta, government units determine number of contracts as on a system with a great hall */
 				numContracts++;
 			}
 
-			/* If located on a faction's capital (interpreted as the starting planet for that faction),
-			 * generate one contract offer for that faction.
-			 */
-			for (Faction f : campaign.getCurrentPlanet().getCurrentFactions(campaign.getDate())) {
+			for (Faction f : Faction.factions.values()) {
 				try {
-					if (f.getStartingPlanet(campaign.getEra()).equals(campaign.getCurrentPlanet().getName())
-							&& RandomFactionGenerator.getInstance().getEmployerSet().contains(f.getShortName())) {
-						AtBContract c = generateAtBContract(campaign, f.getShortName(), unitRatingMod);
-						if (c != null) {
-							contracts.add(c);
-							break;
+					if (f.getStartingPlanet(campaign.getEra()).equals(campaign.getCurrentPlanet().getName())) {
+						for (Faction currentFaction : campaign.getCurrentPlanet().getCurrentFactions(campaign.getDate())) {
+							if (f.equals(currentFaction) && RandomFactionGenerator.getInstance().getEmployerSet().contains(currentFaction)) {
+								contracts.add(generateAtBContract(campaign, f.getShortName(), unitRatingMod));
+								break;
+							}
 						}
+						break;
 					}
 				} catch (ArrayIndexOutOfBoundsException e) {
-					//no starting planet in current era; continue to next faction
+					//no starting planet in current era; continue to next planet
 				}
 			}
-
+			
 			if (newCampaign) {
 				numContracts = Math.max(numContracts, 2);
 			}
-
+			
 			for (int i = 0; i < numContracts; i++) {
-				AtBContract c = generateAtBContract(campaign, unitRatingMod);
-				if (c != null) {
-					contracts.add(c);
-				}
+				contracts.add(generateAtBContract(campaign, unitRatingMod));
 			}
 	        if (campaign.getCampaignOptions().getContractMarketReportRefresh()) {
 	            campaign.addReport("<a href='CONTRACT_MARKET'>Contract market updated</a>");
 	        }
 		}
-	}
+	}	
 
 	private void checkForSubcontracts(Campaign campaign,
 			AtBContract contract, int unitRatingMod) {
@@ -258,51 +251,34 @@ public class ContractMarket implements Serializable {
 						((AtBContract)m).getParentContract() == contract) {
 					numSubcontracts++;
 				}
-			}
-			for (int i = numSubcontracts; i < unitRatingMod - 1; i++) {
-				int roll = Compute.d6(2);
-				if (roll >= 10) {
-					AtBContract sub = generateAtBSubcontract(campaign, contract, unitRatingMod);
-					if (sub.getEndingDate().before(contract.getEndingDate())) {
-						contracts.add(sub);
-					}
+				if (numSubcontracts >= unitRatingMod - 1) {
+					return;
+				}
+				if (Compute.d6(2) >= 10) {
+					contracts.add(generateAtBSubcontract(campaign, contract, unitRatingMod));
 				}
 			}
 		}
 	}
-
-	/* If no suitable planet can be found or no jump path to the planet can be calculated after
-	 * the indicated number of retries, this will return null.
-	 */
+	
 	private AtBContract generateAtBContract(Campaign campaign, int unitRatingMod) {
 		if (campaign.getFactionCode().equals("MERC")) {
 			if (null == campaign.getRetainerEmployerCode()) {
-				int retries = 3;
-				AtBContract retVal = null;
-				while (retries > 0 && retVal == null) {
-					retVal = generateAtBContract(campaign,
-							RandomFactionGenerator.getInstance().getEmployer(),
-							unitRatingMod, 0);
-					retries--;
-				}
-				return retVal;
+				return generateAtBContract(campaign,
+						RandomFactionGenerator.getInstance().getEmployer(),
+						unitRatingMod);
 			} else {
 				return generateAtBContract(campaign,
-						campaign.getRetainerEmployerCode(), unitRatingMod, 3);
+						campaign.getRetainerEmployerCode(), unitRatingMod);
 			}
 		} else {
 			return generateAtBContract(campaign,
-					campaign.getFactionCode(), unitRatingMod, 3);
+					campaign.getFactionCode(), unitRatingMod);
 		}
 	}
-
+	
 	private AtBContract generateAtBContract(Campaign campaign,
 			String employer, int unitRatingMod) {
-		return generateAtBContract(campaign, employer, unitRatingMod, 3);
-	}
-
-	private AtBContract generateAtBContract(Campaign campaign,
-			String employer, int unitRatingMod, int retries) {
 		AtBContract contract = new AtBContract("New Contract");
         lastId++;
         contract.setId(lastId);
@@ -317,7 +293,7 @@ public class ContractMarket implements Serializable {
 		contract.setEmployerCode(employer, campaign.getEra());
 		contract.setMissionType(findAtBMissionType(unitRatingMod,
 				RandomFactionGenerator.getInstance().isISMajorPower(contract.getEmployerCode())));
-
+		
 		if (contract.getMissionType() == AtBContract.MT_PIRATEHUNTING)
 			contract.setEnemyCode("PIR");
 		else if (contract.getMissionType() == AtBContract.MT_RIOTDUTY)
@@ -329,7 +305,7 @@ public class ContractMarket implements Serializable {
 		if (contract.getMissionType() == AtBContract.MT_GARRISONDUTY && contract.getEnemyCode().equals("REB")) {
 			contract.setMissionType(AtBContract.MT_RIOTDUTY);
 		}
-
+		
 		/* Addition to AtB rules: factions which are generally neutral
 		 * (ComStar, Mercs not under contract) are more likely to have garrison-type
 		 * contracts and less likely to have battle-type contracts unless at war.
@@ -344,9 +320,9 @@ public class ContractMarket implements Serializable {
 			}
 		}
 
-		boolean isAttacker = (contract.getMissionType() == AtBContract.MT_PLANETARYASSAULT ||
-				contract.getMissionType() >= AtBContract.MT_PLANETARYASSAULT ||
-				(contract.getMissionType() == AtBContract.MT_RELIEFDUTY && Compute.d6() < 4) ||
+		boolean isAttacker = (contract.getMissionType() == AtBContract.MT_PLANETARYASSAULT || 
+				contract.getMissionType() >= AtBContract.MT_PLANETARYASSAULT || 
+				(contract.getMissionType() == AtBContract.MT_RELIEFDUTY && Compute.d6() < 4) || 
 				contract.getEnemyCode().equals("REB"));
 		if (isAttacker) {
 			contract.setPlanetName(RandomFactionGenerator.getInstance().getMissionTarget(contract.getEmployerCode(), contract.getEnemyCode(), campaign.getDate()));
@@ -356,24 +332,7 @@ public class ContractMarket implements Serializable {
 		if (contract.getPlanetName() == null) {
 			MekHQ.logError("Could not find contract location for " +
 					contract.getEmployerCode() + " vs. " + contract.getEnemyCode());
-			if (retries > 0) {
-				return generateAtBContract(campaign, employer, unitRatingMod, retries - 1);
-			} else {
-				return null;
-			}
-		}
-		JumpPath jp = null;
-		try {
-			jp = campaign.calculateJumpPath(campaign.getCurrentPlanetName(), contract.getPlanetName());
-		} catch (NullPointerException ex) {
-			// could not calculate jump path; leave jp null
-		}
-		if (jp == null) {
-			if (retries > 0) {
-				return generateAtBContract(campaign, employer, unitRatingMod, retries - 1);
-			} else {
-				return null;
-			}			
+			contract.setPlanetName("Terra");
 		}
 
 		setAllyRating(contract, isAttacker, campaign.getCalendar().get(Calendar.YEAR));
@@ -383,14 +342,14 @@ public class ContractMarket implements Serializable {
 			contract.setAllySkill(RandomSkillsGenerator.L_GREEN);
 			contract.setAllyQuality(IUnitRating.DRAGOON_F);
 		}
-
+		
 		contract.calculateLength(campaign.getCampaignOptions().getVariableContractLength());
 		setAtBContractClauses(contract, unitRatingMod, campaign);
-
+		
 		contract.calculatePaymentMultiplier(campaign);
 
 		contract.calculatePartsAvailabilityLevel(campaign);
-
+		
         contract.initContractDetails(campaign);
         contract.calculateContract(campaign);
 		return contract;
@@ -398,23 +357,9 @@ public class ContractMarket implements Serializable {
 
 	protected AtBContract generateAtBSubcontract(Campaign campaign,
 			AtBContract parent, int unitRatingMod) {
-		AtBContract contract = new AtBContract("New Subcontract");
-		contract.setEmployerCode(parent.getEmployerCode(), campaign.getEra());
-		contract.setMissionType(findAtBMissionType(unitRatingMod,
-				RandomFactionGenerator.getInstance().isISMajorPower(contract.getEmployerCode())));
-
-		if (contract.getMissionType() == AtBContract.MT_PIRATEHUNTING)
-			contract.setEnemyCode("PIR");
-		else if (contract.getMissionType() == AtBContract.MT_RIOTDUTY)
-			contract.setEnemyCode("REB");
-		else {
-			boolean rebsAllowed = contract.getMissionType() <= AtBContract.MT_RIOTDUTY;
-			contract.setEnemyCode(RandomFactionGenerator.getInstance().getEnemy(contract.getEmployerCode(), rebsAllowed));
-		}
-		if (contract.getMissionType() == AtBContract.MT_GARRISONDUTY && contract.getEnemyCode().equals("REB")) {
-			contract.setMissionType(AtBContract.MT_RIOTDUTY);
-		}
-
+		AtBContract contract = generateAtBContract(campaign,
+				parent.getEmployerCode(), unitRatingMod);
+		contract.setName("New Subcontract");
 		contract.setParentContract(parent);
         contract.initContractDetails(campaign);
 		lastId++;
@@ -425,7 +370,7 @@ public class ContractMarket implements Serializable {
          * takes place in the same planet/sector. Rebels and pirates can
          * appear anywhere, but others should be limited to what's within a
          * jump. */
-
+        
         /*TODO: When MekHQ gets the capability of splitting the unit to
          * different locations, this restriction can be lessened or lifted.
          */
@@ -445,20 +390,8 @@ public class ContractMarket implements Serializable {
         		contract.setEnemyCode(parent.getEnemyCode());
         	}
         }
-		boolean isAttacker = (contract.getMissionType() == AtBContract.MT_PLANETARYASSAULT ||
-				contract.getMissionType() >= AtBContract.MT_PLANETARYASSAULT ||
-				(contract.getMissionType() == AtBContract.MT_RELIEFDUTY && Compute.d6() < 4) ||
-				contract.getEnemyCode().equals("REB"));
         contract.setPlanetName(parent.getPlanetName());
-		setAllyRating(contract, isAttacker, campaign.getCalendar().get(Calendar.YEAR));
-		setEnemyRating(contract, isAttacker, campaign.getCalendar().get(Calendar.YEAR));
-
-		if (contract.getMissionType() == AtBContract.MT_CADREDUTY) {
-			contract.setAllySkill(RandomSkillsGenerator.L_GREEN);
-			contract.setAllyQuality(IUnitRating.DRAGOON_F);
-		}
-		contract.calculateLength(campaign.getCampaignOptions().getVariableContractLength());
-
+        
         contract.setCommandRights(Math.max(parent.getCommandRights() - 1,
         		Contract.COM_INTEGRATED));
         contract.setSalvageExchange(parent.isSalvageExchange());
@@ -473,7 +406,7 @@ public class ContractMarket implements Serializable {
         	contract.setBattleLossComp(parent.getBattleLossComp() - 20);
 		}
         contract.setTransportComp(100);
-
+		
 		contract.calculatePaymentMultiplier(campaign);
 		contract.calculatePartsAvailabilityLevel(campaign);
         contract.calculateContract(campaign);
@@ -486,8 +419,8 @@ public class ContractMarket implements Serializable {
 		if (followupContracts.values().contains(contract.getId())) {
 			return;
 		}
-		AtBContract followup = new AtBContract("Followup Contract");
-		contract.setEmployerCode(contract.getEmployerCode(), campaign.getEra());
+		AtBContract followup = generateAtBContract(campaign,
+				contract.getEmployerCode(), campaign.getUnitRatingMod());
 		followup.setEnemyCode(contract.getEnemyCode());
 		followup.setPlanetName(contract.getPlanetName());
 		switch (contract.getMissionType()) {
@@ -501,23 +434,12 @@ public class ContractMarket implements Serializable {
 			followup.setMissionType(AtBContract.MT_GARRISONDUTY);
 			break;
 		}
-		followup.setAllySkill(contract.getAllySkill());
-		followup.setAllyQuality(contract.getAllyQuality());
-		followup.setEnemySkill(contract.getEnemySkill());
-		followup.setEnemyQuality(contract.getEnemyQuality());
-		followup.calculateLength(campaign.getCampaignOptions().getVariableContractLength());
-		setAtBContractClauses(followup, campaign.getUnitRatingMod(), campaign);
-
-		followup.calculatePaymentMultiplier(campaign);
-
-		followup.calculatePartsAvailabilityLevel(campaign);
-
         followup.initContractDetails(campaign);
         followup.calculateContract(campaign);
 		lastId++;
 		followup.setId(lastId);
 		contractIds.put(lastId, followup);
-
+		
 		contracts.add(followup);
 		followupContracts.put(followup.getId(), contract.getId());
 	}
@@ -544,7 +466,7 @@ public class ContractMarket implements Serializable {
 		}
 		return table[majorPower?0:1][roll - 2];
 	}
-
+	
 	public void setAllyRating(AtBContract contract, boolean isAttacker, int year) {
 		int mod = 0;
 		if (contract.getEnemyCode().equals("REB") ||
@@ -580,7 +502,7 @@ public class ContractMarket implements Serializable {
 		}
 		contract.setAllyQuality(getQualityRating(Compute.d6(2) + mod));
 	}
-
+	
 	public void setEnemyRating(AtBContract contract, boolean isAttacker, int year) {
 		int mod = 0;
 		if (contract.getEnemyCode().equals("REB") ||
@@ -606,7 +528,7 @@ public class ContractMarket implements Serializable {
 		}
 		contract.setEnemyQuality(getQualityRating(Compute.d6(2) + mod));
 	}
-
+	
 	protected int getSkillRating(int roll) {
 		if (roll <= 5) return RandomSkillsGenerator.L_GREEN;
 		if (roll <= 9) return RandomSkillsGenerator.L_REG;
@@ -621,7 +543,7 @@ public class ContractMarket implements Serializable {
 		if (roll == 11) return IUnitRating.DRAGOON_B;
 		return IUnitRating.DRAGOON_A;
 	}
-	
+
 	protected void setAtBContractClauses(AtBContract contract, int unitRatingMod, Campaign campaign) {
 		ClauseMods mods = new ClauseMods();
 		clauseMods.put(contract.getId(), mods);
@@ -631,15 +553,50 @@ public class ContractMarket implements Serializable {
 		 * assignment of multiple admins to each role. Therefore we go
 		 * through all the admins and for each role select the one with
 		 * the highest admin skill, or higher negotiation if the admin
-		 * skills are equal.
+		 * skills are equal. 
 		 */
-		Person adminCommand = campaign.findBestInRole(Person.T_ADMIN_COM, SkillType.S_ADMIN, SkillType.S_NEG);
-		Person adminTransport = campaign.findBestInRole(Person.T_ADMIN_TRA, SkillType.S_ADMIN, SkillType.S_NEG);
-		Person adminLogistics = campaign.findBestInRole(Person.T_ADMIN_LOG, SkillType.S_ADMIN, SkillType.S_NEG);
-		int adminCommandExp = (adminCommand == null)?SkillType.EXP_ULTRA_GREEN:adminCommand.getSkill(SkillType.S_ADMIN).getExperienceLevel();
-		int adminTransportExp = (adminTransport == null)?SkillType.EXP_ULTRA_GREEN:adminTransport.getSkill(SkillType.S_ADMIN).getExperienceLevel();
-		int adminLogisticsExp = (adminLogistics == null)?SkillType.EXP_ULTRA_GREEN:adminLogistics.getSkill(SkillType.S_ADMIN).getExperienceLevel();
-
+		int adminCommand = SkillType.EXP_ULTRA_GREEN;
+		int adminTransport = SkillType.EXP_ULTRA_GREEN;
+		int adminLogistics = SkillType.EXP_ULTRA_GREEN;
+		for (Person p :campaign.getAdmins()) {
+			if ((p.getPrimaryRole() == Person.T_ADMIN_COM ||
+					p.getSecondaryRole() == Person.T_ADMIN_COM) &&
+					p.getSkill(SkillType.S_ADMIN).getExperienceLevel() >= adminCommand) {
+				adminCommand = p.getSkill(SkillType.S_ADMIN).getExperienceLevel();
+				if (null != p.getSkill(SkillType.S_NEG)) {
+					if (p.getSkill(SkillType.S_ADMIN).getExperienceLevel() == adminCommand) {
+						mods.rerolls[CLAUSE_COMMAND] = Math.max(p.getSkill(SkillType.S_NEG).getLevel(), mods.rerolls[CLAUSE_COMMAND]);
+					} else {
+						mods.rerolls[CLAUSE_COMMAND] = p.getSkill(SkillType.S_NEG).getLevel();
+					}
+				}
+			}
+			if ((p.getPrimaryRole() == Person.T_ADMIN_TRA ||
+					p.getSecondaryRole() == Person.T_ADMIN_TRA) &&
+					p.getSkill(SkillType.S_ADMIN).getExperienceLevel() >= adminTransport) {
+				adminTransport = p.getSkill(SkillType.S_ADMIN).getExperienceLevel();
+				if (null != p.getSkill(SkillType.S_NEG)) {
+					if (p.getSkill(SkillType.S_ADMIN).getExperienceLevel() == adminTransport) {
+						mods.rerolls[CLAUSE_TRANSPORT] = Math.max(p.getSkill(SkillType.S_NEG).getLevel(), mods.rerolls[CLAUSE_TRANSPORT]);
+					} else {
+						mods.rerolls[CLAUSE_TRANSPORT] = p.getSkill(SkillType.S_NEG).getLevel();
+					}
+				}
+			}
+			if ((p.getPrimaryRole() == Person.T_ADMIN_LOG ||
+					p.getSecondaryRole() == Person.T_ADMIN_LOG) &&
+					p.getSkill(SkillType.S_ADMIN).getExperienceLevel() >= adminLogistics) {
+				adminLogistics = p.getSkill(SkillType.S_ADMIN).getExperienceLevel();
+				if (null != p.getSkill(SkillType.S_NEG)) {
+					if (p.getSkill(SkillType.S_ADMIN).getExperienceLevel() == adminLogistics) {
+						mods.rerolls[CLAUSE_SUPPORT] = Math.max(p.getSkill(SkillType.S_NEG).getLevel(), mods.rerolls[CLAUSE_SUPPORT]);
+					} else {
+						mods.rerolls[CLAUSE_SUPPORT] = p.getSkill(SkillType.S_NEG).getLevel();
+					}
+				}
+			}
+		}
+		
 		/* Treat government units like merc units that have a retainer contract */
 		if ((!campaign.getFactionCode().equals("MERC") &&
 				!campaign.getFactionCode().equals("PIR")) ||
@@ -647,8 +604,10 @@ public class ContractMarket implements Serializable {
 			for (int i = 0; i < CLAUSE_NUM; i++) {
 				mods.mods[i]++;
 			}
+			// Command is fixed at integrated
+			mods.rerolls[CLAUSE_COMMAND] = 0;
 		}
-
+		
 		if (campaign.getCampaignOptions().isMercSizeLimited() &&
 				campaign.getFactionCode().equals("MERC")) {
 			int max = (unitRatingMod + 1) * 12;
@@ -658,12 +617,12 @@ public class ContractMarket implements Serializable {
 				numMods--;
 			}
 		}
-
-		mods.mods[CLAUSE_COMMAND] = adminCommandExp - SkillType.EXP_REGULAR;
+		
+		mods.mods[CLAUSE_COMMAND] = adminCommand - SkillType.EXP_REGULAR;
 		mods.mods[CLAUSE_SALVAGE] = 0;
-		mods.mods[CLAUSE_TRANSPORT] = adminTransportExp - SkillType.EXP_REGULAR;
-		mods.mods[CLAUSE_SUPPORT] = adminLogisticsExp - SkillType.EXP_REGULAR;
-		if (unitRatingMod >= IUnitRating.DRAGOON_A) {
+		mods.mods[CLAUSE_TRANSPORT] = adminTransport - SkillType.EXP_REGULAR;
+		mods.mods[CLAUSE_SUPPORT] = adminLogistics - SkillType.EXP_REGULAR;
+		if (unitRatingMod >= IUnitRating.DRAGOON_A) { 
 			mods.mods[Compute.randomInt(4)] += 2;
 			mods.mods[Compute.randomInt(4)] += 2;
 		} else if (unitRatingMod == IUnitRating.DRAGOON_B) {
@@ -674,7 +633,7 @@ public class ContractMarket implements Serializable {
 		} else if (unitRatingMod <= IUnitRating.DRAGOON_F) {
 			mods.mods[Compute.randomInt(4)] -= 1;
 		}
-
+		
 		if (Faction.getFaction(contract.getEnemyCode()).isClan() &&
 				!Faction.getFaction(contract.getEmployerCode()).isClan()) {
 			for (int i = 0; i < 4; i++)
@@ -686,16 +645,16 @@ public class ContractMarket implements Serializable {
 			if (contract.getEnemySkill() == SkillType.EXP_ELITE)
 				mods.mods[Compute.randomInt(4)] += 1;
 		}
-
+		
 		int[][] missionMods = {
 			{1, 0, 1, 0}, {0, 1, -1, -3}, {-3, 0, 2, 1}, {-2, 1, -1, -1},
 			{-2, 0, 2, 3}, {-1, 1, 1, 1}, {-2, 3, -2, -1}, {2, 2, -1, -1},
 			{0, 2, 2, 1}, {-1, 0, 1, 2}, {-1, -2, 1, -1}, {-1, -1, 2, 1}
 		};
 		for (int i = 0; i < 4; i++) {
-			mods.mods[i] += missionMods[contract.getMissionType()][i];
+			mods.mods[i] = missionMods[contract.getMissionType()][i];
 		}
-
+		
 		if (RandomFactionGenerator.getInstance().isISMajorPower(contract.getEmployerCode())) {
 			mods.mods[CLAUSE_SALVAGE] += -1;
 			mods.mods[CLAUSE_TRANSPORT] += 1;
@@ -715,7 +674,7 @@ public class ContractMarket implements Serializable {
 			mods.mods[CLAUSE_SUPPORT] += -1;
 			mods.mods[CLAUSE_TRANSPORT] += 0;
 		}
-
+		
 		if (campaign.getFactionCode().equals("MERC")) {
 			rollCommandClause(contract, mods.mods[CLAUSE_COMMAND]);
 		} else {
@@ -736,18 +695,17 @@ public class ContractMarket implements Serializable {
 
 	private void rollSalvageClause(AtBContract contract, int mod) {
 		contract.setSalvageExchange(false);
-		int roll = Math.min(Compute.d6(2) + mod, 13);
-		if (roll < 2) {
-			contract.setSalvagePct(0);
-		} else if (roll < 4) {
+		int roll = Compute.d6(2) + mod;
+		if (roll < 4) contract.setSalvagePct(0);
+		else if (roll < 4) {
 			contract.setSalvageExchange(true);
 			int r;
 			do {
 				r = Compute.d6(2);
 			} while (r < 4);
-			contract.setSalvagePct(Math.min((r - 3) * 10, 100));
+			contract.setSalvagePct((roll - 3) * 10);
 		} else {
-			contract.setSalvagePct(Math.min((roll - 3) * 10, 100));
+			contract.setSalvagePct((roll - 3) * 10);
 		}
 	}
 
@@ -755,15 +713,10 @@ public class ContractMarket implements Serializable {
 		int roll = Compute.d6(2) + mod;
 		contract.setStraightSupport(0);
 		contract.setBattleLossComp(0);
-		if (roll < 3) {
-		    contract.setStraightSupport(0);
-		} else if (roll < 8) {
-		    contract.setStraightSupport((roll - 2) * 20);
-		} else if (roll == 8) {
-		    contract.setBattleLossComp(10);
-		} else {
-		    contract.setBattleLossComp(Math.min((roll - 8) * 20, 100));
-		}
+		if (roll < 3) contract.setStraightSupport(0);
+		else if (roll < 8) contract.setStraightSupport((roll - 2) * 20);
+		else if (roll == 8) contract.setBattleLossComp(10);
+		else contract.setStraightSupport((roll - 8) * 20);
 	}
 
 	private void rollTransportClause(AtBContract contract, int mod) {
@@ -781,19 +734,16 @@ public class ContractMarket implements Serializable {
             c.writeToXml(pw1, indent + 1);
         }
         for (Integer key : clauseMods.keySet()) {
-        	if (!contracts.contains(key)) {
-        		continue;
-        	}
         	pw1.println(MekHqXmlUtil.indentStr(indent+1)
         			+ "<clauseMods id=\"" + key + "\">");
         	String rerolls = "";
         	String mods = "";
         	for (int i = 0; i < CLAUSE_NUM; i++) {
-        		rerolls += clauseMods.get(key).rerollsUsed[i] + ((i < CLAUSE_NUM - 1)?",":"");
+        		rerolls += clauseMods.get(key).rerolls[i] + ((i < CLAUSE_NUM - 1)?",":"");
         		mods += clauseMods.get(key).mods[i] + ((i < CLAUSE_NUM - 1)?",":"");
         	}
         	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent+2, "mods", mods);
-        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent+2, "rerollsUsed", rerolls);
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent+2, "rerolls", rerolls);
         	pw1.println(MekHqXmlUtil.indentStr(indent+1) + "</clauseMods>");
         }
         pw1.println(MekHqXmlUtil.indentStr(indent) + "</contractMarket>");
@@ -838,10 +788,10 @@ public class ContractMarket implements Serializable {
                 			for (int j = 0; j < s.length; j++) {
                 				cm.mods[j] = Integer.parseInt(s[j]);
                 			}
-                		} else if (wn3.getNodeName().equalsIgnoreCase("rerollsUsed")) {
+                		} else if (wn3.getNodeName().equalsIgnoreCase("rerolls")) {
                 			String [] s = wn3.getTextContent().split(",");
                 			for (int j = 0; j < s.length; j++) {
-                				cm.rerollsUsed[j] = Integer.parseInt(s[j]);
+                				cm.rerolls[j] = Integer.parseInt(s[j]);
                 			}
                 		}
                 	}
@@ -863,7 +813,7 @@ public class ContractMarket implements Serializable {
      * the random clause bonuses should be persistent.
      */
     public class ClauseMods {
-    	public int[] rerollsUsed = {0, 0, 0, 0};
+    	public int[] rerolls = {0, 0, 0, 0};
     	public int[] mods = {0, 0, 0, 0};
     }
 }

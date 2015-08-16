@@ -52,7 +52,6 @@ import megamek.common.SmallCraft;
 import megamek.common.Tank;
 import megamek.common.TargetRoll;
 import megamek.common.VTOL;
-import megamek.common.annotations.Nullable;
 import megamek.common.options.IOption;
 import megamek.common.options.IOptionGroup;
 import megamek.common.options.PilotOptions;
@@ -64,7 +63,6 @@ import mekhq.Version;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.CampaignOptions;
 import mekhq.campaign.LogEntry;
-import mekhq.campaign.parts.Part;
 import mekhq.campaign.unit.Unit;
 import mekhq.campaign.work.IAcquisitionWork;
 import mekhq.campaign.work.IMedicalWork;
@@ -370,7 +368,6 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
 
     public void setPrisoner() {
         prisonerStatus = PRISONER_YES;
-        setRankNumeric(Ranks.RANK_PRISONER);
     }
 
     public boolean isBondsman() {
@@ -382,7 +379,6 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
 
     public void setBondsman() {
         prisonerStatus = PRISONER_BONDSMAN;
-        setRankNumeric(Ranks.RANK_BONDSMAN);
     }
 
     public boolean isFree() {
@@ -872,7 +868,7 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
 
 	public Person birth() {
 		Person baby = campaign.newPerson(T_NONE);
-		baby.setDependent(true);
+
 		UUID tmpAncID = null;
 
 		// Find already existing ancestor set of these parents
@@ -1274,10 +1270,6 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
 	        		+ originalUnitId.toString()
 	        		+ "</originalUnitId>");
         }
-        pw1.println(MekHqXmlUtil.indentStr(indent + 1)
-                + "<acquisitions>"
-                + acquisitions
-                + "</acquisitions>");
        pw1.println(MekHqXmlUtil.indentStr(indent) + "</person>");
     }
 
@@ -1327,8 +1319,6 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
                     retVal.primaryRole = Integer.parseInt(wn2.getTextContent());
                 } else if (wn2.getNodeName().equalsIgnoreCase("secondaryRole")) {
                     retVal.secondaryRole = Integer.parseInt(wn2.getTextContent());
-                } else if (wn2.getNodeName().equalsIgnoreCase("acquisitions")) {
-                    retVal.acquisitions = Integer.parseInt(wn2.getTextContent());
                 } else if (wn2.getNodeName().equalsIgnoreCase("primaryDesignator")) {
                     retVal.primaryDesignator = Integer.parseInt(wn2.getTextContent());
                 } else if (wn2.getNodeName().equalsIgnoreCase("secondaryDesignator")) {
@@ -1699,14 +1689,9 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
     }
 
     public int getRankLevel() {
-    	// If we're somehow above the max level for this rank, drop to that level
-        int profession = getProfession();
-        while (profession != Ranks.RPROF_MW && getRanks().isEmptyProfession(profession)) {
-            profession = getRanks().getAlternateProfession(profession);
-        }
-
-    	if (rankLevel > getRank().getRankLevels(profession)) {
-    		rankLevel = getRank().getRankLevels(profession);
+    	// If we're somehow about the max level for this rank, drop to that level
+    	if (rankLevel > getRank().getRankLevels(getProfession())) {
+    		rankLevel = getRank().getRankLevels(getProfession());
     	}
 
         return rankLevel;
@@ -1863,20 +1848,7 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
         switch (role) {
             case T_MECHWARRIOR:
                 if (hasSkill(SkillType.S_GUN_MECH) && hasSkill(SkillType.S_PILOT_MECH)) {
-					/* Attempt to use higher precision averaging, but if it doesn't provide a clear result
-					due to non-standard experience thresholds then fall back on lower precision averaging
-					See Bug #140 */
-					if(campaign.getCampaignOptions().useAltQualityAveraging()) {
-						int rawScore = (int) Math.floor(
-							(getSkill(SkillType.S_GUN_MECH).getLevel() + getSkill(SkillType.S_PILOT_MECH).getLevel()) / 2.0
-						);
-						if(getSkill(SkillType.S_GUN_MECH).getType().getExperienceLevel(rawScore) ==
-							getSkill(SkillType.S_PILOT_MECH).getType().getExperienceLevel(rawScore)) {
-							return getSkill(SkillType.S_GUN_MECH).getType().getExperienceLevel(rawScore);
-						}
-					}
-
-					return (int) Math.floor((getSkill(SkillType.S_GUN_MECH).getExperienceLevel()
+                    return (int) Math.floor((getSkill(SkillType.S_GUN_MECH).getExperienceLevel()
                                              + getSkill(SkillType.S_PILOT_MECH).getExperienceLevel()) / 2.0);
                 } else {
                     return -1;
@@ -1907,51 +1879,21 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
                 }
             case T_AERO_PILOT:
                 if (hasSkill(SkillType.S_GUN_AERO) && hasSkill(SkillType.S_PILOT_AERO)) {
-					if(campaign.getCampaignOptions().useAltQualityAveraging()) {
-						int rawScore = (int) Math.floor(
-							(getSkill(SkillType.S_GUN_AERO).getLevel() + getSkill(SkillType.S_PILOT_AERO).getLevel()) / 2.0
-						);
-						if(getSkill(SkillType.S_GUN_AERO).getType().getExperienceLevel(rawScore) ==
-							getSkill(SkillType.S_PILOT_AERO).getType().getExperienceLevel(rawScore)) {
-							return getSkill(SkillType.S_GUN_AERO).getType().getExperienceLevel(rawScore);
-						}
-					}
-
-					return (int) Math.floor((getSkill(SkillType.S_GUN_AERO).getExperienceLevel()
-												 + getSkill(SkillType.S_PILOT_AERO).getExperienceLevel()) / 2.0);
+                    return (int) Math.floor((getSkill(SkillType.S_GUN_AERO).getExperienceLevel()
+                                             + getSkill(SkillType.S_PILOT_AERO).getExperienceLevel()) / 2.0);
                 } else {
                     return -1;
                 }
             case T_CONV_PILOT:
                 if (hasSkill(SkillType.S_GUN_JET) && hasSkill(SkillType.S_PILOT_JET)) {
-					if(campaign.getCampaignOptions().useAltQualityAveraging()) {
-						int rawScore = (int) Math.floor(
-							(getSkill(SkillType.S_GUN_JET).getLevel() + getSkill(SkillType.S_PILOT_JET).getLevel()) / 2.0
-						);
-						if(getSkill(SkillType.S_GUN_JET).getType().getExperienceLevel(rawScore) ==
-							getSkill(SkillType.S_PILOT_JET).getType().getExperienceLevel(rawScore)) {
-							return getSkill(SkillType.S_GUN_JET).getType().getExperienceLevel(rawScore);
-						}
-					}
-
-					return (int) Math.floor((getSkill(SkillType.S_GUN_JET).getExperienceLevel()
+                    return (int) Math.floor((getSkill(SkillType.S_GUN_JET).getExperienceLevel()
                                              + getSkill(SkillType.S_PILOT_JET).getExperienceLevel()) / 2.0);
                 } else {
                     return -1;
                 }
             case T_BA:
                 if (hasSkill(SkillType.S_GUN_BA) && hasSkill(SkillType.S_ANTI_MECH)) {
-					if(campaign.getCampaignOptions().useAltQualityAveraging()) {
-						int rawScore = (int) Math.floor(
-							(getSkill(SkillType.S_GUN_BA).getLevel() + getSkill(SkillType.S_ANTI_MECH).getLevel()) / 2.0
-						);
-						if(getSkill(SkillType.S_GUN_BA).getType().getExperienceLevel(rawScore) ==
-							getSkill(SkillType.S_ANTI_MECH).getType().getExperienceLevel(rawScore)) {
-							return getSkill(SkillType.S_GUN_BA).getType().getExperienceLevel(rawScore);
-						}
-					}
-
-					return (int) Math.floor((getSkill(SkillType.S_GUN_BA).getExperienceLevel()
+                    return (int) Math.floor((getSkill(SkillType.S_GUN_BA).getExperienceLevel()
                                              + getSkill(SkillType.S_ANTI_MECH).getExperienceLevel()) / 2.0);
                 } else {
                     return -1;
@@ -2257,7 +2199,7 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
     }
 
     @Override
-    public TargetRoll getAllMods(Person doctor) {
+    public TargetRoll getAllMods() {
         TargetRoll mods = new TargetRoll(getDifficulty(), "difficulty");
         return mods;
     }
@@ -2276,7 +2218,6 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
         return null != skills.get(skillName);
     }
 
-    @Nullable
     public Skill getSkill(String skillName) {
         return skills.get(skillName);
     }
@@ -2880,14 +2821,7 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
     }
 
     public String getTechDesc(boolean overtimeAllowed) {
-        return getTechDesc(overtimeAllowed, null);
-    }
-
-    public String getTechDesc(boolean overtimeAllowed, Part part) {
         String toReturn = "<html><font size='2'><b>" + getFullName() + "</b><br/>";
-        if (null != part && getTechUnitIDs().contains(part.getUnitId())) {
-            toReturn = "<html><font size='2' color='green'><b>@" + getFullName() + "</b><br/>";
-        }
         Skill mechSkill = getSkill(SkillType.S_TECH_MECH);
         Skill mechanicSkill = getSkill(SkillType.S_TECH_MECHANIC);
         Skill baSkill = getSkill(SkillType.S_TECH_BA);
@@ -2948,7 +2882,7 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
         if (unit.getEntity() instanceof BattleArmor) {
             return hasSkill(SkillType.S_TECH_BA);
         }
-        if (unit.getEntity() instanceof Tank || unit.getEntity() instanceof Infantry) {
+        if (unit.getEntity() instanceof Tank) {
             return hasSkill(SkillType.S_TECH_MECHANIC);
         }
         if (unit.getEntity() instanceof Dropship || unit.getEntity() instanceof Jumpship) {
@@ -3689,9 +3623,5 @@ public class Person implements Serializable, MekHqXmlSerializable, IMedicalWork 
     	shares += originalUnitTech;
 
     	return shares;
-    }
-
-    public boolean isDeadOrMIA() {
-    	return (status == S_KIA) || (status == S_MIA);
     }
 }

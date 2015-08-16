@@ -46,9 +46,6 @@ public class CampaignOptions implements Serializable {
     public final static int TECH_ADVANCED = 2;
     public final static int TECH_EXPERIMENTAL = 3;
     public final static int TECH_UNOFFICIAL = 4;
-    // This must always be the highest tech level in order to hide parts
-    // that haven't been invented yet, or that are completely extinct
-    public final static int TECH_UNKNOWN = 5;
 
     public final static int TRANSIT_UNIT_DAY = 0;
     public final static int TRANSIT_UNIT_WEEK = 1;
@@ -76,7 +73,6 @@ public class CampaignOptions implements Serializable {
     private boolean useAbilities;
     private boolean useEdge;
     private boolean useImplants;
-	private boolean altQualityAveraging;
     private int healWaitingPeriod;
     private int naturalHealingWaitingPeriod;
     private boolean useAdvancedMedical; // Unofficial
@@ -87,7 +83,6 @@ public class CampaignOptions implements Serializable {
     private int maxAcquisitions;
     private boolean useUnofficialProcreation;
     private boolean useUnofficialProcreationNoRelationship;
-    private boolean useTransfers;
 
     //personnel market related
     private boolean personnelMarketReportRefresh;
@@ -104,7 +99,6 @@ public class CampaignOptions implements Serializable {
 
     //tech and unit limits
     private boolean limitByYear;
-    private boolean disallowExtinctStuff;
     private boolean allowClanPurchases;
     private boolean allowISPurchases;
     private boolean allowCanonOnly;
@@ -169,8 +163,6 @@ public class CampaignOptions implements Serializable {
     private int repairSystem;
     private boolean useEraMods;
 	private boolean assignedTechFirst;
-	private boolean resetToFirstTech;
-	private int destroyPartTarget;
 
     //maintenance related
     private boolean checkMaintenance;
@@ -197,7 +189,7 @@ public class CampaignOptions implements Serializable {
 
     //random portraits related
     private boolean[] usePortraitForType;
-
+    
     //Against the Bot related
     private boolean useAtB;
     private boolean useAero;
@@ -217,7 +209,6 @@ public class CampaignOptions implements Serializable {
     private boolean sharesExcludeLargeCraft;
     private boolean sharesForAll;
     private boolean retirementRolls;
-    private boolean trackUnitFatigue;
     private boolean customRetirementMods;
     private boolean trackOriginalUnit;
     private boolean mercSizeLimited;
@@ -230,7 +221,6 @@ public class CampaignOptions implements Serializable {
     private boolean useWeatherConditions;
     private boolean useLightConditions;
     private boolean usePlanetaryConditions;
-    private boolean useAltMapgen;
     private boolean useLeadership;
     private boolean useStrategy;
     private int baseStrategyDeployment;
@@ -243,7 +233,7 @@ public class CampaignOptions implements Serializable {
     private boolean contractMarketReportRefresh;
     private boolean unitMarketReportRefresh;
     private int startGameDelay;
-
+    
 
     public CampaignOptions() {
         clanPriceModifier = 1.0;
@@ -251,7 +241,6 @@ public class CampaignOptions implements Serializable {
         repairSystem = REPAIR_SYSTEM_STRATOPS;
         useEraMods = false;
         assignedTechFirst = false;
-		resetToFirstTech = false;
         useUnitRating = true;
         useTactics = false;
         useInitBonus = false;
@@ -260,7 +249,6 @@ public class CampaignOptions implements Serializable {
         useAbilities = false;
         useEdge = false;
         useImplants = false;
-		altQualityAveraging = false;
         useAdvancedMedical = false;
         useDylansRandomXp = false;
         useQuirks = false;
@@ -271,11 +259,10 @@ public class CampaignOptions implements Serializable {
         payForOverhead = false;
         payForMaintain = false;
         payForTransport = false;
-        useLoanLimits = false;
+        useLoanLimits = true;
         sellUnits = false;
         sellParts = false;
         limitByYear = true;
-        disallowExtinctStuff = false;
         allowClanPurchases = true;
         allowISPurchases = true;
         allowCanonOnly = false;
@@ -307,8 +294,8 @@ public class CampaignOptions implements Serializable {
         idleXP = 0;
         targetIdleXP = 10;
         monthsIdleXP = 2;
-        contractNegotiationXP = 0;
-        adminWeeklyXP = 0;
+        contractNegotiationXP = 1;
+        adminWeeklyXP = 1;
         unitRatingMethod = UnitRatingMethod.INTERSTELLAR_OPS;
         waitingPeriod = 7;
         acquisitionSkill = S_TECH;
@@ -330,7 +317,6 @@ public class CampaignOptions implements Serializable {
         naturalHealingWaitingPeriod = 15;
         destroyByMargin = false;
         destroyMargin = 4;
-        destroyPartTarget = 10;
         maintenanceCycleDays = 7;
         maintenanceBonus = -1;
         useQualityMaintenance = true;
@@ -341,7 +327,6 @@ public class CampaignOptions implements Serializable {
         maxAcquisitions = 0;
         useUnofficialProcreation = false;
         useUnofficialProcreationNoRelationship = false;
-        useTransfers = true;
         personnelMarketReportRefresh = true;
         personnelMarketType = PersonnelMarket.TYPE_STRAT_OPS;
         personnelMarketRandomEliteRemoval = 10;
@@ -409,7 +394,6 @@ public class CampaignOptions implements Serializable {
         sharesForAll = false;
         retirementRolls = true;
         customRetirementMods = false;
-        trackUnitFatigue = false;
         trackOriginalUnit = false;
         mercSizeLimited = false;
     	regionalMechVariations = false;
@@ -420,7 +404,6 @@ public class CampaignOptions implements Serializable {
         useWeatherConditions = true;
     	useLightConditions = true;
     	usePlanetaryConditions = true;
-    	usePlanetaryConditions = false;
     	useLeadership = true;
     	useStrategy = true;
     	baseStrategyDeployment = 3;
@@ -484,21 +467,13 @@ public class CampaignOptions implements Serializable {
     public void setEraMods(boolean b) {
         this.useEraMods = b;
     }
-
+    
     public boolean useAssignedTechFirst() {
 		return assignedTechFirst;
 	}
 
 	public void setAssignedTechFirst(boolean assignedTechFirst) {
 		this.assignedTechFirst = assignedTechFirst;
-	}
-	
-	public boolean useResetToFirstTech() {
-		return resetToFirstTech;
-	}
-	
-	public void setResetToFirstTech(boolean resetToFirstTech) {
-		this.resetToFirstTech = resetToFirstTech;
 	}
 
     public boolean useDragoonRating() {
@@ -612,14 +587,6 @@ public class CampaignOptions implements Serializable {
     public void setImplants(boolean b) {
         this.useImplants = b;
     }
-	
-	public boolean useAltQualityAveraging() {
-		return altQualityAveraging;
-	}
-	
-	public void setAltQualityAveraging(boolean altQualityAveraging) {
-		this.altQualityAveraging = altQualityAveraging;
-	}
 
     public boolean useAdvancedMedical() {
         return useAdvancedMedical;
@@ -854,14 +821,6 @@ public class CampaignOptions implements Serializable {
     public void setLimitByYear(boolean b) {
         limitByYear = b;
     }
-    
-    public boolean disallowExtinctStuff() {
-        return disallowExtinctStuff;
-    }
-
-    public void setDisallowExtinctStuff(boolean b) {
-    	disallowExtinctStuff = b;
-    }
 
     public boolean allowClanPurchases() {
         return allowClanPurchases;
@@ -902,11 +861,11 @@ public class CampaignOptions implements Serializable {
     public void setUsePercentageMaint(boolean b) {
         usePercentageMaint = b;
     }
-
+    
     public boolean useInfantryDontCount() {
     	return infantryDontCount;
     }
-
+    
     public void setUseInfantryDontCount(boolean b) {
     	infantryDontCount = b;
     }
@@ -1205,14 +1164,6 @@ public class CampaignOptions implements Serializable {
     public void setDestroyMargin(int d) {
         destroyMargin = d;
     }
-    
-    public int getDestroyPartTarget() {
-        return destroyPartTarget;
-    }
-
-    public void setDestroyPartTarget(int d) {
-        destroyPartTarget = d;
-    }
 
     public boolean useRandomHitsForVees() {
         return useRandomHitsForVees;
@@ -1244,14 +1195,6 @@ public class CampaignOptions implements Serializable {
 
     public void setUseUnofficialProcreationNoRelationship(boolean b) {
     	useUnofficialProcreationNoRelationship = b;
-    }
-    
-    public boolean useTransfers() {
-    	return useTransfers;
-    }
-    
-    public void setUseTransfers(boolean b) {
-    	useTransfers = b;
     }
 
     public int getMinimumHitsForVees() {
@@ -1329,11 +1272,11 @@ public class CampaignOptions implements Serializable {
 	public void setUseTactics(boolean useTactics) {
 		this.useTactics = useTactics;
 	}
-
+	
 	public boolean getUseAtB() {
 		return useAtB;
 	}
-
+	
 	public void setUseAtB(boolean useAtB) {
 		this.useAtB = useAtB;
 	}
@@ -1353,11 +1296,11 @@ public class CampaignOptions implements Serializable {
 	public void setUseVehicles(boolean useVehicles) {
 		this.useVehicles = useVehicles;
 	}
-
+	
 	public boolean getClanVehicles() {
 		return clanVehicles;
 	}
-
+	
 	public void setClanVehicles(boolean clanVehicles) {
 		this.clanVehicles = clanVehicles;
 	}
@@ -1369,43 +1312,43 @@ public class CampaignOptions implements Serializable {
 	public void setDoubleVehicles(boolean doubleVehicles) {
 		this.doubleVehicles = doubleVehicles;
 	}
-
+	
 	public boolean getAdjustPlayerVehicles() {
 		return adjustPlayerVehicles;
 	}
-
+	
 	public int getOpforLanceTypeMechs() {
 		return opforLanceTypeMechs;
 	}
-
+	
 	public void setOpforLanceTypeMechs(int weight) {
 		opforLanceTypeMechs = weight;
 	}
-
+	
 	public int getOpforLanceTypeMixed() {
 		return opforLanceTypeMixed;
 	}
-
+	
 	public void setOpforLanceTypeMixed(int weight) {
 		opforLanceTypeMixed = weight;
 	}
-
+	
 	public int getOpforLanceTypeVehicles() {
 		return opforLanceTypeVehicles;
 	}
-
+	
 	public void setOpforLanceTypeVehicles(int weight) {
 		opforLanceTypeVehicles = weight;
 	}
-
+	
 	public boolean getOpforUsesVTOLs() {
 		return opforUsesVTOLs;
 	}
-
+	
 	public void setOpforUsesVTOLs(boolean vtol) {
 		opforUsesVTOLs = vtol;
 	}
-
+	
 	public void setAdjustPlayerVehicles(boolean adjust) {
 		adjustPlayerVehicles = adjust;
 	}
@@ -1417,19 +1360,19 @@ public class CampaignOptions implements Serializable {
 	public void setUseDropShips(boolean useDropShips) {
 		this.useDropShips = useDropShips;
 	}
-
+	
 	public int getSkillLevel() {
 		return skillLevel;
 	}
-
+	
 	public void setSkillLevel(int level) {
 		skillLevel = level;
 	}
-
+	
 	public boolean getAeroRecruitsHaveUnits() {
 		return aeroRecruitsHaveUnits;
 	}
-
+	
 	public void setAeroRecruitsHaveUnits(boolean haveUnits) {
 		aeroRecruitsHaveUnits = haveUnits;
 	}
@@ -1437,63 +1380,55 @@ public class CampaignOptions implements Serializable {
 	public boolean getUseShareSystem() {
 		return useShareSystem;
 	}
-
+	
 	public boolean getSharesExcludeLargeCraft() {
 		return sharesExcludeLargeCraft;
 	}
-
+	
 	public void setSharesExcludeLargeCraft(boolean exclude) {
 		sharesExcludeLargeCraft = exclude;
 	}
-
+	
 	public boolean getSharesForAll() {
 		return sharesForAll;
 	}
-
+	
 	public void setSharesForAll(boolean set) {
 		sharesForAll = set;
 	}
-
+	
 	public boolean doRetirementRolls() {
 		return retirementRolls;
 	}
-
+	
 	public void setRetirementRolls(boolean roll) {
 		retirementRolls = roll;
 	}
-
+	
 	public boolean getCustomRetirementMods() {
 		return customRetirementMods;
 	}
-
+	
 	public void setCustomRetirementMods(boolean mods) {
 		customRetirementMods = mods;
 	}
-
+	
 	public boolean getTrackOriginalUnit() {
 		return trackOriginalUnit;
 	}
-
+	
 	public void setTrackOriginalUnit(boolean track) {
 		trackOriginalUnit = track;
 	}
-
+	
 	public boolean isMercSizeLimited() {
 		return mercSizeLimited;
-	}
-
-	public boolean getTrackUnitFatigue() {
-		return trackUnitFatigue;
-	}
-	
-	public void setTrackUnitFatigue(boolean fatigue) {
-		trackUnitFatigue = fatigue;
 	}
 	
 	public void setMercSizeLimited(boolean limit) {
 		mercSizeLimited = limit;
 	}
-
+	
 	public void setUseShareSystem(boolean shares) {
 		useShareSystem = shares;
 	}
@@ -1509,11 +1444,11 @@ public class CampaignOptions implements Serializable {
 	public String[] getRATs() {
 		return rats;
 	}
-
+	
 	public void setRATs (String[] rats) {
 		this.rats = rats;
 	}
-
+	
 	public String[] getRATsNoEra() {
 		return ratsNoEra;
 	}
@@ -1521,15 +1456,15 @@ public class CampaignOptions implements Serializable {
 	public int getSearchRadius() {
 		return searchRadius;
 	}
-
+	
 	public void setSearchRadius(int radius) {
 		searchRadius = radius;
 	}
-
+	
 	public boolean getInstantUnitMarketDelivery() {
 		return instantUnitMarketDelivery;
 	}
-
+	
 	public void setInstantUnitMarketDelivery(boolean instant) {
 		instantUnitMarketDelivery = instant;
 	}
@@ -1541,11 +1476,11 @@ public class CampaignOptions implements Serializable {
 	public void setIntensity(double intensity) {
 		this.intensity = intensity;
 	}
-
+	
 	public boolean getVariableContractLength() {
 		return variableContractLength;
 	}
-
+	
 	public void setVariableContractLength(boolean variable) {
 		variableContractLength = variable;
 	}
@@ -1565,21 +1500,13 @@ public class CampaignOptions implements Serializable {
 	public void setUseLightConditions(boolean useLightConditions) {
 		this.useLightConditions = useLightConditions;
 	}
-
+	
 	public boolean getUsePlanetaryConditions() {
 		return usePlanetaryConditions;
 	}
-
+	
 	public void setUsePlanetaryConditions(boolean usePlanetaryConditions) {
 		this.usePlanetaryConditions = usePlanetaryConditions;
-	}
-
-	public boolean getUseAltMapgen() {
-		return useAltMapgen;
-	}
-
-	public void setUseAltMapgen(boolean useAltMapgen) {
-		this.useAltMapgen = useAltMapgen;
 	}
 
 	public boolean getUseLeadership() {
@@ -1621,7 +1548,7 @@ public class CampaignOptions implements Serializable {
 	public void setAdjustPaymentForStrategy(boolean adjustPaymentForStrategy) {
 		this.adjustPaymentForStrategy = adjustPaymentForStrategy;
 	}
-
+	
 	public boolean getRestrictPartsByMission() {
 		return restrictPartsByMission;
 	}
@@ -1629,27 +1556,27 @@ public class CampaignOptions implements Serializable {
 	public void setRestrictPartsByMission(boolean restrictPartsByMission) {
 		this.restrictPartsByMission = restrictPartsByMission;
 	}
-
+	
 	public boolean getLimitLanceWeight() {
 		return limitLanceWeight;
 	}
-
+	
 	public void setLimitLanceWeight(boolean limit) {
 		limitLanceWeight = limit;
 	}
-
+	
 	public boolean getLimitLanceNumUnits() {
 		return limitLanceNumUnits;
 	}
-
+	
 	public void setLimitLanceNumUnits(boolean limit) {
 		limitLanceNumUnits = limit;
 	}
-
+	
 	public boolean getUseAtBCapture() {
 		return useAtBCapture;
 	}
-
+	
 	public void setUseAtBCapture(boolean set) {
 		useAtBCapture = set;
 	}
@@ -1657,27 +1584,27 @@ public class CampaignOptions implements Serializable {
 	public boolean getContractMarketReportRefresh() {
 		return contractMarketReportRefresh;
 	}
-
+	
 	public void setContractMarketReportRefresh(boolean refresh) {
 		contractMarketReportRefresh = refresh;
 	}
-
+	
 	public boolean getUnitMarketReportRefresh() {
 		return unitMarketReportRefresh;
 	}
-
+	
 	public void setUnitMarketReportRefresh(boolean refresh) {
 		unitMarketReportRefresh = refresh;
 	}
-
+	
 	public int getStartGameDelay() {
 		return startGameDelay;
 	}
-
+	
 	public void setStartGameDelay(int delay) {
 		startGameDelay = delay;
 	}
-
+	
 	public void writeToXml(PrintWriter pw1, int indent) {
         pw1.println(MekHqXmlUtil.indentStr(indent) + "<campaignOptions>");
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "clanPriceModifier", clanPriceModifier); //private double
@@ -1689,7 +1616,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "unitRatingMethod", unitRatingMethod.getDescription());
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useEraMods", useEraMods);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "assignedTechFirst", assignedTechFirst);
-		MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "resetToFirstTech", resetToFirstTech);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useTactics", useTactics);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useInitBonus", useInitBonus);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useToughness", useToughness);
@@ -1697,7 +1623,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useAbilities", useAbilities);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useEdge", useEdge);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useImplants", useImplants);
-		MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "altQualityAveraging", altQualityAveraging);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useAdvancedMedical", useAdvancedMedical);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useDylansRandomXp", useDylansRandomXp);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useQuirks", useQuirks);
@@ -1730,7 +1655,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "contractNegotiationXP", contractNegotiationXP);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "adminWeeklyXP", adminWeeklyXP);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "limitByYear", limitByYear);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "disallowExtinctStuff", disallowExtinctStuff);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "allowClanPurchases", allowClanPurchases);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "allowISPurchases", allowISPurchases);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "allowCanonOnly", allowCanonOnly);
@@ -1759,7 +1683,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "naturalHealingWaitingPeriod", naturalHealingWaitingPeriod);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "destroyByMargin", destroyByMargin);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "destroyMargin", destroyMargin);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "destroyPartTarget", destroyPartTarget);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "maintenanceCycleDays", maintenanceCycleDays);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "maintenanceBonus", maintenanceBonus);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useQualityMaintenance", useQualityMaintenance);
@@ -1770,7 +1693,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "maxAcquisitions", maxAcquisitions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useUnofficialProcreation", useUnofficialProcreation);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useUnofficialProcreationNoRelationship", useUnofficialProcreationNoRelationship);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useTransfers", useTransfers);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "personnelMarketType", personnelMarketType);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "personnelMarketRandomEliteRemoval",
                                        personnelMarketRandomEliteRemoval);
@@ -1810,7 +1732,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "sharesForAll", sharesForAll);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "retirementRolls", retirementRolls);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "customRetirementMods", customRetirementMods);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "trackUnitFatigue", trackUnitFatigue);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "mercSizeLimited", mercSizeLimited);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "trackOriginalUnit", trackOriginalUnit);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "regionalMechVariations", regionalMechVariations);
@@ -1821,7 +1742,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useWeatherConditions", useWeatherConditions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useLightConditions", useLightConditions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "usePlanetaryConditions", usePlanetaryConditions);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useAltMapgen", useAltMapgen);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useLeadership", useLeadership);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useStrategy", useStrategy);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "baseStrategyDeployment", baseStrategyDeployment);
@@ -1834,7 +1754,7 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "contractMarketReportRefresh", contractMarketReportRefresh);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "unitMarketReportRefresh", unitMarketReportRefresh);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "startGameDelay", startGameDelay);
-
+        
         pw1.println(MekHqXmlUtil.indentStr(indent + 1)
                     + "<salaryTypeBase>"
                     + Utilities.printIntegerArray(salaryTypeBase)
@@ -1907,8 +1827,6 @@ public class CampaignOptions implements Serializable {
             	retVal.useEraMods = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("assignedTechFirst")) {
             	retVal.assignedTechFirst = Boolean.parseBoolean(wn2.getTextContent());
-			} else if (wn2.getNodeName().equalsIgnoreCase("resetToFirstTech")) {
-            	retVal.resetToFirstTech = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("useTactics")) {
                 retVal.useTactics = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("useInitBonus")) {
@@ -1923,8 +1841,6 @@ public class CampaignOptions implements Serializable {
                 retVal.useEdge = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("useImplants")) {
                 retVal.useImplants = Boolean.parseBoolean(wn2.getTextContent());
-			} else if (wn2.getNodeName().equalsIgnoreCase("altQualityAveraging")) {
-            	retVal.altQualityAveraging = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("useAdvancedMedical")) {
                 retVal.useAdvancedMedical = Boolean.parseBoolean(wn2.getTextContent());
             } else if (wn2.getNodeName().equalsIgnoreCase("useDylansRandomXp")) {
@@ -2049,12 +1965,6 @@ public class CampaignOptions implements Serializable {
                 } else {
                     retVal.limitByYear = false;
                 }
-            } else if (wn2.getNodeName().equalsIgnoreCase("disallowExtinctStuff")) {
-                if (wn2.getTextContent().equalsIgnoreCase("true")) {
-                    retVal.disallowExtinctStuff = true;
-                } else {
-                    retVal.disallowExtinctStuff = false;
-                }
             } else if (wn2.getNodeName().equalsIgnoreCase("allowClanPurchases")) {
                 if (wn2.getTextContent().equalsIgnoreCase("true")) {
                     retVal.allowClanPurchases = true;
@@ -2117,9 +2027,7 @@ public class CampaignOptions implements Serializable {
                 }
             } else if (wn2.getNodeName().equalsIgnoreCase("destroyMargin")) {
                 retVal.destroyMargin = Integer.parseInt(wn2.getTextContent().trim());
-            } else if (wn2.getNodeName().equalsIgnoreCase("destroyPartTarget")) {
-                retVal.destroyPartTarget = Integer.parseInt(wn2.getTextContent().trim());
-            }else if (wn2.getNodeName().equalsIgnoreCase("maintenanceCycleDays")) {
+            } else if (wn2.getNodeName().equalsIgnoreCase("maintenanceCycleDays")) {
                 retVal.maintenanceCycleDays = Integer.parseInt(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("maintenanceBonus")) {
                 retVal.maintenanceBonus = Integer.parseInt(wn2.getTextContent().trim());
@@ -2141,8 +2049,6 @@ public class CampaignOptions implements Serializable {
             	retVal.useUnofficialProcreation = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useUnofficialProcreationNoRelationship")) {
             	retVal.useUnofficialProcreationNoRelationship = Boolean.parseBoolean(wn2.getTextContent().trim());
-            } else if (wn2.getNodeName().equalsIgnoreCase("useTransfers")) {
-            	retVal.useTransfers = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useRandomHitsForVees")) {
                 if (wn2.getTextContent().equalsIgnoreCase("true")) {
                     retVal.useRandomHitsForVees = true;
@@ -2227,8 +2133,6 @@ public class CampaignOptions implements Serializable {
                 retVal.retirementRolls = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("customRetirementMods")) {
                 retVal.customRetirementMods = Boolean.parseBoolean(wn2.getTextContent().trim());
-            } else if (wn2.getNodeName().equalsIgnoreCase("trackUnitFatigue")) {
-                retVal.trackUnitFatigue = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("trackOriginalUnit")) {
                 retVal.trackOriginalUnit = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("mercSizeLimited")) {
@@ -2249,8 +2153,6 @@ public class CampaignOptions implements Serializable {
                 retVal.useLightConditions = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("usePlanetaryConditions")) {
                 retVal.usePlanetaryConditions = Boolean.parseBoolean(wn2.getTextContent().trim());
-            } else if (wn2.getNodeName().equalsIgnoreCase("useAltMapgen")) {
-                retVal.useAltMapgen = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useLeadership")) {
                 retVal.useLeadership = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useStrategy")) {

@@ -46,17 +46,9 @@ public class MissingProtomekJumpJet extends MissingPart {
     public MissingProtomekJumpJet(int tonnage, Campaign c) {
         super(tonnage, c);
         this.name = "Protomech Jump Jet";
+        this.time = 60;
+        this.difficulty = 0;
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
    
     @Override
     public double getTonnage() {
@@ -179,21 +171,6 @@ public class MissingProtomekJumpJet extends MissingPart {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		return 3055;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 
 }

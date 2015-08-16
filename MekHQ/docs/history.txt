@@ -1,246 +1,7 @@
 VERSION HISTORY
 ----------------------------------
-v0.3.17-dev (SVN)
 
-v0.3.16 (2015-08-15 19:40 UTC)
-+ Bug [#823]: NPE during 'Auto Resolve'
-+ Bug [#415]: Fighters and small craft have thrusters
-+ Bug [#698]: All BA armor is incorrectly set to clan tech
-+ Bug [#699]: BA armor may not be bought from the parts market
-+ Bug [#277]: BattleArmor costs
-+ Bug [#862]: Battle Armor Breaks Save Files
-+ Bug [#898]: BA suits not getting roll to avoid destruction
-+ re-added infantry weapons
-+ Major overhaul of BattleArmorSuit replacement to allow for sub-parts to follow main part
-+ fixed TechRating values for parts with IS_TW_ALL that should be ALLOWED_ALL
-+ Bug [#893]: can't get parts before year introduction from parts store
-+ added the ability to save and load campaign option presets
-+ Bug [#901]: mekhq.campaign.Campaign.newDay Error
-+ Bug: Protomek parts not showing up in repair bay by location
-+ Bug: Protomek leg location sending incorrect casting exception
-+ Bug: quad protos getting arm parts
-+ Bug: engine-less protos still have running MP
-+ Bug: updateConditions in ProtomekLocation not critting/uncritting things correctly
-+ Bug [#902]: Tank and Aero system parts not getting check for destruction
-+ Moved all equipment checks for destruction into Part.updateConditionFromEntity
-+ removed time and difficulty variables from Part, now tracked by specific methods in each part,
-	no need to always updateConditionFromEntity to switch
-+ target for equipment destruction from combat is now a customizable option
-+ Bug [#618]: Ammo bins cannot be replaced on mechs
-+ Bug: swapped out ammo is lost on ammo swap
-+ Bug [#577]: Incomplete Ammo Acquisition
-+ Bug: units not showing up in repair bay when set to salvage
-+ removed salvaging variable from Part, Part.isSalvaging() now determined by characteristics of unit
-+ reclassified BaArmor and ProtomekArmor as sub-classes of armor
-+ Bug: previous change made it possible for overnight tasks to do the wrong thing if unit repair/salvage status was switched
-+ Bug [#896]: Removing units from TO&E does not remove them from deployment
-+ Bug [#903]: [ATB] Retirement Sort by Cost Incorrect
-+ Splitting Models out of RetirementDefectionDialog
-+ Changed FormattedNumberSorter to use long instead of int
-+ Bug [#849]: Removing ammo from a design does not cause the corresponding ammo to appear in your warehouse
-+ Bug: cancel customization not available in unit context menu
-+ Bug [#857]: Refit kit does not remove parts from the warehouse when the refit is completed
-+ Bug [#602]: 0.3.6 warehouse graphical glitch
-+ Bug [#904]: Armor parts showing up as zero amount on refits
-+ Bug [#906]: Location specific armor parts showing up for refit after save and load
-+ Bug [#905]: Refit parts are reserved a day too late
-+ Bug [#843]: Ammo bin repair
-+ MegaMek.jar updated to 0.41.6 and MegaMekLab.jar updated to 0.1.42
-
-v0.3.15 (2015-08-04 10:50 UTC)
-+ Planetary faction updates
-+ Bug [#716]: Add Another Special Ability not Cancelled
-+ Bug [#884]: Shoulder/Hip Crits disappear
-+ Bug [#887]: Different Prices for Parts
-+ populate store with more jump jet options, change labels to indicate tonnage of unit for JJs
-+ Bug [#881]: Cannot reload Field Artillery ammo
-+ Bug [#873]: Right Torso location cannot be replaced without salvaging...
-+ Bug [#854]: Engines take extra damage after saving/reloading
-+ Bug: array index out of bounds on Faction.getFullName causing campaign option save fail
-+ Bug: trailing empty cells not collected by split method in faction generation resulting in some arrays being too short
-+ added array length safety check methods to Faction.getEraMods, Faction.getFullName, and Faction.getStartingPlanet
-    and incorrect data reported to log
-+ Bug [#829]: GM mode -> set XP for personnel does not work when attempting to set XP higher than 100
-    (IllegalArgumentException: setSelectedIndex: 0 out of bounds)
-+ Bug [#867]: Custom Vehicles w/ C3Master unable to network
-+ Bug [#348]: random skill error
-+ Bug [#826]: 2525 points of standard armor in the warehouse, but cannot replace standard armor on a marauder
-+ Bug [#814]: Fusion engine incorrectly in head location
-+ Bug [#415]: Fighters and small craft have thrusters
-+ Bug [#892]: Missing BA suit, MekHQ
-+ Updated MegaMek.jar to 0.41.5 and MegaMekLab.jar to 0.1.41
-
-v0.3.14 (2015-05-31 18:15 UTC)
-+ Entity last target and sensors now reset at end of game
-+ Bug: AtB contract generator does not generate additional contract at faction capital
-+ Patch [patches:#50]: Log Saver - Use Reassign instead of Remove/Assign
-+ Patch [patches:#49]: Refit: Tech Time Management
-+ Patch [patches:#45]: Marriage bugfix - Can marry the dead
-+ Patch [patches:#43]: Higher-precision quality averaging
-+ Bug [#140]: Mechwarrior Quality Bug
-+ Patch [patches:#42]: Show required lances for AtB contracts in market
-+ Patch [patches:#41]: Don't auto-deploy when force under repair
-+ Bug [#804]: [ATB] Scheduled repair tasks automatically fail if the mech is auto deployed to a pending battle
-+ Patch [patches:#38]: Procreation Birth correction
-+ Quirks saved in MM now properly save when MM is closed
-+ Bug: NoSuchElementException in Campaign.clearGameData
-+ Bug [#882]: Scenario resolution causes opfor recruitment
-+ Bug [#880]: NPE: Loading a saved campaign - Lance.java
-+ Bug [#874]: [ATB] Duplicate Prisoner Names
-+ Bug [#838]: "Use ammo by type" unofficial rule also works with ballistics
-+ Bug [#865]: NPE Dragoon's rating after GM mode change admin skill
-+ Bug [#883]: Missing procreation w/o relatioship option
-+ Bug: Phantom MegaMek servers left running on Load Game failures
-+ Planetary Update 38
-+ Planetary faction updates
-
-v0.3.13 (2015-04-19 21:29 UTC)
-+ Bug: Inappropriate mixing of string and integer in personnel table fields leads to class cast errors
-+ Bug: Compiling with JDK 7 breaks Mac releases
-+ Bug: MHQ doesn't save custom weapon sort orders when saving client settings
-+ Improve memory usage by only loading data used by AtB contract and battle generators
-        when AtB is enabled, dump when disabled
-	Implements:
-		+Feature [feature-requests:#264] ATB: Please add date ranges to the RAT descriptors
-+ Bug [#781]: AtB: Tech/Admin/Doctor XP costs are wrong when using "Use AtB Skills Option"
-+ Bug [#825]: [ATB] Contract incorrectly generated with 110% salvage
-+ Patch [patches:#44]: Hotfix for retirement screen not coming up
-	Fixes Bug [#817] Atb: Defection/retirement screen will not populate
-+ Feature: [AtB] Contract fatigue rules from v2.30
-+ Bug [#822]: [ATB] Base attack (defender) mission generated with no opfor due to a NPE
-+ Bug [#784]: Clan Aerospace Pilot Ranks
-+ Patch [patches:#39]: Assign Tech to Lance
-+ Bug: [AtB] NPE when generating unit market while RandomFactionGenerator's employer list
-	is empty (likely when campaign is set in Clan space)
-+ Bug [#788]: "Limit units/parts by year" does not work properly
-	+Also corrected failure to respect limits on tech base (IS/Clan)
-+ Bug: Aeros don't have their velocity reset in Campaign.clearGameData
-+ Changes to Infantry Costs doesn't use Alternate Cost anymore.
-+ Updates MegaMek and MegaMekLab Jar files.
-
-v0.3.12 (2015-02-12 15:45 UTC)
-+ Bug: OpFor personnel are captured, even when not selected as prisoner or bondsman
-+ Bug [#786]: AtB: Rank sort and prisoner rolls broken after battle
-+ Bug: Edit Unit buttons doing nothing for salvaged units
-+ Bug: Entities were not being correctly set on UnitStatuses
-+ Bug [#792]: Battle resolution does not start in MHQ after MM game
-    I've fixed the NPE, but this still leaves the root cause of the issue unknown
-    until questions in the ticket are answered. It would be best to fix that extraneous
-    issue as well.
-+ Bug [#749]: MM displays wrong year when launched from MHQ
-+ Bug [#756]: VTOL Repair Issue Causes Internal Structure to Go Over Max IS
-+ Bug [#790]: Heat sinks may not be purchased on intro tech level
-+ Bug [#791]: Admin skills - scrounge sort order incorrect
-+ Bug [#806]: Repair bay : Location filter is reset to "All" if you adjust the time of a task
-+ Bug [#799]: Repair bay : GM mode -> complete task becomes unavailable if location filters are used
-+ Patch [patches:#40]: After repair reset to the technician at the top of the list
-
-v0.3.11 (2015-01-28 18:00 UTC)
-+ Bug [#783]: Scenario Resolution, Unable to View Unit or Edit Unit
-+ Added logging output for when null clans exist because a new clan faction is created but not added to the clans.xml file
-+ Bug: NPE when resolving manually hits code to generate salvage statuses
-+ Bug: Parts showing up before they've been invented, and defaulting as IS intro tech level until they are invented
-+ Updated MegaMek.jar to 0.41.1 and MegaMekLab.jar to 0.1.37
-
-v0.3.10 (2015-01-22 22:15 UTC)
-+ Updated SubmitBug.html with corrected links and a new link for the bug reporting policy/howto
-+ Bug [#737]: ATB - Sacked Prisoner's get 50,000 C-bills
-+ Bug [#600]: ATB : Incorrect missions being generated
-+ Bug: Index out of bounds when resolving games where ASF are carrying certain types of bombs
-+ Bug: Possible NPE if RAT names change and are not updated in ratinfo.xml
-+ Bug: [#688]: ATB contract generation causes NPE
-+ Bug: (AtB) Incorrectly computes maximum number of subcontract offers
-	Only offer subcontracts that do not last beyond the ending date of the main contract
-+ Bug: [#669]: ATB : Base attack (defender) scenario generated with no opfor
-+ Bug: MissingBattleArmorSuit NPE due to unit variable not being set
-+ Bug: NPE with the tech color coding for assigned to the part's unit tech in the repair bay
-+ Bug: [#701]: (ATB) Probe condition is incorrect
-+ Feature: Salvaged mechs that were using individual camos now import with those individual camos
-+ Bug: Individual camo reset after unit participates in a battle
-+ Bug: [#639]: 0.3.6 : ATB : Negotiation bugs
-+ Bug: Retainer contract offers are visible in the contract market dialog even when not playing a mercenary unit
-+ Stop de-selecting pieces of the TO&E when a change is made that refreshes it
-+ Bug: [#708]: ATB : Use bonus part does nothing if ammo is selected in the acquistion tab
-+ Bug: [#767]: Contract ended, retirement payout window not processing
-		Also set final payout amount to zero for retiring infantry that are not assigned to a unit.
-+ Bug: [#757] ATB - Incorrect Map Sizes
-+ Bug: [#727]: [AtB] Pilot retiring while mech deployed
-+ Bug: [#633]: [AtB] 0.3.6 : Jump platoons on scout scenarios deploy incorrectly
-	Made the following related changes as well:
-      + Use jump movement for all conventional and battlearmor infantry
-      + Use walking + 1 for jump-capable 'Mechs
-      + Apply scout lance delay to attached allies as well
-      + Ignore delayed deployment when making a combat drop
-+ Bug: Unscrambling equipment numbers messes up ammobins that are loaded with a different ammo type
-    if you leave leave any bins loaded with the original ammo type
-+ Bug [#771]: MekHQ 0.3.9 - Campain will not load if individual camon folder contain "&" Character
-+ Bug: "None" unit assignment messed up after change to move it below the popup menu of actual units
-+ Bug [#765]: Capture Personnel Dialog data conflicts with Salvage Window data
-+ Bug [#769]: Set XP to Zero Generates Bulk Purchase Exception
-+ Bug [#773]: Interstellar Map dragging too fast (methods "forgets" to update current mouse coordinates)
-+ Bug [#742]: IllegalArgumentException : Unable to edit special abilities if xp cost is set to -1
-+ Bug [#777]: Rank System Bugs
-
-v0.3.9 (2015-01-01 21:25 UTC)
-+ Bug: packaging.xml was renaming mhq's hitory.txt to history-mm.txt due to change in where mm docs are copied to
-+ Bug: packaging_local.xml out of date compared to packaging.xml
-+ Bug: packaging_local.xml needs to mkdir before the copies used in place of svn exports
-+ Bug [#676]: Campaign file could not be loaded : Array index out of bounds
-+ Bug [#730]: Refit chances reduced to Impossible
-+ Feature: New view menu toggle option for the overview tab
-+ Bug [#75]: Warehouse NPE for parts with a decimal in the tonnage
-+ Bug [#754]: Contracts not created, Unit Market has nothing in it
-+ Changed text and tooltip text of CampaignOptionsDialog/AtB tab skill/SPA toggle buttons in an attempt to clarify function
-+ Bug [#763]: Change StellarOps to IO
-+ Update MegaMek.jar to 0.40.0 and MegaMekLab.jar to 0.1.35
-
-v0.3.8 (2014-12-25 15:30 UTC)
-+ Bug [#718]: [AtB] Unit MArket does not retain unit selections
-+ Bug [#702]: ATB : Convoy attack : badlands map turns out to be heavily wooded
-+ Bug [feature-requests:#226] ATB : Have the program remember retainer status
-+ Bug [#570]: [ATB] Can not load campaign file
-+ Bug [#640]: 0.3.6 : ATB : Paid recruitment roll bug
-+ Bug [#706] ATB : End of battle window does not popup at all -> NPE
-+ Bug [#557]: Assigning Kills for Retreated and Killed - Take 2
-+ Feature: [feature-requests:#246]: Visual Indicator for Assigned Techs
-+ Feature: [feature-requests:#237]: New AtB Maps request - alt maps added as option for player
-+ Bug [#738]: Personnel Market has wrong window title
-+ Bug [#711]: ATB : Opfor fails to generate properly (unit could not be loaded) -> campaign file could not be saved
-+ Bug [#626]: [ATB] 0.3.6 : Contract generation modifiers do not work
-+ Major code refactoring of CampaignGUI begun, several embedded classes refactored to be split out
-    So far the following are finished being split:
-    OrgTreeTransferHandler (now in mekhq.gui.handler package)
-    FinanceTableMouseAdapter
-    LoanTableMouseAdapter
-    ProcurementTableMouseAdapter
-    ScenarioTableMouseAdapter
-    UnitTableMouseAdapter
-        All of the Adapter classes are now in mekhq.gui.adapter package
-+ Major refactor of CampaignGUI phase 2
-    Split out:
-    OrgTreeMouseAdapter
-    PartsTableMouseAdapter
-    ServicedUnitsTableMouseAdapter
-    All of the areAllXXX and doAllXXX check methods into a new mekhq.gui.utils.StaticChecks class,
-        and made them all static
-+ Added external configuration file for AtB to allow player customization beyond options in CampaignOptions
-		and to remove hard-coded universe details.
-	Moved details on hiring halls from contract generation code into the new atbconfig.xml file
-		as the first entry and added era details.
-+ Bug [#746]: indepedent - spelling
-+ Bug [#634]: [ATB] 0.3.6 : Invalid lance in TO&E can still trigger battles
-	also removed ineligible lances from the required lances table on the briefing room tab
-+ Bug [#659]: 0.3.6 : ATB : Tactics re-roll checkbox when light conditions are turned off
-	Also corrected the same issue for weather conditions.
-+ Planet Editor: Made some more progress getting this ready
-+ Bug [#660]: 0.3.6 : ATB : Star league cache 1 (defender) mission may not be started
-+ Bug [#741]: Ghost Repairing Dropships and Warships
-+ Bug [#744]: Mothball/Re-activate 0-time spent
-+ Bug [#740]: Destroyed Infantry Resolve Issue
-+ Bug [#723]: Refresh bug effecting Prisoners
-+ Update MegaMek.jar to 0.39.5 and MegaMekLab.jar to 0.1.34
-
-v0.3.7 (2014-12-14 19:25 UTC)
+v0.3.7 (SVN)
 + Patch [34]: Against the Bot, 13th Patch
     Fixes Bug [#589] [AtB] Changing tabs still works but HQ will no longer advance days
     Fixes Bug [#591] [AtB] Planet gravity is not used
@@ -250,22 +11,10 @@ v0.3.7 (2014-12-14 19:25 UTC)
 + Bug [#668]: NPE when clicking "finish" at end of battle salvage screen
 + Bug [#700]: Entity.swarmTargetId shoulds be cleared by MHQ at the end of a game
 + Bug [#687]: C3I lance being incorrectly passed to megamek
-+ Bug [#713]: Warship price column sorting appears to be broken
-+ Bug [#717]: Buy in Bulk Buys 1 if you enter over 100
-+ Removed the automated repair assignments for large vessels (DS, JS, WS)
-+ Bug [#664]: 0.3.6 : Dropship captain attempts to auto-repair damaged PPC, but is unable to
-+ Bug [#710]: ASFs which were deployed with bombs return with empty Ammo Slots
-+ Bug [#714]: Maximum number of Acquistions limit is gone when save/loading
-+ Bug [#470]: SPA: Not tied together between MM & HQ
-+ Bug [#715]: Maximum number of acquistion disregarded when trying to fulfill pending orders
-+ Bug [#622]: 0.3.6 : Jammed weapons do not show up in the repair bay
-+ Bug [#722]: Export Personnel missing if AtB turned on
-+ Bug [#720]: Resolution screen personnel and prisoners not taking damage or status changes correctly
-+ Bug [feature-requests:#232]: Fast Forward 'Advance Day'
-+ Bug [#644]: 0.3.6 : Parts reserved for refits incorrectly show up as damaged
-+ Feature: Warehouse Status filter now has entry for parts reserved for refit or repair
-+ Bug [#597]: [ATB] Battle Loss Compensation never higher than 10%
-+ Updated MegaMek.jar to 0.39.4 and MegaMekLab.jar to 0.1.33
+
+v0.3.6-dylan (never released)
++ Bug [#549]: Parts in Use tab displays HTML Tags
++ Bug [#550]: Parts in Use tab displays SI not on unit wazz up msg
 
 v0.3.6 (2014-12-02)
 + Bug [#496]: NPE in mission resolution dialogue
@@ -463,6 +212,9 @@ v0.3.6 (2014-12-02)
 + Fix to Campaign.java for switch from entity enumeration to entity vector in MM's Game.java
 + Bug [#447]: Being in debt not working properly
 
+v0.3.5-dylan (2014-04-28)
+-- No Changes--
+
 v0.3.5 (2014-04-28)
 + new MegaMek.jar, fixes Bug [#486]: Ammo Bins destroyed when upgrading to 0.3.4
 + Bug [#490]: Error Exporting Campaign Options
@@ -470,6 +222,15 @@ v0.3.5 (2014-04-28)
 + Bug [#462]: BA Repairs
 + new MM.jar
 + better instructions for how to fix unit names in loading error dialog
+
+v0.3.4-dylan (2014-04-26)
++ Reintegrated Overview Tab
++ Cleanup from trunk removal of refreshCargo()
++ Use various Report objects instead of duplicating a bunch of code to create the overview report.
+    Removes all the duplicated code
++ Added new Cargo Overview tab
++ Bug: Missing refresh for Cargo Overview
++ Bug [#450]: Parts in Use font error
 
 v0.3.4 (2014-04-26)
 + Bug: Moved Report Log not scrolling again (don't force set caret to 0 on refresh)
@@ -2425,7 +2186,6 @@ v0.1.0 (2009-07-29)
 + Heat sink replacement item
 + Heat sink repair item
 + Jump jet replacement item
-
 + Jump jet repair item
 + Life support repair item
 + Sensor replacement item
@@ -2447,7 +2207,6 @@ v0.1.0 (2009-07-29)
 + Gyro repair and replacement
 + serialized classes
 + changed package structure
-
 + Fixed list selection indexing
 + mul example
 + new MegaMek.jar

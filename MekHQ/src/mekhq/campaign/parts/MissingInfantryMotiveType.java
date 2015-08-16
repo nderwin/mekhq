@@ -25,7 +25,6 @@ import java.io.PrintWriter;
 
 import megamek.common.Entity;
 import megamek.common.EntityMovementMode;
-import megamek.common.EquipmentType;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
 
@@ -54,16 +53,6 @@ public class MissingInfantryMotiveType extends MissingPart {
 		if(null != mode) {
 			assignName();
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 0;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
 	}
 	
 	private void assignName() {
@@ -162,19 +151,5 @@ public class MissingInfantryMotiveType extends MissingPart {
 		return Entity.LOC_NONE;
 	}
 
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
 	
 }

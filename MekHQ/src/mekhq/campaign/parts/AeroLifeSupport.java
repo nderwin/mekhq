@@ -24,7 +24,6 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Aero;
-import megamek.common.Compute;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.TechConstants;
@@ -70,37 +69,25 @@ public class AeroLifeSupport extends Part {
     }
         
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		int priorHits = hits;
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero) {
 			 if(((Aero)unit.getEntity()).hasLifeSupport()) {
 				 hits = 0;
 			 } else { 
 				 hits = 1;
 			 }
-			 if(checkForDestruction 
-						&& hits > priorHits 
-						&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				 remove(false);
-				 return;
-			 }
-		}	
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 6720;
 		}
-		return 120;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
+		if(hits > 0) {
+			time = 120;
+			difficulty = 1;
+		} else {
+			time = 0;
+			difficulty = 0;
 		}
-		return -1;
+		if(isSalvaging()) {
+			time = 6720;
+			difficulty = 0;
+		}
 	}
 
 	@Override
@@ -139,8 +126,9 @@ public class AeroLifeSupport extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
@@ -189,7 +177,12 @@ public class AeroLifeSupport extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_IS_TW_ALL;
+	}
+	
+	@Override 
+	public int getTechBase() {
+		return T_BOTH;	
 	}
 
 	public boolean isForFighter() {
@@ -249,21 +242,6 @@ public class AeroLifeSupport extends Part {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 	
 }

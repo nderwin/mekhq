@@ -24,7 +24,6 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Entity;
-import megamek.common.EquipmentType;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
 
@@ -65,16 +64,6 @@ public class MissingInfantryArmorPart extends MissingPart {
     	this.spaceSuit = space;
     	assignName();
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 0;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
     
     private void assignName() {
     	String heavyString = "";
@@ -265,44 +254,6 @@ public class MissingInfantryArmorPart extends MissingPart {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		//I am going to kind of hack this together based on the actual kits
-		//this will be better if we implement Hammer's suggested Armor Kit MiscTypes
-		int latestDate = EquipmentType.DATE_NONE;
-		int nSneak = 0;
-		if(sneak_ecm) {
-			nSneak++;
-		}
-		if(sneak_ir) {
-			nSneak++;
-		}
-		if(sneak_camo) {
-			nSneak++;
-		}
-		if(nSneak > 2) {
-			latestDate = 2465;
-		} else if (nSneak > 1) {
-			latestDate = 2445;
-		} else if (nSneak > 0) {
-			latestDate = 2430;
-		}		
-		if(dest) {
-			latestDate = 3045;
-		}
-		return latestDate;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 	
 }

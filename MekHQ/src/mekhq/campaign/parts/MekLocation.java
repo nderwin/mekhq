@@ -34,7 +34,6 @@ import megamek.common.TargetRoll;
 import megamek.common.TechConstants;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
-import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.work.Modes;
 
@@ -429,13 +428,15 @@ public class MekLocation extends Part {
 				unit.addPart(missing);
 				campaign.addPart(missing, 0);
 			}
+			unit.runDiagnostic();
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 	
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
 			blownOff = unit.getEntity().isLocationBlownOff(loc);
 			breached = unit.isLocationBreached(loc);
@@ -445,64 +446,39 @@ public class MekLocation extends Part {
 				return;
 			} 
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			if(isBlownOff()) {
-				return 0;
-			} else {
-				return 240;
-			}
-		}
 		if(blownOff) {
 			if(loc == Mech.LOC_HEAD) {
-				return 200;
+				this.time = 200;
+				this.difficulty = 2;
 			} else {
-				return 180;
+				this.time = 180;
+				this.difficulty = 1;
 			}
-		} 
-		if(breached) {
-			return 60;
-		}
-		if (percent < 0.25) {
-			return 270;
+		} else if(breached) {
+			this.time = 60;
+			this.difficulty = 0;
+		} else if (percent < 0.25) {
+			this.time = 270;
+			this.difficulty = 2;
 		} else if (percent < 0.5) {
-			return 180;
+			this.time = 180;
+			this.difficulty = 1;
 		} else if (percent < 0.75) {
-			return 135;
+			this.time = 135;
+			this.difficulty = 0;
+		} else {
+			this.time = 90;
+			this.difficulty = -1;
 		}
-		return 90;
-	}
-	
-	@Override
-	public int getDifficulty() {
 		if(isSalvaging()) {
 			if(isBlownOff()) {
-				return 0;
+				this.time = 0;
+				this.difficulty = 0;
 			} else {
-				return 3;
+				this.time = 240;
+				this.difficulty = 3;
 			}
-		}
-		if(blownOff) {
-			if(loc == Mech.LOC_HEAD) {
-				return 2;
-			} else {
-				return 1;
-			}
-		} 
-		if(breached) {
-			return 0;
-		}
-		if (percent < 0.25) {
-			return 2;
-		} else if (percent < 0.5) {
-			return 1;
-		} else if (percent < 0.75) {
-			return 0;
-		}
-		return -1;
+		}		
 	}
 
 	public boolean isBreached() {
@@ -556,6 +532,16 @@ public class MekLocation extends Part {
 	public void updateConditionFromPart() {
 		if(null != unit) {
 			unit.getEntity().setInternal((int)Math.round(percent * unit.getEntity().getOInternal(loc)), loc);
+			if(loc == Mech.LOC_RARM || loc == Mech.LOC_LARM) {
+				if(forQuad) {
+					unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.ACTUATOR_HIP, loc);
+				} else {
+					unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.ACTUATOR_SHOULDER, loc);
+				}
+			}
+			else if(loc == Mech.LOC_RLEG || loc == Mech.LOC_LLEG) {
+				unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.ACTUATOR_HIP, loc);
+			}
 			//TODO: we need to cycle through slots and remove crits on non-hittable ones
 			//We shouldn't have to do this, these slots should not be hit in MM
 			for (int i = 0; i < unit.getEntity().getNumberOfCriticals(loc); i++) {
@@ -707,14 +693,14 @@ public class MekLocation extends Part {
 	}
 	
 	@Override
-	public TargetRoll getAllMods(Person tech) {
+	public TargetRoll getAllMods() {
 		if(isBreached() && !isSalvaging()) {
 			return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "fixing breach");
 		}
 		if(isBlownOff() && isSalvaging()) {
 			return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "salvaging blown-off location");
 		}
-		return super.getAllMods(tech);
+		return super.getAllMods();
 	}
 	
 	public String getDesc() {
@@ -739,8 +725,8 @@ public class MekLocation extends Part {
         } else {
             toReturn += "" + getTimeLeft() + " minutes" + scheduled;
     		if(isBlownOff()) {
-    			String bonus = getAllMods(null).getValueAsString();
-    			if (getAllMods(null).getValue() > -1) {
+    			String bonus = getAllMods().getValueAsString();
+    			if (getAllMods().getValue() > -1) {
     				bonus = "+" + bonus;
     			}
     			bonus = "(" + bonus + ")";
@@ -811,7 +797,7 @@ public class MekLocation extends Part {
 	     int points = unit.getEntity().getInternal(loc);
          points = Math.max(points -d, 1);
          unit.getEntity().setInternal(points, loc);
-         updateConditionFromEntity(false);
+         updateConditionFromEntity();
 	 }
 
 	@Override
@@ -823,51 +809,6 @@ public class MekLocation extends Part {
 	@Override
 	public int getLocation() {
 		return Entity.LOC_NONE;
-	}
-	
-	@Override
-	public int getIntroDate() {
-		//TODO: I need a clan tag in order to distinguish some of these
-		//I believe there is also a bug about differences between IS/Clan IS
-		int currentDate;
-		switch(structureType) {
-		case EquipmentType.T_STRUCTURE_ENDO_COMPOSITE:
-			currentDate = 3067;
-			break;
-		case EquipmentType.T_STRUCTURE_REINFORCED:
-			currentDate = 3057;
-			break;
-		case EquipmentType.T_STRUCTURE_COMPOSITE:
-			currentDate = 3061;
-			break;
-		case EquipmentType.T_STRUCTURE_INDUSTRIAL:
-			currentDate = 2350;
-			break;
-		case EquipmentType.T_STRUCTURE_STANDARD:
-			currentDate = 2439;
-			break;
-		case EquipmentType.T_STRUCTURE_ENDO_PROTOTYPE:
-		case EquipmentType.T_STRUCTURE_ENDO_STEEL:
-			currentDate = 2487;
-			break;
-		default:
-			currentDate = EquipmentType.DATE_NONE;
-		}
-		if(tsm && currentDate < 3050) {
-			currentDate = 3050;
-		}
-		return currentDate;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		//TOD: endo steel should go extinct for IS, but I have no way to distinguish
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 	
 }

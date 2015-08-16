@@ -164,21 +164,14 @@ public class Turret extends TankLocation {
 		}
 		setUnit(null);
 	}
-	
-	@Override 
-	public int getBaseTime() {
-		if(isSalvaging()) {
-			return 160;
-		}
-		return 60;
-	}
-	
+
 	@Override
-	public int getDifficulty() {
+	public void updateConditionFromEntity() {
+		super.updateConditionFromEntity();
 		if(isSalvaging()) {
-			return 1;
+			this.time = 160;
+			this.difficulty = -1;
 		}
-		return 0;
 	}
 
 	@Override
@@ -187,7 +180,12 @@ public class Turret extends TankLocation {
 			unit.getEntity().setInternal(unit.getEntity().getOInternal(loc) - damage, loc);
 		}
 	}
-
+	
+	@Override
+	public boolean isSalvaging() {
+		return salvaging;
+	}
+	
 	@Override 
 	public String checkFixable() {
 		if(isSalvaging()) {

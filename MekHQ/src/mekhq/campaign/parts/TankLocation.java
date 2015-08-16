@@ -33,7 +33,6 @@ import megamek.common.TargetRoll;
 import megamek.common.TechConstants;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
-import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 
 import org.w3c.dom.Node;
@@ -70,6 +69,8 @@ public class TankLocation extends Part {
         super(tonnage, c);
         this.loc = loc;
         this.damage = 0;
+        this.time = 60;
+        this.difficulty = 0;
         this.breached = false;
         this.name = "Tank Location";
         switch(loc) {
@@ -159,7 +160,7 @@ public class TankLocation extends Part {
 
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -207,12 +208,13 @@ public class TankLocation extends Part {
 			}
 			unit.removePart(this);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
 			if(IArmorState.ARMOR_DESTROYED == unit.getEntity().getInternal(loc)) {
 				remove(false);
@@ -223,16 +225,8 @@ public class TankLocation extends Part {
 				} 
 			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
+		time = 60;
+		difficulty = 0;
 	}
 
 	public boolean isBreached() {
@@ -291,11 +285,11 @@ public class TankLocation extends Part {
 	}
 	
 	@Override
-	public TargetRoll getAllMods(Person tech) {
+	public TargetRoll getAllMods() {
 		if(isBreached() && !isSalvaging()) {
 			return new TargetRoll(TargetRoll.AUTOMATIC_SUCCESS, "fixing breach");
 		}
-		return super.getAllMods(tech);
+		return super.getAllMods();
 	}
 	
 	@Override
@@ -326,7 +320,7 @@ public class TankLocation extends Part {
          int points = unit.getEntity().getInternal(loc);
          points = Math.max(points -d, 1);
          unit.getEntity().setInternal(points, loc);
-         updateConditionFromEntity(false);
+         updateConditionFromEntity();
      }
 
 	@Override
@@ -338,20 +332,4 @@ public class TankLocation extends Part {
 	public int getLocation() {
 		return loc;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

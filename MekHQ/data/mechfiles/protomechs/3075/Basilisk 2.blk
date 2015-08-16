@@ -18,6 +18,9 @@ Basilisk
 <Tonnage>
 7
 </Tonnage>
+<BV>
+174
+</BV>
 <cruiseMP>
 4
 </cruiseMP>
@@ -32,12 +35,10 @@ Basilisk
 6
 3
 </Armor>
-<Main Gun Equipment>
-CLSRM2
-CLSRM2 Ammo (10)
-</Main Gun Equipment>
 <Torso Equipment>
 CLERSmallLaser
+CLSRM2
+CLSRM2 Ammo (10)
 </Torso Equipment>
 <Right Arm Equipment>
 CLERMicroLaser

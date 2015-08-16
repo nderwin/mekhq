@@ -24,11 +24,8 @@ package mekhq.campaign.parts;
 import java.io.PrintWriter;
 
 import megamek.common.Aero;
-import megamek.common.Compute;
-import megamek.common.Dropship;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
-import megamek.common.Jumpship;
 import megamek.common.TechConstants;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
@@ -70,37 +67,25 @@ public class Thrusters extends Part {
     }
         
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Aero) {
-			int priorHits = hits;
 			if (isLeftThrusters) {
 				hits = ((Aero)unit.getEntity()).getLeftThrustHits();
 			} else {
 				hits = ((Aero)unit.getEntity()).getRightThrustHits();
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits > 0) {
+			time = 90;
+			difficulty = -1;
+		} else {
+			time = 0;
+			difficulty = 0;
+		}
 		if(isSalvaging()) {
-			return 600;
+			time = 600;
+			difficulty = -2;
 		}
-		return 90;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return -2;
-		}
-		return -1;
 	}
 
 	@Override
@@ -147,8 +132,9 @@ public class Thrusters extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
@@ -163,29 +149,12 @@ public class Thrusters extends Part {
 
 	@Override
 	public boolean needsFixing() {
-		if(null != getUnit() && null != getUnit().getEntity() && 
-				(getUnit().getEntity() instanceof Aero 
-						&& !(getUnit().getEntity() instanceof Dropship 
-								|| getUnit().getEntity() instanceof Jumpship))) {
-			return false;
-		}
 		return hits > 0;
-	}
-	
-	@Override
-	public boolean isSalvaging() {
-		if(null != getUnit() && null != getUnit().getEntity() && 
-				(getUnit().getEntity() instanceof Aero 
-						&& !(getUnit().getEntity() instanceof Dropship 
-								|| getUnit().getEntity() instanceof Jumpship))) {
-			return false;
-		}
-		return super.isSalvaging();
 	}
 
 	@Override
 	public long getStickerPrice() {
-		return 12500;
+		return 25000;
 	}
 
 	@Override
@@ -205,7 +174,7 @@ public class Thrusters extends Part {
 	
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_IS_TW_ALL;
 	}
 	
 	@Override 
@@ -271,23 +240,5 @@ public class Thrusters extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
-	
-	
 	
 }

@@ -50,17 +50,9 @@ public class MissingTurret extends MissingPart {
         super(tonnage, c);
         this.weight = weight;
         this.name = "Turret";
+        this.time = 160;
+        this.difficulty = -1;
     }
-	
-	@Override 
-	public int getBaseTime() {
-		return 160;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return -1;
-	}
 
 	@Override
 	public void writeToXml(PrintWriter pw1, int indent) {
@@ -136,20 +128,4 @@ public class MissingTurret extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

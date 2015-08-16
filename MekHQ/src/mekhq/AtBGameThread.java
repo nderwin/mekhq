@@ -35,7 +35,6 @@ import megamek.common.IGame;
 import megamek.common.MapSettings;
 import megamek.common.PlanetaryConditions;
 import megamek.common.Player;
-import megamek.common.UnitType;
 import megamek.common.logging.LogLevel;
 import mekhq.campaign.force.Lance;
 import mekhq.campaign.mission.AtBScenario;
@@ -108,22 +107,14 @@ public class AtBGameThread extends GameThread {
     				Thread.sleep(campaign.getCampaignOptions().getStartGameDelay());
                 }
 
-                MapSettings mapSettings = new MapSettings();
-                File mapgenFile = new File("data/mapgen/" + scenario.getMap() + ".xml");
-                if (campaign.getCampaignOptions().getUseAltMapgen()) {
-                	File alt = new File("data/mapgen/" + scenario.getMap() + " - Jazz.xml");
-                	if (alt.isFile()) {
-                		mapgenFile = alt;
-                	}
-                }
-                 try {
-                	mapSettings.load(new FileInputStream(mapgenFile));
+                MapSettings mapSettings = new MapSettings(scenario.getMapX(), scenario.getMapY(), 1, 1);
+                File f = new File("data/mapgen/" + scenario.getMap() + ".xml");
+                try {
+                	mapSettings.load(new FileInputStream(f));
                 } catch (FileNotFoundException ex) {
                 	MekHQ.logError("Could not load map file data/mapgen/" + scenario.getMap() + ".xml");
                 	MekHQ.logError(ex);
                 }
-                mapSettings.setBoardSize(scenario.getMapX(), scenario.getMapY());
-                mapSettings.setMapSize(1,  1);
                 mapSettings.getBoardsSelectedVector().clear();
                 mapSettings.getBoardsSelectedVector().add(MapSettings.BOARD_GENERATED);
                 client.sendMapSettings(mapSettings);
@@ -141,28 +132,6 @@ public class AtBGameThread extends GameThread {
                 
                 client.getLocalPlayer().setStartingPos(scenario.getStart());
                 client.getLocalPlayer().setTeam(1);
-                
-                /* If the player is making a combat drop (either required by scenario
-                 * or player chose to deploy a DropShip), do not use deployment
-                 * delay for slower scout units.
-                 */
-                boolean useDropship = false;
-                if (scenario.getLanceRole() == Lance.ROLE_SCOUT) {
-	                for (Entity en : scenario.getAlliesPlayer()) {
-	                	if (UnitType.determineUnitTypeCode(en) == UnitType.DROPSHIP) {
-	                		useDropship = true;
-	                		break;
-	                	}
-	                }
-	                if (!useDropship) {
-		                for (Unit unit : units) {
-		                	if (UnitType.determineUnitTypeCode(unit.getEntity()) == UnitType.DROPSHIP) {
-		                		useDropship = true;
-		                		break;
-		                	}
-		                }
-	                }
-                }
 
                 for (Unit unit : units) {
                 	// Get the Entity
@@ -172,21 +141,9 @@ public class AtBGameThread extends GameThread {
                 	// Set the owner
                 	entity.setOwner(client.getLocalPlayer()); 
                 	// Calculate deployment round
-            		int speed = entity.getWalkMP();
-            		if (unit.getEntity().getJumpMP() > 0) {
-	            		if (unit.getEntity() instanceof megamek.common.Infantry) {
-	            			speed = entity.getJumpMP();
-	            		} else {
-	            			speed++;
-	            		}
-            		}
-            		/* Set scenario type-specific delay */
-                	int deploymentRound = Math.max(entity.getDeployRound(), scenario.getDeploymentDelay() - speed);
-                	/* Lances deployed in scout roles always deploy units in 6-walking speed turns */
-                	if (scenario.getLanceRole() == Lance.ROLE_SCOUT
-                			&& scenario.getLance(campaign).getForceId() == scenario.getLanceForceId()
-                			&& !useDropship) {
-                		deploymentRound = Math.max(deploymentRound, 6 - speed);
+                	int deploymentRound = Math.max(entity.getDeployRound(), scenario.getDeploymentDelay() - entity.getWalkMP());
+                	if (scenario.getLanceRole() == Lance.ROLE_SCOUT) {
+                		deploymentRound = Math.max(deploymentRound, 6 - entity.getWalkMP());
                 	}
                 	entity.setDeployRound(deploymentRound);
                 	// Add Mek to game
@@ -201,6 +158,11 @@ public class AtBGameThread extends GameThread {
                 		continue;
                 	}
                 	entity.setOwner(client.getLocalPlayer());
+                	int deploymentRound = Math.max(entity.getDeployRound(), scenario.getDeploymentDelay() - entity.getWalkMP());
+                	if (null != scenario.getLance(campaign) && scenario.getLance(campaign).getRole() == Lance.ROLE_SCOUT) {
+                		deploymentRound = Math.max(deploymentRound, 6 - entity.getWalkMP());
+                	}
+                	entity.setDeployRound(deploymentRound);
                 	client.sendAddEntity(entity);
                 	Thread.sleep(campaign.getCampaignOptions().getStartGameDelay());
                 }

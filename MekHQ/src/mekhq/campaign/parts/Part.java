@@ -1,20 +1,20 @@
 /*
  * Part.java
- *
+ * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.UUID;
 
@@ -47,16 +46,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * Parts do the lions share of the work of repairing, salvaging, reloading, refueling, etc.
+ * Parts do the lions share of the work of repairing, salvaging, reloading, refueling, etc. 
  * for units. Each unit has an ArrayList of all its relevant parts. There is a corresponding unit
- * variable in part but this can be null when we are dealing with a spare part, so when putting in
+ * variable in part but this can be null when we are dealing with a spare part, so when putting in 
  * calls to unit, you should always check to make sure it is not null.
- *
- * There are two kinds of parts: Part and MissingPart. The latter is used as a placeholder on a unit to
- * indicate it is missing the given part. When parts are removed from a unit, they shold be replaced
+ * 
+ * There are two kinds of parts: Part and MissingPart. The latter is used as a placeholder on a unit to 
+ * indicate it is missing the given part. When parts are removed from a unit, they shold be replaced 
  * with the appropriate missing part which will remind MHQ that a replacement needs to be done.
- *
- * Parts implement IPartWork and MissingParts also implement IAcquisitionWork. These interfaces allow for
+ * 
+ * Parts implement IPartWork and MissingParts also implement IAcquisitionWork. These interfaces allow for 
  * most of the actual work that can be done on parts. There is a lot of variability in how parts actually handle
  * this work
  * @author Jay Lawson <jaylawson39 at yahoo.com>
@@ -76,8 +75,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public static final int PART_TYPE_GENERIC_SPARE_PART = 10;
 	public static final int PART_TYPE_OTHER = 11;
 	public static final int PART_TYPE_MEK_COCKPIT = 12;
-
-	public static final int T_UNKNOWN = -1;
+	
 	public static final int T_BOTH = 0;
 	public static final int T_IS   = 1;
 	public static final int T_CLAN = 2;
@@ -88,7 +86,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     public static final int QUALITY_D = 3;
     public static final int QUALITY_E = 4;
     public static final int QUALITY_F = 5;
-
+	
 	private static final String[] partTypeLabels = { "Armor", "Weapon", "Ammo",
 			"Equipment Part", "Mek Actuator", "Mek Engine", "Mek Gyro",
 			"Mek Life Support", "Mek Body Part", "Mek Sensor",
@@ -97,89 +95,73 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public static String[] getPartTypeLabels() {
 		return partTypeLabels;
 	}
-
+		
 	protected String name;
 	protected int id;
 
 	//this is the unitTonnage which needs to be tracked for some parts
-	//even when off the unit. actual tonnage is returned via the
+	//even when off the unit. actual tonnage is returned via the 
 	//getTonnage() method
 	protected int unitTonnage;
 
-	
 	//hits to this part
 	protected int hits;
-	
-	//Taharqa: as of 8/12/2015, we are no longer going to track difficulty and time
-	//as hard coded numbers but rather use abstract methods that get them from each part
-	//depending on the dynamic characteristics of the part
 	// the skill modifier for difficulty
-	//protected int difficulty;
+	protected int difficulty;
 	// the amount of time for the repair (this is the base time)
-	//protected int time;
-	
-	
+	protected int time;
 	// time spent on the task so far for tasks that span days
 	protected int timeSpent;
 	// the minimum skill level in order to attempt
 	protected int skillMin;
 	//current repair mode for part
 	protected int mode;
-	
 	protected UUID teamId;
-	private boolean isTeamSalvaging;
-
 	//null is valid. It indicates parts that are not attached to units.
 	protected Unit unit;
 	protected UUID unitId;
-
+	//boolean to indicate whether the repair status on this part is set to salvage or 
+	//to repair
+	protected boolean salvaging;
+	
 	protected int quality;
-
+	
 	protected boolean brandNew;
-
+	
 	//we need to keep track of a couple of potential mods that result from carrying
 	//over a task, otherwise people can get away with working over time with no consequence
 	protected boolean workingOvertime;
 	protected int shorthandedMod;
-
+	
 	//this tracks whether the part is reserved for a refit
 	protected UUID refitId;
 	protected UUID reserveId;
-
+	
 	//for delivery
 	protected int daysToArrival;
-
+	
 	//all parts need a reference to campaign
 	protected Campaign campaign;
 	
-	/*
-	 * This will be unusual but in some circumstances certain parts will be linked to other parts.
-	 * These linked parts will be considered integral and subsidary to those other parts and will
-	 * not show up independently. Currently (8/8/2015), we are only using this for BA suits 
-	 * We need a parent part id and a vector of children parts to represent this.
-	 */
-	protected int parentPartId; 
-	protected ArrayList<Integer> childPartIds;
-
 	/**
 	 * The number of parts in exactly the same condition,
 	 * to track multiple spare parts more efficiently and also the shopping list
 	 */
 	protected int quantity;
-
+	
 	//reverse-compatability
 	protected int oldUnitId = -1;
 	protected int oldTeamId = -1;
 	protected int oldRefitId = -1;
-
+	
 	//only relevant for acquisitionable parts
 	protected int daysToWait;
 	protected int replacementId;
-
+	
 	public Part() {
 		this(0, null);
 	}
-
+	
 	public Part(int tonnage, Campaign c) {
 		this.name = "Unknown";
 		this.unitTonnage = tonnage;
@@ -187,6 +169,9 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		this.skillMin = SkillType.EXP_GREEN;
 		this.mode = Modes.MODE_NORMAL;
 		this.timeSpent = 0;
+		this.time = 0;
+		this.difficulty = 0;
+		this.salvaging = false;
 		this.unitId = null;
 		this.workingOvertime = false;
 		this.shorthandedMod = 0;
@@ -197,11 +182,8 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		this.quantity = 1;
 		this.replacementId = -1;
 		this.quality = QUALITY_D;
-		this.parentPartId = -1;
-		this.childPartIds = new ArrayList<Integer>();
-		this.isTeamSalvaging = false;
 	}
-
+	
 	public static String getQualityName(int quality) {
         switch(quality) {
         case QUALITY_A:
@@ -220,7 +202,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
             return "?";
         }
     }
-
+    
     public String getQualityName() {
         return getQualityName(getQuality());
     }
@@ -232,7 +214,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public int getId() {
 		return id;
 	}
-
+	
 	public UUID getUnitId() {
 		return unitId;
 	}
@@ -240,11 +222,11 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public void setCampaign(Campaign c) {
 		this.campaign = c;
 	}
-
+	
 	public Campaign getCampaign() {
 	    return campaign;
 	}
-
+	
 	public String getName() {
 		return name;
 	}
@@ -254,7 +236,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	 * @return
 	 */
 	public abstract long getStickerPrice();
-
+	
 	/**
 	 * This is the actual value of the part as affected by any characteristics
 	 * of the part itself
@@ -263,7 +245,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public long getCurrentValue() {
 		return getStickerPrice();
 	}
-
+	
 	/**
 	 * This is the value of the part that may be affected by campaign options
 	 * @return
@@ -271,13 +253,13 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public long getActualValue() {
 		return adjustCostsForCampaignOptions(getCurrentValue());
 	}
-
+	
 	public boolean isPriceAdustedForAmount() {
 	    return false;
 	}
-
+	
 	protected long adjustCostsForCampaignOptions(long cost) {
-		if(getTechBase() == T_CLAN) {
+		if(isClanTechBase()) {
 			cost *= campaign.getCampaignOptions().getClanPriceModifier();
 		}
 		if(needsFixing() && !isPriceAdustedForAmount()) {
@@ -288,25 +270,25 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		}
 		return cost;
 	}
-
+	
 	public boolean isBrandNew() {
 		return brandNew;
 	}
-
+	
 	public void setBrandNew(boolean b) {
 		this.brandNew = b;
 	}
-
+	
 	public int getUnitTonnage() {
 		return unitTonnage;
 	}
-
+	
 	public abstract double getTonnage();
-
+	
 	public Unit getUnit() {
 		return unit;
 	}
-
+	
 	public void setUnit(Unit u) {
 		this.unit = u;
 		if(null != unit) {
@@ -316,17 +298,17 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			unitId = null;
 		}
 	}
-
+	
 	public String getStatus() {
 		String toReturn = "Functional";
 		if(needsFixing()) {
 			toReturn = "Damaged";
 		}
 		if(isReservedForRefit()) {
-			toReturn = "Reserved for Refit";
+			toReturn = "Reserved for refit";
 		}
 		if(isReservedForReplacement()) {
-			toReturn = "Reserved for Repair";
+			toReturn = "Reserved for repair";
 		}
 		if(isBeingWorkedOn()) {
 			toReturn = "Being worked on";
@@ -341,14 +323,14 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
         }
 		return toReturn;
 	}
-
+	
 	public int getHits() {
 		return hits;
 	}
 
 	public String getDesc() {
-		String bonus = getAllMods(null).getValueAsString();
-		if (getAllMods(null).getValue() > -1) {
+		String bonus = getAllMods().getValueAsString();
+		if (getAllMods().getValue() > -1) {
 			bonus = "+" + bonus;
 		}
 		bonus = "(" + bonus + ")";
@@ -361,7 +343,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		if (getAssignedTeamId() != null) {
 			scheduled = " (scheduled) ";
 		}
-
+	
 		toReturn += ">";
 		toReturn += "<b>" + action + getName() + "</b><br/>";
 		toReturn += getDetails() + "<br/>";
@@ -380,7 +362,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		toReturn += "</font></html>";
 		return toReturn;
 	}
-
+	
 	public String getRepairDesc() {
 		String toReturn = "";
 		if(needsFixing()) {
@@ -388,8 +370,8 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			if (getAssignedTeamId() != null) {
 				scheduled = " (scheduled) ";
 			}
-			String bonus = getAllMods(null).getValueAsString();
-			if (getAllMods(null).getValue() > -1) {
+			String bonus = getAllMods().getValueAsString();
+			if (getAllMods().getValue() > -1) {
 				bonus = "+" + bonus;
 			}
 			bonus = "(" + bonus + ")";
@@ -402,9 +384,9 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		}
 		return toReturn;
 	}
-
+	
 	public abstract int getTechRating();
-
+	
 	public abstract int getAvailability(int era);
 
 
@@ -412,20 +394,17 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	    if(getTechLevel() == TechConstants.T_ALLOWED_ALL) {
 	        return T_BOTH;
 	    }
-	    if (getTechLevel() == TechConstants.T_TECH_UNKNOWN) {
-	        return T_UNKNOWN;
-	    }
 		if(isClanTechBase()) {
 			return T_CLAN;
 		} else {
 			return T_IS;
 		}
 	}
-
+	
 	public String getTechBaseName() {
 		return getTechBaseName(getTechBase());
 	}
-
+	
 	public static String getTechBaseName(int base) {
 		switch(base) {
 		case T_BOTH:
@@ -434,49 +413,18 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			return "Clan";
 		case T_IS:
 			return "IS";
-		case T_UNKNOWN:
-		    return "UNKNOWN";
-		default:
+		default: 
 			return "??";
 		}
 	}
-
+	
 	abstract public int getTechLevel();
-	
-	abstract public int getIntroDate();
-	
-	abstract public int getExtinctDate();
-	
-	abstract public int getReIntroDate();
-	
-	/**
-	 * We are going to only limit parts by year if they totally haven't been produced
-	 * otherwise, we will just replace the existing availability code with X
-	 */
-	public boolean isIntroducedBy(int year) {
-        if (year < getIntroDate()) {
-            return false;
-        }
-        
-        return true;
-    }
-
-	public boolean isExtinctIn(int year) {
-		if ((getExtinctDate() == EquipmentType.DATE_NONE)) {
-			return false;
-		}
-		if (year >= getExtinctDate() && year < getReIntroDate()) {
-            return true;
-        }
-        return false;
-	}
-	
 	
 	/**
 	 * Checks if the current part is exactly the "same kind" of part as the part
 	 * given in argument. This is used to determine whether we need to add new spare
 	 * parts, or increment existing ones.
-	 *
+	 * 
 	 * @param part
 	 *            The part to be compared with the current part
 	 */
@@ -485,11 +433,11 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	}
 
 	public abstract boolean isSamePartType(Part part);
-
+	
 	public boolean isSameStatus(Part part) {
 		//parts that are reserved for refit or being worked on are never the same status
-		if(isReservedForRefit() || isBeingWorkedOn() || isReservedForReplacement() || hasParentPart()
-				|| part.isReservedForRefit() || part.isBeingWorkedOn() || part.isReservedForReplacement() || part.hasParentPart()) {
+		if(isReservedForRefit() || isBeingWorkedOn() || isReservedForReplacement()
+				|| part.isReservedForRefit() || part.isBeingWorkedOn() || part.isReservedForReplacement()) {
     		return false;
     	}
 		return hits == part.getHits() && part.getSkillMin() == this.getSkillMin() && this.getDaysToArrival() == part.getDaysToArrival();
@@ -500,7 +448,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     }
 
 	public abstract void writeToXml(PrintWriter pw1, int indent);
-
+	
 	protected void writeToXmlBegin(PrintWriter pw1, int indent) {
 		pw1.println(MekHqXmlUtil.indentStr(indent) + "<part id=\""
 				+id
@@ -523,6 +471,14 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 				+"<hits>"
 				+hits
 				+"</hits>");
+		pw1.println(MekHqXmlUtil.indentStr(indent+1)
+				+"<difficulty>"
+				+difficulty
+				+"</difficulty>");
+		pw1.println(MekHqXmlUtil.indentStr(indent+1)
+				+"<time>"
+				+time
+				+"</time>");
 		pw1.println(MekHqXmlUtil.indentStr(indent+1)
 				+"<timeSpent>"
 				+timeSpent
@@ -547,6 +503,10 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 					+unitId.toString()
 					+"</unitId>");
 		}
+		pw1.println(MekHqXmlUtil.indentStr(indent+1)
+				+"<salvaging>"
+				+salvaging
+				+"</salvaging>");
 		pw1.println(MekHqXmlUtil.indentStr(indent+1)
 				+"<workingOvertime>"
 				+workingOvertime
@@ -583,20 +543,8 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
                 +"<quality>"
                 +quality
                 +"</quality>");
-        pw1.println(MekHqXmlUtil.indentStr(indent+1)
-                +"<isTeamSalvaging>"
-                +isTeamSalvaging
-                +"</isTeamSalvaging>");
-        pw1.println(MekHqXmlUtil.indentStr(indent+1)
-                +"<parentPartId>"
-                +parentPartId
-                +"</parentPartId>");
-        for(int childId : childPartIds) {
-			pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "<childPartId>"
-					+ childId + "</childPartId>");
-		}
 	}
-
+	
 	protected void writeToXmlEnd(PrintWriter pw1, int indent) {
 		pw1.println(MekHqXmlUtil.indentStr(indent) + "</part>");
 	}
@@ -606,11 +554,11 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		NamedNodeMap attrs = wn.getAttributes();
 		Node classNameNode = attrs.getNamedItem("type");
 		String className = classNameNode.getTextContent();
-
+		
 		//reverse compatability checks
 		if(className.equalsIgnoreCase("mekhq.campaign.parts.MekEngine")) {
 			className = "mekhq.campaign.parts.EnginePart";
-		}
+		} 
 		else if(className.equalsIgnoreCase("mekhq.campaign.parts.MissingMekEngine")) {
 			className = "mekhq.campaign.parts.MissingEnginePart";
 		}
@@ -638,18 +586,18 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		else if(className.equalsIgnoreCase("mekhq.campaign.parts.MissingHeatSink")) {
 			className = "mekhq.campaign.parts.equipment.MissingHeatSink";
 		}
-
+		
 		try {
 			// Instantiate the correct child class, and call its parsing function.
 			retVal = (Part) Class.forName(className).newInstance();
 			retVal.loadFieldsFromXmlNode(wn);
-
+			
 			// Okay, now load Part-specific fields!
 			NodeList nl = wn.getChildNodes();
-
+			
 			for (int x=0; x<nl.getLength(); x++) {
 				Node wn2 = nl.item(x);
-
+				
 				 if (wn2.getNodeName().equalsIgnoreCase("id")) {
 					retVal.id = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("name")) {
@@ -660,6 +608,10 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 					retVal.quantity = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("hits")) {
 					retVal.hits = Integer.parseInt(wn2.getTextContent());
+				} else if (wn2.getNodeName().equalsIgnoreCase("difficulty")) {
+					retVal.difficulty = Integer.parseInt(wn2.getTextContent());
+				} else if (wn2.getNodeName().equalsIgnoreCase("time")) {
+					retVal.time = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("timeSpent")) {
 					retVal.timeSpent = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("skillMin")) {
@@ -669,7 +621,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 				} else if (wn2.getNodeName().equalsIgnoreCase("daysToWait")) {
                     retVal.daysToWait = Integer.parseInt(wn2.getTextContent());
                 } else if (wn2.getNodeName().equalsIgnoreCase("teamId")) {
-					if (version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
+					if(version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
 						retVal.oldTeamId = Integer.parseInt(wn2.getTextContent());
 					} else {
 						if(!wn2.getTextContent().equals("null")) {
@@ -677,7 +629,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 						}
 					}
 				} else if (wn2.getNodeName().equalsIgnoreCase("unitId")) {
-					if (version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
+					if(version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
 						retVal.oldUnitId = Integer.parseInt(wn2.getTextContent());
 					} else {
 						if(!wn2.getTextContent().equals("null")) {
@@ -687,12 +639,12 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 				} else if (wn2.getNodeName().equalsIgnoreCase("shorthandedMod")) {
 					retVal.shorthandedMod = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("refitId")) {
-					if (version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
+					if(version.getMajorVersion() == 0 && version.getMinorVersion() < 2 && version.getSnapshot() < 14) {
 						retVal.oldRefitId = Integer.parseInt(wn2.getTextContent());
 					} else {
 						if(!wn2.getTextContent().equals("null")) {
 							retVal.refitId = UUID.fromString(wn2.getTextContent());
-						}
+						}	
 					}
 				} else if (wn2.getNodeName().equalsIgnoreCase("daysToArrival")) {
 					retVal.daysToArrival = Integer.parseInt(wn2.getTextContent());
@@ -702,11 +654,11 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 					} else {
 						retVal.workingOvertime = false;
 					}
-				} else if (wn2.getNodeName().equalsIgnoreCase("isTeamSalvaging")) {
+				} else if (wn2.getNodeName().equalsIgnoreCase("salvaging")) {
 					if(wn2.getTextContent().equalsIgnoreCase("true")) {
-						retVal.isTeamSalvaging = true;
+						retVal.salvaging = true;
 					} else {
-						retVal.isTeamSalvaging = false;
+						retVal.salvaging = false;
 					}
 				} else if (wn2.getNodeName().equalsIgnoreCase("brandNew")) {
 					if(wn2.getTextContent().equalsIgnoreCase("true")) {
@@ -719,11 +671,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 					retVal.replacementId = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("quality")) {
                     retVal.quality = Integer.parseInt(wn2.getTextContent());
-                } else if (wn2.getNodeName().equalsIgnoreCase("parentPartId")) {
-                    retVal.parentPartId = Integer.parseInt(wn2.getTextContent());
-                } else if (wn2.getNodeName().equalsIgnoreCase("childPartId")) {
-                    retVal.childPartIds.add(Integer.parseInt(wn2.getTextContent()));
-                }
+                } 
 			}
 		} catch (Exception ex) {
 			// Errrr, apparently either the class name was invalid...
@@ -731,34 +679,39 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			// Doh!
 			MekHQ.logError(ex);
 		}
-
-		// Refit protection of unit id
-		if (retVal.unitId != null && retVal.refitId != null) {
-		    retVal.setUnit(null);
-		}
-
+		
 		return retVal;
 	}
-
+	
 	protected abstract void loadFieldsFromXmlNode(Node wn);
+	
+	@Override
+	public int getDifficulty() {
+		return difficulty;
+	}
+
+	@Override
+	public int getBaseTime() {
+		return time;
+	}
 
 	@Override
 	public int getActualTime() {
 		switch (mode) {
 		case Modes.MODE_EXTRA_DOUBLE:
-			return 2 * getBaseTime();
+			return 2 * time;
 		case Modes.MODE_EXTRA_TRIPLE:
-			return 3 * getBaseTime();
+			return 3 * time;
 		case Modes.MODE_EXTRA_QUAD:
-			return 4 * getBaseTime();
+			return 4 * time;
 		case Modes.MODE_RUSH_ONE:
-			return (int) Math.ceil(getBaseTime() / 2.0);
+			return (int) Math.ceil(time / 2.0);
 		case Modes.MODE_RUSH_TWO:
-			return (int) Math.ceil(getBaseTime() / 4.0);
+			return (int) Math.ceil(time / 4.0);
 		case Modes.MODE_RUSH_THREE:
-			return (int) Math.ceil(getBaseTime() / 8.0);
+			return (int) Math.ceil(time / 8.0);
 		default:
-			return getBaseTime();
+			return time;
 		}
 	}
 
@@ -779,7 +732,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public void resetTimeSpent() {
 		this.timeSpent = 0;
 	}
-
+	
 	public void resetOvertime() {
 		this.workingOvertime = false;
 	}
@@ -792,7 +745,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public void setSkillMin(int i) {
 		this.skillMin = i;
 	}
-
+	
 	public int getMode() {
 		return mode;
 	}
@@ -800,9 +753,9 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public void setMode(int i) {
 		this.mode = i;
 	}
-
+	
 	@Override
-	public TargetRoll getAllMods(Person tech) {
+	public TargetRoll getAllMods() {
 		TargetRoll mods = new TargetRoll(getDifficulty(), "difficulty");
 		if (Modes.getModeMod(mode,campaign.getCampaignOptions().isDestroyByMargin()) != 0) {
 			mods.addModifier(Modes.getModeMod(mode,campaign.getCampaignOptions().isDestroyByMargin()), getCurrentModeName());
@@ -816,12 +769,15 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	            mods.addModifier(1, "difficult to maintain");
 	        }
 		}
+		Person tech = campaign.getPerson(getAssignedTeamId());
 		if(isClanTechBase() || (this instanceof MekLocation && this.getUnit() != null && this.getUnit().getEntity().isClan())) {
-			if (null != tech && !tech.isClanner()) {
+			if (tech == null) {
+				mods.addModifier(2, "clan tech");
+			} else if (!tech.isClanner()) {
 				mods.addModifier(2, "clan tech");
 			}
 		}
-
+		
 		switch(quality) {
 		case QUALITY_A:
             mods.addModifier(3, "Quality A");
@@ -842,16 +798,16 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
             mods.addModifier(-2, "Quality F");
             break;
 		}
-
+		
         return mods;
 	}
-
+	
 	public TargetRoll getAllModsForMaintenance() {
 	    //according to StratOps you get a -1 mod when checking on individual parts
 	    //but we will make this user customizable
 	    TargetRoll mods = new TargetRoll(campaign.getCampaignOptions().getMaintenanceBonus(), "maintenance");
         mods.addModifier(Availability.getTechModifier(getTechRating()), "tech rating " + EquipmentType.getRatingName(getTechRating()));
-
+    
 	    if(null != unit) {
 	        mods.append(unit.getSiteMod());
 	        if(unit.getEntity().hasQuirk("easy_maintain")) {
@@ -868,7 +824,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	            mods.addModifier(2, "clan tech");
 	        }
 	    }
-
+	        
 	    if(campaign.getCampaignOptions().useQualityMaintenance()) {
     	    switch(quality) {
     	    case QUALITY_A:
@@ -891,44 +847,33 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     	        break;
     	    }
 	    }
-
+	        
 	    return mods;
 	}
 
 	public String getCurrentModeName() {
 		return Modes.getModeName(mode);
 	}
-
+	
 	@Override
 	public UUID getAssignedTeamId() {
 		return teamId;
 	}
-
+	
 	@Override
 	public void setTeamId(UUID i) {
-		//keep track of whether this was a salvage operation
-		//because the entity may change
-		if(null == i) {
-			this.isTeamSalvaging = false;
-		} else if(null == teamId) {
-			this.isTeamSalvaging = isSalvaging();
-		}
-		this.teamId = i;		
+		this.teamId = i;
 	}
 	
-	public boolean isTeamSalvaging() {
-		return null != getAssignedTeamId() && isTeamSalvaging;
-	}
-
 	public void setReserveId(UUID i) {
 		this.reserveId = i;
 	}
-
+	
 	@Override
 	public String getPartName() {
 		return name;
 	}
-
+	
 	@Override
 	public void fix() {
 		hits = 0;
@@ -936,7 +881,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		shorthandedMod = 0;
 		mode = Modes.MODE_NORMAL;
 	}
-
+	
 	@Override
 	public String fail(int rating) {
 		skillMin = ++rating;
@@ -949,92 +894,97 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	public String succeed() {
 		if(isSalvaging()) {
 			remove(true);
+			salvaging = false;
 			return " <font color='green'><b> salvaged.</b></font>";
 		} else {
 			fix();
 			return " <font color='green'><b> fixed.</b></font>";
 		}
 	}
-
+	
 	@Override
     public String getDetails() {
         return hits + " hit(s)";
     }
-
-	@Override
+	
+	@Override 
 	public boolean isSalvaging() {
-		if(null != unit) {
-			return unit.isSalvage() || isMountedOnDestroyedLocation() || isTeamSalvaging();
-		}
-		return false;
+		return salvaging || isMountedOnDestroyedLocation();
 	}
 
+	public void setSalvaging(boolean b) {
+		this.salvaging = b;
+	}
+	
 	public String checkScrappable() {
 		return null;
 	}
-
+	
 	public boolean canNeverScrap() {
 		return false;
 	}
-
+	
 	public String scrap() {
 		remove(false);
 		return getName() + " scrapped.";
 	}
-
+	
 	@Override
 	public boolean hasWorkedOvertime() {
 		return workingOvertime;
 	}
-
+	
 	@Override
 	public void setWorkedOvertime(boolean b) {
 		workingOvertime = b;
 	}
-
+	
 	@Override
 	public int getShorthandedMod() {
 		return shorthandedMod;
 	}
-
+	
 	@Override
 	public void setShorthandedMod(int i) {
 		shorthandedMod = i;
 	}
-
+	
 	@Override
 	public abstract Part clone();
 
     protected void copyBaseData(Part part) {
+        this.time = part.time;
         this.mode = part.mode;
         this.hits = part.hits;
+        this.difficulty = part.difficulty;
+        this.salvaging = part.salvaging;
         this.brandNew = part.brandNew;
     }
-
+	
 	public void setRefitId(UUID rid) {
 		refitId = rid;
 	}
-
+	
 	public UUID getRefitId() {
 		return refitId;
 	}
-
+	
 	public boolean isReservedForRefit() {
 		return refitId != null;
 	}
-
+	
 	public boolean isReservedForReplacement() {
 		return reserveId != null;
 	}
-
+	
 	public void setDaysToArrival(int days) {
 		daysToArrival = days;
 	}
-
-	public int getDaysToArrival() {
+	
+	public int getDaysToArrival() { 
 		return daysToArrival;
 	}
-
+	
 	public boolean checkArrival() {
 		if(daysToArrival > 0) {
 			daysToArrival--;
@@ -1042,38 +992,36 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		}
 		return false;
 	}
-
+	
 	public boolean isPresent() {
 		return daysToArrival == 0;
 	}
-
+	
 	public boolean isBeingWorkedOn() {
 		return teamId != null;
 	}
-
+	
 	public void fixIdReferences(Hashtable<Integer, UUID> uHash, Hashtable<Integer, UUID> pHash) {
     	unitId = uHash.get(oldUnitId);
     	refitId = uHash.get(oldRefitId);
     	teamId = pHash.get(oldTeamId);
     }
-
-	/*
+	
 	public void resetRepairStatus() {
 		if(null != unit) {
 			setSalvaging(unit.isSalvage());
-			updateConditionFromEntity(false);
+			updateConditionFromEntity();
 		}
 	}
-	*/
-
+	
 	public boolean onBadHipOrShoulder() {
 		return false;
 	}
-
+	
 	public boolean isMountedOnDestroyedLocation() {
 		return false;
 	}
-
+	
 	public boolean isPartForEquipmentNum(int index, int loc) {
 		return false;
 	}
@@ -1081,62 +1029,56 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     public boolean isInSupply() {
         return true;
     }
-
+    
     public int getQuantity() {
     	return quantity;
     }
-
+    
     public void incrementQuantity() {
     	quantity++;
     }
-
+    
     public void decrementQuantity() {
     	quantity--;
     	if(quantity <= 0) {
-    		for(int childId : childPartIds) {
-    			Part p = campaign.getPart(childId);
-    			if(null != p) {
-    				campaign.removePart(p);
-    			}
-    		}
     		campaign.removePart(this);
     	}
     }
-
+    
     public boolean isSpare() {
-    	return null == unitId && parentPartId == -1;
+    	return null == unitId;
     }
-
+    
     public boolean isRightTechType(String skillType) {
     	return true;
     }
-
+    
     public boolean isOmniPoddable() {
     	return false;
     }
-
+        
     public int getDaysToWait() {
         return daysToWait;
     }
-
+    
     public void resetDaysToWait() {
         this.daysToWait = campaign.getCampaignOptions().getWaitingPeriod();
     }
-
+    
     public void decrementDaysToWait() {
         if(daysToWait > 0) {
             daysToWait--;
         }
     }
-
+    
     public String getShoppingListReport(int quan) {
         return getQuantityName(quan) + ((quan > 1) ? " have " : " has ") + "been added to the procurement list.";
     }
-
+    
     public String getArrivalReport() {
         return getQuantityName(quantity) + ((quantity > 1) ? " have " : " has ") + "arrived";
     }
-
+    
     public String getQuantityName(int quantity) {
         String answer = "" + quantity + " " + getName();
         if(quantity > 1) {
@@ -1144,7 +1086,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
         }
         return answer;
     }
-
+    
     /** Get the acquisition work to acquire a new part of this type
      * For most parts this is just getMissingPart(), but some override it
      * @return
@@ -1152,109 +1094,42 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     public IAcquisitionWork getAcquisitionWork() {
         return getMissingPart();
     }
-
+    
     public void doMaintenanceDamage(int d) {
         hits += d;
         updateConditionFromPart();
-        updateConditionFromEntity(false);
+        updateConditionFromEntity();
     }
-
+    
     public int getQuality() {
         return quality;
     }
-
+    
     public void improveQuality() {
         quality += 1;
     }
-
+    
     public void decreaseQuality() {
         quality -= 1;
     }
-
+    
     public void setQuality(int q) {
     	quality = q;
     }
-
+    
     public boolean needsMaintenance() {
         return true;
     }
-
+    
     public void cancelAssignment() {
         setTeamId(null);
         resetOvertime();
         resetTimeSpent();
         setShorthandedMod(0);
     }
-
+    
     public abstract String getLocationName();
-
+    
     public abstract int getLocation();
-    
-    public void setParentPartId(int id) {
-    	parentPartId = id;
-    }
-    
-    public int getParentPartId() {
-    	return parentPartId;
-    }
-    
-    public boolean hasParentPart() {
-    	return parentPartId != -1;
-    }
-    
-    public ArrayList<Integer> getChildPartIds() {
-    	return childPartIds;
-    }
-    
-    public void addChildPart(Part child) {
-    	childPartIds.add(child.getId());
-    	child.setParentPartId(id);
-    }
-
-    public void removeChildPart(int childId) {
-    	ArrayList<Integer> tempArray = new ArrayList<Integer>();
-    	for(int cid : childPartIds) {
-    		if(cid == childId) {
-    			Part part = campaign.getPart(childId);
-        		if(null != part) {
-        			part.setParentPartId(-1);
-        		}
-    		} else {
-    			tempArray.add(cid);
-    		}
-    	}
-    	childPartIds = tempArray;
-    }
-     
-    public void removeAllChildParts() {
-    	for(int childId : childPartIds) {
-    		Part part = campaign.getPart(childId);
-    		if(null != part) {
-    			part.setParentPartId(-1);
-    		}
-    	}
-    	childPartIds = new ArrayList<Integer>();
-    }
-    
-    /**
-     * Reserve a part for overnight work
-     */
-    @Override
-    public void reservePart() {
-    	//nothing goes here for real parts. Only missing parts need to reserve a replacement
-    }
-    
-    @Override
-    public void cancelReservation() {
-    	//nothing goes here for real parts. Only missing parts need to reserve a replacement
-    }
-    
-    /**
-     * Make any changes to the part needed for adding to the campaign
-     */
-    public void postProcessCampaignAddition() {
-    	//do nothing
-    }
-    
 }
 

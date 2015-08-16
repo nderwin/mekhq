@@ -21,7 +21,6 @@
 
 package mekhq.campaign.parts.equipment;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.EquipmentType;
 import megamek.common.MiscType;
@@ -76,11 +75,6 @@ public class JumpJet extends EquipmentPart {
     public long getStickerPrice() {
     	return 200 * getUnitTonnage();	
     }
-    
-    @Override
-    public String getDetails() {
-    	return getUnitTonnage() + " ton unit";
-    }
 
 	@Override
 	public MissingPart getMissingPart() {
@@ -88,42 +82,30 @@ public class JumpJet extends EquipmentPart {
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			Mounted mounted = unit.getEntity().getEquipment(equipmentNum);
 			if(null != mounted) {
-				if(mounted.isMissing()) {
+				if(!mounted.isRepairable()) {
 					remove(false);
 					return;
 				} 
 				hits = unit.getEntity().getDamagedCriticals(CriticalSlot.TYPE_EQUIPMENT, equipmentNum, mounted.getLocation());
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} else if(hits > 0) {
+			time = 100;
+			difficulty = -3;
+		}
 		if(isSalvaging()) {
-			return 60;
+			this.time = 60;
+			this.difficulty = 0;
 		}
-		return 100;
 	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
-		}
-		return -3;
-	}
-	
+
 	@Override
 	public boolean needsFixing() {
 		return hits > 0;

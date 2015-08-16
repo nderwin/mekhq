@@ -81,8 +81,6 @@ public class MekHQ implements GameListener {
 	public static int VERBOSITY_LEVEL = 5;
 	public static String CAMPAIGN_DIRECTORY = "./campaigns/";
 	public static String PROPERTIES_FILE = "mmconf/mekhq.properties";
-	public static String PRESET_DIR = "./mmconf/mhqPresets/";
-
 
 	//stuff related to MM games
     private Server myServer = null;
@@ -164,8 +162,6 @@ public class MekHQ implements GameListener {
 
     public void showNewView() {
     	campaigngui = new CampaignGUI(this);
-    	campaigngui.getTabOverview().setVisible(campaign.isOverviewLoadingValue());
-    	campaigngui.showHideTabOverview();
     }
 
     /**
@@ -257,20 +253,6 @@ public class MekHQ implements GameListener {
     	campaign = c;
     }
 
-    /**
-     * @return the campaigngui
-     */
-    public CampaignGUI getCampaigngui() {
-        return campaigngui;
-    }
-
-    /**
-     * @param campaigngui the campaigngui to set
-     */
-    public void setCampaigngui(CampaignGUI campaigngui) {
-        this.campaigngui = campaigngui;
-    }
-
     public void joinGame(Scenario scenario, ArrayList<Unit> meks) {
 		LaunchGameDialog lgd = new LaunchGameDialog(campaigngui.getFrame(), false, campaign);
 		lgd.setVisible(true);
@@ -301,16 +283,11 @@ public class MekHQ implements GameListener {
                 FileDialog f = new FileDialog(campaigngui.getFrame(), "Load Savegame");
                 f.setDirectory(System.getProperty("user.dir") + "/savegames");
                 f.setVisible(true);
-                if (null != f.getFile()) {
-                    myServer.loadGame(new File(f.getDirectory(), f.getFile()));
-                } else {
-                    throw new FileNotFoundException();
-                }
+                myServer.loadGame(new File(f.getDirectory(), f.getFile()));
             }
         } catch (Exception ex) {
         	MekHQ.logMessage("Failed to start up server properly");
 			MekHQ.logError(ex);
-			stopHost();
             return;
         }
 
@@ -397,7 +374,6 @@ public class MekHQ implements GameListener {
 
 	@Override
 	public void gameVictory(GameVictoryEvent gve) {
-	    // Prevent double run
 		if (gameThread.stopRequested()) {
 			return;
 		}

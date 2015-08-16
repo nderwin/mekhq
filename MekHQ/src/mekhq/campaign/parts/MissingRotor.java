@@ -43,17 +43,9 @@ public class MissingRotor extends MissingPart {
 	public MissingRotor(int tonnage, Campaign c) {
         super(tonnage, c);
         this.name = "Rotor";
+        this.time = 300;
+        this.difficulty = 0;
     }
-	
-	@Override 
-	public int getBaseTime() {
-		return 300;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
 
 	@Override
 	protected void loadFieldsFromXmlNode(Node wn) {
@@ -113,20 +105,4 @@ public class MissingRotor extends MissingPart {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }

@@ -1,20 +1,20 @@
 /*
  * PartsStore.java
- *
+ * 
  * Copyright (c) 2011 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
- *
+ * 
  * This file is part of MekHQ.
- *
+ * 
  * MekHQ is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * MekHQ is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * along with MekHQ.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,18 +28,15 @@ import java.util.Enumeration;
 import megamek.common.Aero;
 import megamek.common.AmmoType;
 import megamek.common.Engine;
-import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.Mech;
-import megamek.common.MechFileParser;
-import megamek.common.MechSummary;
-import megamek.common.MechSummaryCache;
 import megamek.common.MiscType;
 import megamek.common.Protomech;
-import megamek.common.loaders.EntityLoadingException;
+import megamek.common.verifier.TestBattleArmor;
 import megamek.common.verifier.TestEntity;
 import megamek.common.weapons.BayWeapon;
 import megamek.common.weapons.InfantryAttack;
+import megamek.common.weapons.infantry.InfantryWeapon;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.parts.AeroHeatSink;
 import mekhq.campaign.parts.AeroSensor;
@@ -47,7 +44,6 @@ import mekhq.campaign.parts.AmmoStorage;
 import mekhq.campaign.parts.Armor;
 import mekhq.campaign.parts.Avionics;
 import mekhq.campaign.parts.BaArmor;
-import mekhq.campaign.parts.BattleArmorSuit;
 import mekhq.campaign.parts.EnginePart;
 import mekhq.campaign.parts.FireControlSystem;
 import mekhq.campaign.parts.LandingGear;
@@ -78,32 +74,32 @@ import mekhq.campaign.parts.equipment.MASC;
  * This is a parts store which will contain one copy of every possible
  * part that might be needed as well as a variety of helper functions to
  * acquire parts.
- *
+ * 
  * We could in the future extend this to different types of stores that have different finite numbers of
  * parts in inventory
- *
+ * 
  * @author Jay Lawson <jaylawson39 at yahoo.com>
  */
 public class PartsStore implements Serializable {
 
 	/**
-	 *
+	 * 
 	 */
 	private static final long serialVersionUID = 1686222527383868364L;
-
+	
 	private ArrayList<Part> parts;
-
+	
 	public PartsStore(Campaign c) {
 		parts = new ArrayList<Part>();
 		stock(c);
 	}
-
+	
 	public ArrayList<Part> getInventory() {
 		return parts;
 	}
-
+	
 	public void stock(Campaign c) {
-		stockWeaponsAmmoAndEquipment(c);
+		stockWeaponsAmmoAndEquipment(c);	
 		stockMekActuators(c);
 		stockEngines(c);
 		stockGyros(c);
@@ -114,60 +110,33 @@ public class PartsStore implements Serializable {
 		stockMekLocations(c);
 		stockProtomekLocations(c);
 		stockProtomekComponents(c);
-		stockBattleArmorSuits(c);
 		for(Part p : parts) {
 			p.setBrandNew(true);
 		}
 	}
-
-	private void stockBattleArmorSuits(Campaign c) {
-		//this is just a test
-		for(MechSummary summary : MechSummaryCache.getInstance().getAllMechs()) {
-			if(!summary.getUnitType().equals("BattleArmor")) {
-				continue;
-			}
-			//FIXME: I can't pull entity movement mode and quad shape off of mechsummary
-			//try loading the full entity, but this might take too long
-			if(null != summary) {
-		 		Entity newEntity = null;
-		 		try {
-		 			newEntity = new MechFileParser(summary.getSourceFile(), summary.getEntryName()).getEntity();
-				} catch (EntityLoadingException e) {
-					e.printStackTrace();
-				}
-		 		if(null != newEntity) {
-		 			BattleArmorSuit ba = new BattleArmorSuit(summary.getChassis(), summary.getModel(), (int)summary.getTons(), 1, summary.getWeightClass(), summary.getWalkMp(), summary.getJumpMp(), newEntity.entityIsQuad(), summary.isClan(), newEntity.getMovementMode(), c);
-		 			parts.add(ba);
-		 		}
-			}
-		}
-	}
-
+	
 	private void stockWeaponsAmmoAndEquipment(Campaign c) {
         for (Enumeration<EquipmentType> e = EquipmentType.getAllTypes(); e.hasMoreElements();) {
             EquipmentType et = e.nextElement();
-            if(!et.isHittable() &&
-            		!(et instanceof MiscType && ((MiscType)et).hasFlag(MiscType.F_BA_MANIPULATOR))) {
+            if(!et.isHittable()) {
             	continue;
             }
             //TODO: we are still adding a lot of non-hittable equipment
 			if(et instanceof AmmoType) {
 				parts.add(new AmmoStorage(0, et, ((AmmoType)et).getShots(), c));
-			} else if(et instanceof MiscType && (((MiscType)et).hasFlag(MiscType.F_HEAT_SINK) || ((MiscType)et).hasFlag(MiscType.F_DOUBLE_HEAT_SINK))) {
+			} else if(et instanceof MiscType && (et.hasFlag(MiscType.F_HEAT_SINK) || et.hasFlag(MiscType.F_DOUBLE_HEAT_SINK))) {
             	parts.add(new HeatSink(0, et, -1, c));
-			} else if(et instanceof MiscType && ((MiscType)et).hasFlag(MiscType.F_JUMP_JET)) {
-				//need to do it by rating and unit tonnage
-				for(int ton = 10; ton <= 100; ton += 5) {
-					parts.add(new JumpJet(ton, et, -1, c));
-				}
-			} else if ((et instanceof MiscType && ((MiscType)et).hasFlag(MiscType.F_TANK_EQUIPMENT) && ((MiscType)et).hasFlag(MiscType.F_CHASSIS_MODIFICATION))
+			} else if(et instanceof MiscType && et.hasFlag(MiscType.F_JUMP_JET)) {
+				parts.add(new JumpJet(55, et, -1, c));
+				parts.add(new JumpJet(85, et, -1, c));
+				parts.add(new JumpJet(100, et, -1, c));
+			} else if ((et instanceof MiscType && et.hasFlag(MiscType.F_BA_EQUIPMENT))
+					|| (et instanceof MiscType && et.hasFlag(MiscType.F_TANK_EQUIPMENT) && et.hasFlag(MiscType.F_CHASSIS_MODIFICATION))
+					|| et instanceof InfantryWeapon 
 					|| et instanceof BayWeapon
 					|| et instanceof InfantryAttack) {
 				continue;
-			} else if(et instanceof MiscType && ((MiscType)et).hasFlag(MiscType.F_BA_EQUIPMENT)
-						&& !((MiscType)et).hasFlag(MiscType.F_BA_MANIPULATOR)) {
-				continue;
-			} else if(et instanceof MiscType && ((MiscType)et).hasFlag(MiscType.F_MASC)) {
+			} else if(et instanceof MiscType && et.hasFlag(MiscType.F_MASC)) {
 				if(et.hasSubType(MiscType.S_SUPERCHARGER)) {
 					for(int rating = 10; rating <= 400; rating += 5) {
 						for(double eton = 0.5; eton <= 10.5; eton += 0.5) {
@@ -213,7 +182,7 @@ public class PartsStore implements Serializable {
         parts.add(new AeroHeatSink(0, Aero.HEAT_SINGLE, c));
         parts.add(new AeroHeatSink(0, Aero.HEAT_DOUBLE, c));
 	}
-
+	
 	private void stockMekActuators(Campaign c) {
 		for(int i = Mech.ACTUATOR_UPPER_ARM; i <= Mech.ACTUATOR_FOOT; i++) {
 			if(i == Mech.ACTUATOR_HIP) {
@@ -226,7 +195,7 @@ public class PartsStore implements Serializable {
 			}
 		}
 	}
-
+	
 	private double getEngineTonnage(Engine engine) {
 		float weight = Engine.ENGINE_RATINGS[(int) Math.ceil(engine.getRating() / 5.0)];
         switch (engine.getEngineType()) {
@@ -264,8 +233,8 @@ public class PartsStore implements Serializable {
         float toReturn = TestEntity.ceilMaxHalf(weight, TestEntity.CEIL_HALFTON);
         return toReturn;
 	}
-
-	private void stockEngines(Campaign c) {
+	
+	private void stockEngines(Campaign c) {					
 		Engine engine;
 		for(int rating = 10; rating <= 400; rating += 5) {
 			for(int ton = 5; ton <= 100; ton += 5) {
@@ -299,12 +268,12 @@ public class PartsStore implements Serializable {
 						if(engine.engineValid) {
 							parts.add(new EnginePart(ton, engine, c, true));
 						}
-					}
+					}				
 				}
 			}
 		}
 	}
-
+	
 	private void stockGyros(Campaign c) {
 		for(double i = 0.5; i <= 8.0; i += 0.5) {
 			//standard at intervals of 1.0, up to 4
@@ -323,10 +292,10 @@ public class PartsStore implements Serializable {
 			if(i % 2.0 == 0) {
 				parts.add(new MekGyro(0, Mech.GYRO_HEAVY_DUTY, i, c));
 			}
-
+			
 		}
 	}
-
+	
 	private void stockMekComponents(Campaign c) {
 		parts.add(new MekLifeSupport(0, c));
 		for(int ton = 20; ton <= 100; ton += 5) {
@@ -336,7 +305,7 @@ public class PartsStore implements Serializable {
 			parts.add(new MekCockpit(0, type, c));
 		}
 	}
-
+	
 	private void stockAeroComponents(Campaign c) {
 		parts.add(new AeroHeatSink(0, Aero.HEAT_SINGLE, c));
 		parts.add(new AeroHeatSink(0, Aero.HEAT_DOUBLE, c));
@@ -348,7 +317,7 @@ public class PartsStore implements Serializable {
 		parts.add(new FireControlSystem(0, 0, c));
 		parts.add(new LandingGear(0, c));
 	}
-
+	
 	private void stockVeeComponents(Campaign c) {
 		parts.add(new VeeSensor(0, c));
 		parts.add(new VeeStabiliser(0,-1, c));
@@ -357,14 +326,13 @@ public class PartsStore implements Serializable {
 			parts.add(new Turret(ton, -1, c));
 		}
 	}
-
+	
 	private void stockArmor(Campaign c) {
-		/*
-		 * Mech, Aero, and Vehicle armors
-		 */
 		//Standard armor
 		int amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_STANDARD, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_STANDARD, amount, -1, false, false, c));
+		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_STANDARD, true));
+		parts.add(new Armor(0, EquipmentType.T_ARMOR_STANDARD, amount, -1, false, true, c));
 		//Ferro-Fibrous
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_FERRO_FIBROUS, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_FERRO_FIBROUS, amount, -1, false, false, c));
@@ -388,8 +356,6 @@ public class PartsStore implements Serializable {
 		//Light/Heavy FF
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_LIGHT_FERRO, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_LIGHT_FERRO, amount, -1, false, false, c));
-		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_LIGHT_FERRO, true));
-		parts.add(new Armor(0, EquipmentType.T_ARMOR_LIGHT_FERRO, amount, -1, false, true, c));
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_HEAVY_FERRO, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_HEAVY_FERRO, amount, -1, false, false, c));
 		//Stealth
@@ -421,7 +387,7 @@ public class PartsStore implements Serializable {
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_PRIMITIVE, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_PRIMITIVE, amount, -1, false, false, c));
 		/*
-		 * Warship armors
+		 * These are all warship armors
 		*/
 		//Ferro-Carbide
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_FERRO_CARBIDE, false));
@@ -432,28 +398,17 @@ public class PartsStore implements Serializable {
 		//Improved Ferro-Aluminum
 		amount = (int) (5.0 * 16.0 * EquipmentType.getArmorPointMultiplier(EquipmentType.T_ARMOR_FERRO_IMP, false));
 		parts.add(new Armor(0, EquipmentType.T_ARMOR_FERRO_IMP, amount, -1, false, false, c));
-		/*
-		 * Protomek Armor
-		 */
 		parts.add(new ProtomekArmor(0, 100, -1, true, c));
-		/*
-		*BA ARMOR
-		*/
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STANDARD, false)), EquipmentType.T_ARMOR_BA_STANDARD, -1, false, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STANDARD, true)), EquipmentType.T_ARMOR_BA_STANDARD, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STANDARD_ADVANCED, true)), EquipmentType.T_ARMOR_BA_STANDARD_ADVANCED, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STANDARD_PROTOTYPE, true)), EquipmentType.T_ARMOR_BA_STANDARD_PROTOTYPE, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH_BASIC, false)), EquipmentType.T_ARMOR_BA_STEALTH_BASIC, -1, false, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH_BASIC, true)), EquipmentType.T_ARMOR_BA_STEALTH_BASIC, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH_IMP, false)), EquipmentType.T_ARMOR_BA_STEALTH_IMP, -1, false, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH_IMP, true)), EquipmentType.T_ARMOR_BA_STEALTH_IMP, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH_PROTOTYPE, true)), EquipmentType.T_ARMOR_BA_STEALTH_PROTOTYPE, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH, false)), EquipmentType.T_ARMOR_BA_STEALTH, -1, false, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_STEALTH, true)), EquipmentType.T_ARMOR_BA_STEALTH, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_FIRE_RESIST, true)), EquipmentType.T_ARMOR_BA_FIRE_RESIST, -1, true, c));
-		parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(EquipmentType.T_ARMOR_BA_MIMETIC, false)), EquipmentType.T_ARMOR_BA_MIMETIC, -1, false, c));
+		for(int i=0; i < TestBattleArmor.BAArmor.getNumBAArmors(); i++) {
+		    if(BaArmor.canBeIs(i)) {
+		        parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(i, false)), i, -1, false, c));
+		    }
+		    if(BaArmor.canBeClan(i)) {
+		        parts.add(new BaArmor(0, (int)Math.round(5 * BaArmor.getPointsPerTon(i, true)), i, -1, true, c));
+		    }
+		}
 	}
-
+	
 	private void stockMekLocations(Campaign c) {
 		for(int loc = Mech.LOC_HEAD; loc <= Mech.LOC_LLEG; loc++) {
 			for(int ton = 20; ton <= 100; ton=ton+5) {
@@ -462,7 +417,7 @@ public class PartsStore implements Serializable {
 					    //for(int ctype = Mech.COCKPIT_STANDARD; ctype < Mech.COCKPIT_STRING.length; ctype++) {
 					        parts.add(new MekLocation(loc, ton, type, false, false, true, true, c));
 	                        parts.add(new MekLocation(loc, ton, type, true, false, true, true, c));
-				        //}
+				        //}				   
 					} else {
     				    parts.add(new MekLocation(loc, ton, type, false, false, false, false, c));
     					parts.add(new MekLocation(loc, ton, type, true, false, false, false, c));
@@ -475,7 +430,7 @@ public class PartsStore implements Serializable {
 			}
 		}
 	}
-
+	
 	private void stockProtomekLocations(Campaign c) {
 	    for(int loc = Protomech.LOC_HEAD; loc <= Protomech.LOC_MAINGUN; loc++) {
             for(int ton = 2; ton <= 15; ton++) {
@@ -488,7 +443,7 @@ public class PartsStore implements Serializable {
             }
 	    }
 	}
-
+	
 	private void stockProtomekComponents(Campaign c) {
 	    int ton = 2;
 	    while(ton <= 15) {
@@ -499,5 +454,5 @@ public class PartsStore implements Serializable {
 	        ton++;
 	    }
 	}
-
+	
 }

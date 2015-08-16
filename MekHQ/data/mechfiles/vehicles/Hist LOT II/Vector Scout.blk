@@ -58,7 +58,6 @@ VTOL
 
 <Body Equipment>
 BeagleActiveProbe
-ISTAG
 </Body Equipment>
 
 <Front Equipment>
@@ -78,6 +77,7 @@ Medium Laser
 
 <Rotor Equipment>
 ISMastMount
+ISTAG
 </Rotor Equipment>
 
 <source>

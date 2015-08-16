@@ -40,8 +40,6 @@ import mekhq.campaign.JumpPath;
 import mekhq.campaign.market.ContractMarket;
 import mekhq.campaign.mission.AtBContract;
 import mekhq.campaign.mission.Contract;
-import mekhq.campaign.personnel.Person;
-import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.universe.Planets;
 
 /**
@@ -59,9 +57,6 @@ public class ContractSummaryPanel extends JPanel {
 	private Campaign campaign;
 	private Contract contract;
 	private boolean allowRerolls;
-	private int cmdRerolls;
-	private int logRerolls;
-	private int tranRerolls;
 
 	private JPanel mainPanel;
 
@@ -95,9 +90,7 @@ public class ContractSummaryPanel extends JPanel {
 	private JLabel lblStraightSupport;
 	private JTextArea txtStraightSupport;
 	private JLabel lblBattleLossComp;
-	private JLabel lblRequiredLances;
 	private JTextArea txtBattleLossComp;
-	private JTextArea txtRequiredLances;
 	private JLabel lblSalvageRights;
 	private JTextArea txtSalvageRights;
 
@@ -118,17 +111,6 @@ public class ContractSummaryPanel extends JPanel {
 		this.contract = contract;
 		this.campaign = campaign;
 		this.allowRerolls = allowRerolls;
-		if (allowRerolls) {
-			Person admin = campaign.findBestInRole(Person.T_ADMIN_COM, SkillType.S_ADMIN, SkillType.S_NEG);
-			cmdRerolls = (admin == null || admin.getSkill(SkillType.S_NEG) == null)?
-					0 : admin.getSkill(SkillType.S_NEG).getLevel();
-			admin = campaign.findBestInRole(Person.T_ADMIN_LOG, SkillType.S_ADMIN, SkillType.S_NEG);
-			logRerolls = (admin == null || admin.getSkill(SkillType.S_NEG) == null)?
-					0 : admin.getSkill(SkillType.S_NEG).getLevel();
-			admin = campaign.findBestInRole(Person.T_ADMIN_TRA, SkillType.S_ADMIN, SkillType.S_NEG);
-			tranRerolls = (admin == null || admin.getSkill(SkillType.S_NEG) == null)?
-					0 : admin.getSkill(SkillType.S_NEG).getLevel();
-		}
 		initComponents();
 	}
 
@@ -194,8 +176,6 @@ public class ContractSummaryPanel extends JPanel {
 		txtStraightSupport = new JTextArea();
 		lblBattleLossComp = new JLabel();
 		txtBattleLossComp = new JTextArea();
-		lblRequiredLances = new JLabel();
-		txtRequiredLances = new JTextArea();
 		lblSalvageRights = new JLabel();
 		txtSalvageRights = new JTextArea();
 
@@ -497,11 +477,9 @@ public class ContractSummaryPanel extends JPanel {
 		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
 		mainPanel.add(txtCommand, gridBagConstraints);
 		
-		/* Only allow command clause rerolls for merc and pirates; house units are always integrated */
-		if (allowRerolls && (campaign.getFactionCode().equals("MERC") || campaign.getFactionCode().equals("PIR")) &&
-				campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_COMMAND) < cmdRerolls) {
+		if (allowRerolls && campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_COMMAND) > 0) {
 			JButton btnCommand = new JButton("Renegotiate (" +
-					(cmdRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_COMMAND)) + ")");
+					campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_COMMAND) + ")");
 			gridBagConstraints = new java.awt.GridBagConstraints();
 			gridBagConstraints.gridx = 2;
 			gridBagConstraints.gridy = y;
@@ -513,7 +491,7 @@ public class ContractSummaryPanel extends JPanel {
 						campaign.getContractMarket().rerollClause((AtBContract)contract,
 								ContractMarket.CLAUSE_COMMAND, campaign);
 						((JButton)ev.getSource()).setText("Renegotiate (" +
-								(cmdRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_COMMAND)) + ")");
+								campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_COMMAND) + ")");
 						txtCommand.setText(Contract.getCommandRightsName(contract.getCommandRights()));
 						refreshAmounts();
 					}
@@ -545,9 +523,9 @@ public class ContractSummaryPanel extends JPanel {
 		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
 		mainPanel.add(txtTransport, gridBagConstraints);
 
-		if (allowRerolls && campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_TRANSPORT) < tranRerolls) {
+		if (allowRerolls && campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_TRANSPORT) > 0) {
 			JButton btnTransport = new JButton("Renegotiate (" +
-					(tranRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_TRANSPORT)) + ")");
+					campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_TRANSPORT) + ")");
 			gridBagConstraints = new java.awt.GridBagConstraints();
 			gridBagConstraints.gridx = 2;
 			gridBagConstraints.gridy = y;
@@ -559,7 +537,7 @@ public class ContractSummaryPanel extends JPanel {
 						campaign.getContractMarket().rerollClause((AtBContract)contract,
 								ContractMarket.CLAUSE_TRANSPORT, campaign);
 						((JButton)ev.getSource()).setText("Renegotiate (" +
-								(tranRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_TRANSPORT)) + ")");
+								campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_TRANSPORT) + ")");
 						txtTransport.setText(contract.getTransportComp() + "%");
 						refreshAmounts();
 					}
@@ -615,9 +593,9 @@ public class ContractSummaryPanel extends JPanel {
 		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
 		mainPanel.add(txtStraightSupport, gridBagConstraints);
 
-		if (allowRerolls && campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_SUPPORT) < logRerolls) {
+		if (allowRerolls && campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_SUPPORT) > 0) {
 			JButton btnSupport = new JButton("Renegotiate (" +
-					(logRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_SUPPORT)) + ")");
+					campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_SUPPORT) + ")");
 			gridBagConstraints = new java.awt.GridBagConstraints();
 			gridBagConstraints.gridx = 2;
 			gridBagConstraints.gridy = y;
@@ -629,7 +607,7 @@ public class ContractSummaryPanel extends JPanel {
 						campaign.getContractMarket().rerollClause((AtBContract)contract,
 								ContractMarket.CLAUSE_SUPPORT, campaign);
 						((JButton)ev.getSource()).setText("Renegotiate (" +
-								(logRerolls - campaign.getContractMarket().getRerollsUsed(contract, ContractMarket.CLAUSE_SUPPORT)) + ")");
+								campaign.getContractMarket().getRerolls(contract, ContractMarket.CLAUSE_SUPPORT) + ")");
 						txtStraightSupport.setText(contract.getStraightSupport() + "%");
 						txtBattleLossComp.setText(contract.getBattleLossComp() + "%");
 						refreshAmounts();
@@ -661,31 +639,6 @@ public class ContractSummaryPanel extends JPanel {
 		gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
 		mainPanel.add(txtBattleLossComp, gridBagConstraints);
-		
-		if(contract instanceof AtBContract) {
-			lblRequiredLances.setName("lblRequiredLances"); // NOI18N
-			lblRequiredLances.setText(resourceMap.getString("lblRequiredLances.text"));
-			gridBagConstraints = new java.awt.GridBagConstraints();
-			gridBagConstraints.gridx = 0;
-			gridBagConstraints.gridy = y;
-			gridBagConstraints.fill = java.awt.GridBagConstraints.NONE;
-			gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-			mainPanel.add(lblRequiredLances, gridBagConstraints);
-			
-			txtRequiredLances.setName("txtRequiredLances"); // NOI18N
-			txtRequiredLances.setText(((AtBContract)contract).getRequiredLances() + " Lance(s)");
-			txtRequiredLances.setEditable(false);
-			txtRequiredLances.setLineWrap(true);
-			txtRequiredLances.setWrapStyleWord(true);
-			gridBagConstraints = new java.awt.GridBagConstraints();
-			gridBagConstraints.gridx = 1;
-			gridBagConstraints.gridy = y++;
-			gridBagConstraints.weightx = 0.5;
-			gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
-			gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-			gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-			mainPanel.add(txtRequiredLances, gridBagConstraints);
-		}
 
 		DecimalFormat formatter = new DecimalFormat();
 

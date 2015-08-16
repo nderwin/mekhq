@@ -53,17 +53,9 @@ public class MissingProtomekArmActuator extends MissingPart {
         super(tonnage, c);
         this.name = "Protomech Arm Actuator";
         this.location = loc;
+        this.time = 120;
+        this.difficulty = 0;
     }
-    
-    @Override 
-	public int getBaseTime() {
-		return 120;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return 0;
-	}
     
     public void setLocation(int loc) {
         this.location = loc;
@@ -175,21 +167,6 @@ public class MissingProtomekArmActuator extends MissingPart {
 	@Override
 	public String getLocationName() {
 		return unit.getEntity().getLocationName(location);
-	}
-	
-	@Override
-	public int getIntroDate() {
-		return 3055;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
 	}
 
 }

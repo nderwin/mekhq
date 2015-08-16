@@ -56,16 +56,8 @@ public class MotiveSystem extends Part {
 		this.name = "Motive System";
 		this.damage = 0;
 		this.penalty = 0;
-	}
-	
-	@Override 
-	public int getBaseTime() {
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		return -1;
+		this.time = 60;
+		this.difficulty = -1;
 	}
 	
 	public MotiveSystem clone() {
@@ -88,7 +80,7 @@ public class MotiveSystem extends Part {
 	
     @Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 
 	@Override
@@ -167,9 +159,7 @@ public class MotiveSystem extends Part {
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		//motive systems don't have to check for destruction since they 
-		//cannot be removed
+	public void updateConditionFromEntity() {
 		if(null != unit && unit.getEntity() instanceof Tank) {
 			Tank t = (Tank)unit.getEntity();
 			damage = t.getMotiveDamage();
@@ -218,21 +208,5 @@ public class MotiveSystem extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 	
 }

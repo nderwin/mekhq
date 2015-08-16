@@ -13,11 +13,11 @@ BattleArmor
 </UnitType>
 
 <Name>
-PAB-28 Sniper Suit
+PAB-28
 </Name>
 
 <Model>
-(Standard)
+Sniper Suit
 </Model>
 
 <year>

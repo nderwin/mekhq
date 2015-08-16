@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
@@ -97,14 +96,9 @@ public class MekCockpit extends Part {
         case Mech.COCKPIT_COMMAND_CONSOLE:
             return TechConstants.T_IS_ADVANCED;
         case Mech.COCKPIT_TORSO_MOUNTED:
-        case Mech.COCKPIT_SUPERHEAVY:
-		case Mech.COCKPIT_SUPERHEAVY_TRIPOD:
-		case Mech.COCKPIT_TRIPOD:
-		case Mech.COCKPIT_INTERFACE:
-			//TODO: some of these depend on clan/IS
             return TechConstants.T_IS_EXPERIMENTAL;
         default:
-            return TechConstants.T_ALLOWED_ALL;
+            return TechConstants.T_IS_TW_NON_BOX;
 		}
 	}
 	
@@ -117,7 +111,12 @@ public class MekCockpit extends Part {
     public int getType() {
     	return type;
     }
-    
+ 
+    @Override
+	public int getTechBase() {
+		return T_BOTH;
+	}
+
 	@Override
 	public void writeToXml(PrintWriter pw1, int indent) {
 		writeToXmlBegin(pw1, indent);
@@ -143,7 +142,6 @@ public class MekCockpit extends Part {
 
 	@Override
 	public int getAvailability(int era) {
-		//TODO: change once we add DA era 
 		switch (type) {
         case Mech.COCKPIT_COMMAND_CONSOLE:
         	if(era == EquipmentType.ERA_SL) {
@@ -184,18 +182,14 @@ public class MekCockpit extends Part {
 
 	@Override
 	public int getTechRating() {
-		switch(type) {
-		case Mech.COCKPIT_SMALL:
-		case Mech.COCKPIT_INTERFACE:
-		case Mech.COCKPIT_SUPERHEAVY:
-		case Mech.COCKPIT_SUPERHEAVY_TRIPOD:
-		case Mech.COCKPIT_TRIPOD:
+		switch (type) {
+        case Mech.COCKPIT_SMALL: 	
+        case Mech.COCKPIT_TORSO_MOUNTED:
             return EquipmentType.RATING_E;
-		case Mech.COCKPIT_INDUSTRIAL:
-		case Mech.COCKPIT_PRIMITIVE_INDUSTRIAL:
-            return EquipmentType.RATING_C;		
-		default:
-			return EquipmentType.RATING_D;
+        case Mech.COCKPIT_INDUSTRIAL:
+            return EquipmentType.RATING_C;
+        default:
+            return EquipmentType.RATING_D;
 		}
 	}
 
@@ -228,19 +222,18 @@ public class MekCockpit extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
-		int priorHits = hits;
+	public void updateConditionFromEntity() {
 		if(null != unit) {
 			Entity entity = unit.getEntity();
 			for (int i = 0; i < entity.locations(); i++) {
 				if (entity.getNumberOfCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_COCKPIT, i) > 0) {
-					//check for missing equipment as well
-					if (!unit.isSystemMissing(Mech.SYSTEM_COCKPIT, i)) {					
+					if (entity.isSystemRepairable(Mech.SYSTEM_COCKPIT, i)) {					
 						hits = entity.getDamagedCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_COCKPIT, i);	
 						break;
 					} else {
@@ -249,31 +242,20 @@ public class MekCockpit extends Part {
 					}
 				}
 			}
-			if(checkForDestruction 
-					&& hits > priorHits 
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} 
+		else {
+			//TODO: These are made up values until the errata establish them
+			time = 200;
+			difficulty = 3;
+		}
 		if(isSalvaging()) {
-			return 300;
+			this.time = 300;
+			this.difficulty = 0;
 		}
-		//TODO: These are made up values until the errata establish them
-		return 200;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return 0;
-		}
-		//TODO: These are made up values until the errata establish them
-		return 3;
 	}
 
 	@Override
@@ -287,7 +269,9 @@ public class MekCockpit extends Part {
 			if(hits == 0) {
 				unit.repairSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_COCKPIT);
 			} else {
-				unit.damageSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_COCKPIT, hits);
+				for(int i = 0; i < hits; i++) {
+					unit.damageSystem(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_COCKPIT, hits);
+				}
 			}
 		}
 	}
@@ -344,62 +328,4 @@ public class MekCockpit extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-
-    @Override
-	public int getIntroDate() {
-    	//TODO: where are aerospace cockpits
-    	//TODO: differentiate clan for some designs
-		switch(type) {
-		case Mech.COCKPIT_STANDARD:
-			return 2468;
-		case Mech.COCKPIT_SMALL:
-			return 3060;
-		case Mech.COCKPIT_COMMAND_CONSOLE:
-			return 2625;
-		case Mech.COCKPIT_TORSO_MOUNTED:
-		case Mech.COCKPIT_DUAL:
-			return 3053;
-		case Mech.COCKPIT_INDUSTRIAL:
-			return 2469;
-		case Mech.COCKPIT_PRIMITIVE:
-			return 2430;
-		case Mech.COCKPIT_PRIMITIVE_INDUSTRIAL:
-			return 2300;
-		case Mech.COCKPIT_SUPERHEAVY:
-			return 3060;
-		case Mech.COCKPIT_SUPERHEAVY_TRIPOD:
-			return 3130;
-		case Mech.COCKPIT_TRIPOD:
-			return 2590;
-		case Mech.COCKPIT_INTERFACE:
-			return 3074;
-		default:
-			return EquipmentType.DATE_NONE;
-		}
-	}
-
-	@Override
-	public int getExtinctDate() {
-		switch(type) {
-		case Mech.COCKPIT_PRIMITIVE:
-			return 2520;
-		case Mech.COCKPIT_PRIMITIVE_INDUSTRIAL:
-			return 2520;
-		case Mech.COCKPIT_COMMAND_CONSOLE:
-			return 2850;
-		default:
-			return EquipmentType.DATE_NONE;
-		}
-	}
-
-	@Override
-	public int getReIntroDate() {
-		switch(type) {
-		case Mech.COCKPIT_COMMAND_CONSOLE:
-			return 3030;
-		default:
-			return EquipmentType.DATE_NONE;
-		}
-	}
-    
 }

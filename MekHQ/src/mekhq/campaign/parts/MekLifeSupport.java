@@ -23,7 +23,6 @@ package mekhq.campaign.parts;
 
 import java.io.PrintWriter;
 
-import megamek.common.Compute;
 import megamek.common.CriticalSlot;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
@@ -72,6 +71,11 @@ public class MekLifeSupport extends Part {
 
         return part instanceof MekLifeSupport;
     }
+    
+    @Override
+	public int getTechBase() {
+		return T_BOTH;
+	}
 
 	@Override
 	public void writeToXml(PrintWriter pw1, int indent) {
@@ -96,7 +100,7 @@ public class MekLifeSupport extends Part {
 
 	@Override
 	public int getTechLevel() {
-		return TechConstants.T_ALLOWED_ALL;
+		return TechConstants.T_INTRO_BOXSET;
 	}
 	
 	@Override
@@ -128,18 +132,18 @@ public class MekLifeSupport extends Part {
 			unit.addPart(missing);
 			campaign.addPart(missing, 0);
 		}
+		setSalvaging(false);
 		setUnit(null);
-		updateConditionFromEntity(false);
+		updateConditionFromEntity();
 	}
 
 	@Override
-	public void updateConditionFromEntity(boolean checkForDestruction) {
+	public void updateConditionFromEntity() {
 		if(null != unit) {
-			int priorHits = hits;
 			Entity entity = unit.getEntity();
 			for (int i = 0; i < entity.locations(); i++) {
 				if (entity.getNumberOfCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_LIFE_SUPPORT, i) > 0) {
-					if (!unit.isSystemMissing(Mech.SYSTEM_LIFE_SUPPORT, i)) {					
+					if (entity.isSystemRepairable(Mech.SYSTEM_LIFE_SUPPORT, i)) {					
 						hits = entity.getDamagedCriticals(CriticalSlot.TYPE_SYSTEM, Mech.SYSTEM_LIFE_SUPPORT, i);	
 						break;
 					} else {
@@ -148,35 +152,24 @@ public class MekLifeSupport extends Part {
 					}
 				}
 			}
-			if(checkForDestruction 
-					&& hits > priorHits && hits >= 2
-					&& Compute.d6(2) < campaign.getCampaignOptions().getDestroyPartTarget()) {
-				remove(false);
-				return;
-			}
 		}
-	}
-	
-	@Override 
-	public int getBaseTime() {
+		if(hits == 0) {
+			time = 0;
+			difficulty = 0;
+		} 
+		else if(hits == 1) {
+			time = 60;
+			difficulty = -1;
+		}
+		else if(hits > 1) {
+			time = 120;
+			difficulty = 1;
+		}
 		if(isSalvaging()) {
-			return 180;
+			this.time = 180;
+			this.difficulty = -1;
 		}
-		if(hits > 1) {
-			return 120;
-		}
-		return 60;
-	}
-	
-	@Override
-	public int getDifficulty() {
-		if(isSalvaging()) {
-			return -1;
-		}
-		if(hits > 1) {
-			return 1;
-		}
-		return 0;
+		
 	}
 
 	@Override
@@ -247,20 +240,4 @@ public class MekLifeSupport extends Part {
 	public int getLocation() {
 		return Entity.LOC_NONE;
 	}
-	
-	@Override
-	public int getIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getExtinctDate() {
-		return EquipmentType.DATE_NONE;
-	}
-
-	@Override
-	public int getReIntroDate() {
-		return EquipmentType.DATE_NONE;
-	}
-	
 }
