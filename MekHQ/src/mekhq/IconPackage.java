@@ -10,7 +10,7 @@ import megamek.common.util.DirectoryItems;
 import mekhq.gui.PortraitFileFactory;
 
 /**
- * This is a convenience class that will keep all the various directories and tilesets 
+ * This is a convenience class that will keep all the various directories and tilesets
  * for tracking graphics and icons
  * @author Jay Lawson
  *
@@ -21,11 +21,11 @@ public class IconPackage {
     private DirectoryItems camos;
     private DirectoryItems forceIcons;
     protected static MechTileset mt;
-    
+
     public IconPackage() {
 
     }
-    
+
     public void loadDirectories() {
         if(null == portraits) {
             try {
@@ -61,19 +61,19 @@ public class IconPackage {
             }
         }
     }
-    
+
     public DirectoryItems getPortraits() {
         return portraits;
     }
-    
+
     public DirectoryItems getCamos() {
         return camos;
     }
-    
+
     public DirectoryItems getForceIcons() {
         return forceIcons;
     }
-    
+
     public MechTileset getMechTiles() {
         return mt;
     }

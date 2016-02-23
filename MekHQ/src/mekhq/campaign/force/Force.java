@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Vector;
@@ -65,7 +66,7 @@ public class Force implements Serializable {
     public static final int FORCE_NONE = -1;
     private String iconCategory = ROOT_ICON;
     private String iconFileName = ICON_NONE;
-    private HashMap<String, String> iconMap = new HashMap<String, String>();
+    private LinkedHashMap<String, Vector<String>> iconMap = new LinkedHashMap<String, Vector<String>>();
 
 
 	private String name;
@@ -338,7 +339,7 @@ public class Force implements Serializable {
 		this.iconFileName = s;
 	}
 
-	public HashMap<String, String> getIconMap() {
+	public LinkedHashMap<String, Vector<String>> getIconMap() {
 	    return iconMap;
 	}
 
@@ -363,9 +364,21 @@ public class Force implements Serializable {
 		if (iconCategory.equals(ROOT_LAYERED)) {
 		    pw1.println(MekHqXmlUtil.indentStr(indent+1)
 		            +"<iconHashMap>");
-		    for (Map.Entry<String, String> entry : iconMap.entrySet()) {
-		        pw1.println(MekHqXmlUtil.indentStr(indent+2)
-		                +"<iconentry key=\"" + MekHqXmlUtil.escape(entry.getKey()) + "\" val=\""+ MekHqXmlUtil.escape(entry.getValue()) +"\"/>");
+		    for (Map.Entry<String, Vector<String>> entry : iconMap.entrySet()) {
+		        if (null != entry.getValue() && !entry.getValue().isEmpty()) {
+                    pw1.println(MekHqXmlUtil.indentStr(indent+2)
+                            +"<iconentry key=\""
+                            +MekHqXmlUtil.escape(entry.getKey())
+                            +">");
+		            for (String value : entry.getValue()) {
+    		            pw1.println(MekHqXmlUtil.indentStr(indent+2)
+    		                    +"<value name=\""
+                                +MekHqXmlUtil.escape(value)
+        		                +"\"/>");
+		            }
+                    pw1.println(MekHqXmlUtil.indentStr(indent+2)
+                            +"</iconentry>");
+		        }
 		    }
             pw1.println(MekHqXmlUtil.indentStr(indent+1)
                     +"</iconHashMap>");
@@ -483,8 +496,8 @@ public class Force implements Serializable {
 		}
 	}
 
-	private static void processIconMapNodes(Force retVal, Node wn, Version version) {
-	    NodeList nl = wn.getChildNodes();
+    private static void processIconMapNodes(Force retVal, Node wn, Version version) {
+        NodeList nl = wn.getChildNodes();
         for (int x=0; x<nl.getLength(); x++) {
             Node wn2 = nl.item(x);
 
@@ -496,21 +509,34 @@ public class Force implements Serializable {
             NamedNodeMap attrs = wn2.getAttributes();
             Node keyNode = attrs.getNamedItem("key");
             String key = keyNode.getTextContent();
-            Node valNode = attrs.getNamedItem("val");
-            String val = valNode.getTextContent();
-            retVal.iconMap.put(key, val);
+            Vector<String> values = null;
+            if (wn2.hasChildNodes()) {
+                values = processIconMapSubNodes(wn2, version);
+            }
+            retVal.iconMap.put(key, values);
         }
-    /*if (iconCategory.equals(ROOT_LAYERED)) {
-        pw1.println(MekHqXmlUtil.indentStr(indent+1)
-                +"<iconHashMap>");
-        for(Map.Entry<String, String> entry : iconMap.entrySet()) {
-            pw1.println(MekHqXmlUtil.indentStr(indent+2)
-                    +"<iconentry key=\"" + MekHqXmlUtil.escape(entry.getKey()) + "\" val=\""+ MekHqXmlUtil.escape(entry.getValue()) +"\"/>");
+    }
+
+    private static Vector<String> processIconMapSubNodes(Node wn, Version version) {
+        Vector<String> values = new Vector<String>();
+        NodeList nl = wn.getChildNodes();
+        for (int x=0; x<nl.getLength(); x++) {
+            Node wn2 = nl.item(x);
+
+            // If it's not an element node, we ignore it.
+            if (wn2.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
+
+            NamedNodeMap attrs = wn2.getAttributes();
+            Node keyNode = attrs.getNamedItem("name");
+            String key = keyNode.getTextContent();
+            if (null != key && !key.isEmpty()) {
+                values.add(key);
+            }
         }
-        pw1.println(MekHqXmlUtil.indentStr(indent+1)
-                +"</iconHashMap>");
-    }*/
-	}
+        return values;
+    }
 
 	public Vector<Object> getAllChildren(Campaign campaign) {
 		Vector<Object> children = new Vector<Object>();
