@@ -39,7 +39,7 @@ import mekhq.Utilities;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.work.IAcquisitionWork;
-import mekhq.campaign.work.Modes;
+import mekhq.campaign.work.WorkTime;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -126,7 +126,7 @@ public class Armor extends Part implements IAcquisitionWork {
 		String toReturn = "<html><font size='2'";
 
 		String scheduled = "";
-		if (getAssignedTeamId() != null) {
+		if (getTeamId() != null) {
 			scheduled = " (scheduled) ";
 		}
 
@@ -140,7 +140,7 @@ public class Armor extends Part implements IAcquisitionWork {
 			}
 			toReturn += " " + bonus;
 		}
-		if (getMode() != Modes.MODE_NORMAL) {
+		if (getMode() != WorkTime.NORMAL) {
 			toReturn += "<br/><i>" + getCurrentModeName() + "</i>";
 		}
 		toReturn += "</font></html>";
@@ -731,4 +731,9 @@ public class Armor extends Part implements IAcquisitionWork {
         	this.name += " (" + EquipmentType.armorNames[type] + ")";
         }
 	}
+	
+	@Override
+	public int getMassRepairOptionType() {
+    	return Part.REPAIR_PART_TYPE.ARMOR;
+    }
 }

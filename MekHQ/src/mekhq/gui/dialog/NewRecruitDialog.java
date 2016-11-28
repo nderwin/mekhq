@@ -15,6 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
 import megamek.common.util.DirectoryItems;
+import megamek.common.util.EncodeControl;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.Rank;
@@ -68,7 +69,7 @@ public class NewRecruitDialog extends javax.swing.JDialog {
     }
     
     private void refreshView() {
-    	scrollView.setViewportView(new PersonViewPanel(person, campaign, portraits));
+    	scrollView.setViewportView(new PersonViewPanel(person, campaign, hqView.getIconPackage()));
 		//This odd code is to make sure that the scrollbar stays at the top
 		//I cant just call it here, because it ends up getting reset somewhere later
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -93,7 +94,7 @@ public class NewRecruitDialog extends javax.swing.JDialog {
         btnRegenerate = new javax.swing.JButton();
         choiceRanks = new javax.swing.JComboBox<String>();
 
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.NewRecruitDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.NewRecruitDialog", new EncodeControl()); //$NON-NLS-1$
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         setTitle(resourceMap.getString("Form.title")); // NOI18N
@@ -188,8 +189,8 @@ public class NewRecruitDialog extends javax.swing.JDialog {
         });
         panBottomButtons.add(btnClose, gridBagConstraints);
 
-        scrollView.setMinimumSize(new java.awt.Dimension(450, 150));
-        scrollView.setPreferredSize(new java.awt.Dimension(450, 150));
+        scrollView.setMinimumSize(new java.awt.Dimension(450, 180));
+        scrollView.setPreferredSize(new java.awt.Dimension(450, 180));
         scrollView.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollView.setViewportView(null);
         refreshView();
@@ -232,7 +233,7 @@ public class NewRecruitDialog extends javax.swing.JDialog {
     }
     
     private void choosePortrait() {
-    	PortraitChoiceDialog pcd = new PortraitChoiceDialog(frame, true,
+    	ImageChoiceDialog pcd = new ImageChoiceDialog(frame, true,
 				person.getPortraitCategory(),
 				person.getPortraitFileName(), portraits);
 		pcd.setVisible(true);

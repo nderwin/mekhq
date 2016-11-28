@@ -36,7 +36,7 @@ import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
-import mekhq.campaign.work.Modes;
+import mekhq.campaign.work.WorkTime;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -726,7 +726,7 @@ public class MekLocation extends Part {
 		}
 		String toReturn = "<html><font size='2'";
 		String scheduled = "";
-		if (getAssignedTeamId() != null) {
+		if (getTeamId() != null) {
 			scheduled = " (scheduled) ";
 		}
 	
@@ -751,7 +751,7 @@ public class MekLocation extends Part {
     			    toReturn += ", " + SkillType.getExperienceLevelName(getSkillMin());
     			}
     			toReturn += " " + bonus;
-    			if (getMode() != Modes.MODE_NORMAL) {
+    			if (getMode() != WorkTime.NORMAL) {
     				toReturn += "<br/><i>" + getCurrentModeName() + "</i>";
     			}
     		}
@@ -873,4 +873,13 @@ public class MekLocation extends Part {
 		return EquipmentType.DATE_NONE;
 	}
 	
+	@Override
+	public int getMassRepairOptionType() {
+    	return Part.REPAIR_PART_TYPE.GENERAL_LOCATION;
+    }
+	
+	@Override
+	public int getRepairPartType() {
+    	return Part.REPAIR_PART_TYPE.MEK_LOCATION;
+    }
 }

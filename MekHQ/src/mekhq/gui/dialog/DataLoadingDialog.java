@@ -43,15 +43,18 @@ import megamek.client.RandomNameGenerator;
 import megamek.common.MechSummaryCache;
 import megamek.common.QuirksHandler;
 import megamek.common.options.GameOptions;
+import megamek.common.util.EncodeControl;
 import mekhq.MekHQ;
 import mekhq.NullEntityException;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.GamePreset;
+import mekhq.campaign.event.OptionsChangedEvent;
+import mekhq.campaign.mod.am.InjuryTypes;
 import mekhq.campaign.personnel.Bloodname;
 import mekhq.campaign.universe.Faction;
 import mekhq.campaign.universe.Planets;
+import mekhq.campaign.universe.RATManager;
 import mekhq.campaign.universe.RandomFactionGenerator;
-import mekhq.campaign.universe.UnitTableData;
 
 public class DataLoadingDialog extends JDialog implements PropertyChangeListener {
 
@@ -73,7 +76,7 @@ public class DataLoadingDialog extends JDialog implements PropertyChangeListener
         this.app = app;
         this.fileCampaign = f;
 
-        resourceMap = ResourceBundle.getBundle("mekhq.resources.DataLoadingDialog");
+        resourceMap = ResourceBundle.getBundle("mekhq.resources.DataLoadingDialog", new EncodeControl()); //$NON-NLS-1$
 
         setUndecorated(true);
         progressBar = new JProgressBar(0, 4);
@@ -131,7 +134,7 @@ public class DataLoadingDialog extends JDialog implements PropertyChangeListener
             }
             try {
             	//Load values needed for CampaignOptionsDialog
-            	UnitTableData.populateRatNames();
+            	RATManager.populateCollectionNames();
             } catch (Exception ex) {
     			ex.printStackTrace();
             }
@@ -167,6 +170,8 @@ public class DataLoadingDialog extends JDialog implements PropertyChangeListener
             	try {
 					newCampaign = true;
 					campaign = new Campaign();
+	                 // TODO: Make this depending on campaign options
+                    InjuryTypes.registerAll();
 					campaign.setApp(app);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -233,12 +238,17 @@ public class DataLoadingDialog extends JDialog implements PropertyChangeListener
                 if(!presets.isEmpty()) {
                 	ChooseGamePresetDialog cgpd = new ChooseGamePresetDialog(frame, true, presets);
                 	cgpd.setVisible(true);
-                	if(cgpd.wasCancelled()) {
+                	/* This code causes the new campaign process to abort after the campaign
+                	 * options dialog if the user cancels the preset dialog instead of choosing
+                	 * one. Since a preset is not necessary, I don't think it should abort the
+                	 * process -- Neoancient */
+                	//if(cgpd.wasCancelled()) {
                 		//FIXME: why is this not working?
-                		cancelled = true;
-                		cancel(true);
-                	}
-                	else if(null != cgpd.getSelectedPreset()) {
+                		//cancelled = true;
+                		//cancel(true);
+                	//}
+                	//else
+                	if(null != cgpd.getSelectedPreset()) {
         				cgpd.getSelectedPreset().apply(campaign);
         			}
                 }
@@ -261,6 +271,9 @@ public class DataLoadingDialog extends JDialog implements PropertyChangeListener
         				campaign.getRetirementDefectionTracker().setLastRetirementRoll(campaign.getCalendar());
         			}
         		}
+            } else {
+                // Make sure campaign options event handlers get their data
+                MekHQ.EVENT_BUS.trigger(new OptionsChangedEvent(campaign));
             }
             return null;
         }

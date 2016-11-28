@@ -1,5 +1,5 @@
 /*
- * Avionics.java
+ * Thrusters.java
  * 
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
  * 
@@ -25,10 +25,10 @@ import java.io.PrintWriter;
 
 import megamek.common.Aero;
 import megamek.common.Compute;
-import megamek.common.Dropship;
 import megamek.common.Entity;
 import megamek.common.EquipmentType;
 import megamek.common.Jumpship;
+import megamek.common.SmallCraft;
 import megamek.common.TechConstants;
 import mekhq.MekHqXmlUtil;
 import mekhq.campaign.Campaign;
@@ -165,7 +165,7 @@ public class Thrusters extends Part {
 	public boolean needsFixing() {
 		if(null != getUnit() && null != getUnit().getEntity() && 
 				(getUnit().getEntity() instanceof Aero 
-						&& !(getUnit().getEntity() instanceof Dropship 
+						&& !(getUnit().getEntity() instanceof SmallCraft
 								|| getUnit().getEntity() instanceof Jumpship))) {
 			return false;
 		}
@@ -176,7 +176,7 @@ public class Thrusters extends Part {
 	public boolean isSalvaging() {
 		if(null != getUnit() && null != getUnit().getEntity() && 
 				(getUnit().getEntity() instanceof Aero 
-						&& !(getUnit().getEntity() instanceof Dropship 
+						&& !(getUnit().getEntity() instanceof SmallCraft 
 								|| getUnit().getEntity() instanceof Jumpship))) {
 			return false;
 		}

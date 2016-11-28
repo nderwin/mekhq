@@ -205,7 +205,7 @@ public class MekLabPanel extends JPanel {
 		if(null == entity) {
 			return;
 		}
-		refit = new Refit(unit, entity, true); 
+		refit = new Refit(unit, entity, true, false); 
 		testEntity = null;
 		if(entity instanceof Aero) {
 			testEntity = new TestAero((Aero)entity, entityVerifier.aeroOption, null);
@@ -238,9 +238,9 @@ public class MekLabPanel extends JPanel {
 
         double totalHeat = calculateTotalHeat();
 		int bvDiff = entity.calculateBattleValue(true, true) - unit.getEntity().calculateBattleValue(true, true);
-		float currentTonnage = testEntity.calculateWeight();
+		double currentTonnage = testEntity.calculateWeight();
         currentTonnage += UnitUtil.getUnallocatedAmmoTonnage(entity);
-        float tonnage = entity.getWeight();
+        double tonnage = entity.getWeight();
 
         if(entity.getWeight() < testEntity.calculateWeight()) {
 			btnRefit.setEnabled(false);

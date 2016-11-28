@@ -27,24 +27,28 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.UUID;
 
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import megamek.common.EquipmentType;
+import megamek.common.MiscType;
 import megamek.common.TargetRoll;
 import megamek.common.TechConstants;
+import megamek.common.WeaponType;
 import mekhq.MekHQ;
 import mekhq.MekHqXmlSerializable;
 import mekhq.MekHqXmlUtil;
 import mekhq.Version;
 import mekhq.campaign.Campaign;
+import mekhq.campaign.parts.equipment.EquipmentPart;
+import mekhq.campaign.parts.equipment.MissingEquipmentPart;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.unit.Unit;
 import mekhq.campaign.work.IAcquisitionWork;
 import mekhq.campaign.work.IPartWork;
-import mekhq.campaign.work.Modes;
-
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import mekhq.campaign.work.WorkTime;
 
 /**
  * Parts do the lions share of the work of repairing, salvaging, reloading, refueling, etc.
@@ -89,6 +93,21 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     public static final int QUALITY_E = 4;
     public static final int QUALITY_F = 5;
 
+	public interface REPAIR_PART_TYPE {
+		public static final int ARMOR = 0;
+		public static final int AMMO = 1;
+		public static final int WEAPON = 2;
+		public static final int GENERAL_LOCATION = 3;
+		public static final int ENGINE = 4;
+		public static final int GYRO = 5;
+		public static final int ACTUATOR = 6;
+		public static final int ELECTRONICS = 7;
+		public static final int GENERAL = 8;
+		public static final int HEATSINK = 9;
+		public static final int MEK_LOCATION = 10;		
+		public static final int PHYSICAL_WEAPON = 11;		
+	}
+    
 	private static final String[] partTypeLabels = { "Armor", "Weapon", "Ammo",
 			"Equipment Part", "Mek Actuator", "Mek Engine", "Mek Gyro",
 			"Mek Life Support", "Mek Body Part", "Mek Sensor",
@@ -124,7 +143,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	// the minimum skill level in order to attempt
 	protected int skillMin;
 	//current repair mode for part
-	protected int mode;
+	protected WorkTime mode;
 	
 	protected UUID teamId;
 	private boolean isTeamSalvaging;
@@ -185,7 +204,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		this.unitTonnage = tonnage;
 		this.hits = 0;
 		this.skillMin = SkillType.EXP_GREEN;
-		this.mode = Modes.MODE_NORMAL;
+		this.mode = WorkTime.NORMAL;
 		this.timeSpent = 0;
 		this.unitId = null;
 		this.workingOvertime = false;
@@ -376,7 +395,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			action = "Salvage ";
 		}
 		String scheduled = "";
-		if (getAssignedTeamId() != null) {
+		if (getTeamId() != null) {
 			scheduled = " (scheduled) ";
 		}
 
@@ -391,7 +410,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     		    toReturn += ", " + SkillType.getExperienceLevelName(getSkillMin());
     		}
     		toReturn += " " + bonus;
-    		if (getMode() != Modes.MODE_NORMAL) {
+    		if (getMode() != WorkTime.NORMAL) {
     			toReturn += "<br/><i>" + getCurrentModeName() + "</i>";
     		}
 		}
@@ -403,7 +422,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		String toReturn = "";
 		if(needsFixing()) {
 			String scheduled = "";
-			if (getAssignedTeamId() != null) {
+			if (getTeamId() != null) {
 				scheduled = " (scheduled) ";
 			}
 			String bonus = getAllMods(null).getValueAsString();
@@ -414,7 +433,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 			toReturn += getTimeLeft() + " minutes" + scheduled;
 			toReturn += ", " + SkillType.getExperienceLevelName(getSkillMin());
 			toReturn += " " + bonus;
-			if (getMode() != Modes.MODE_NORMAL) {
+			if (getMode() != WorkTime.NORMAL) {
 				toReturn += ", " + getCurrentModeName();
 			}
 		}
@@ -683,7 +702,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 				} else if (wn2.getNodeName().equalsIgnoreCase("skillMin")) {
 					retVal.skillMin = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("mode")) {
-					retVal.mode = Integer.parseInt(wn2.getTextContent());
+					retVal.mode = WorkTime.of(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("daysToWait")) {
                     retVal.daysToWait = Integer.parseInt(wn2.getTextContent());
                 } else if (wn2.getNodeName().equalsIgnoreCase("teamId")) {
@@ -762,22 +781,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 
 	@Override
 	public int getActualTime() {
-		switch (mode) {
-		case Modes.MODE_EXTRA_DOUBLE:
-			return 2 * getBaseTime();
-		case Modes.MODE_EXTRA_TRIPLE:
-			return 3 * getBaseTime();
-		case Modes.MODE_EXTRA_QUAD:
-			return 4 * getBaseTime();
-		case Modes.MODE_RUSH_ONE:
-			return (int) Math.ceil(getBaseTime() / 2.0);
-		case Modes.MODE_RUSH_TWO:
-			return (int) Math.ceil(getBaseTime() / 4.0);
-		case Modes.MODE_RUSH_THREE:
-			return (int) Math.ceil(getBaseTime() / 8.0);
-		default:
-			return getBaseTime();
-		}
+	    return (int) Math.ceil(getBaseTime() * mode.timeMultiplier);
 	}
 
 	@Override
@@ -811,19 +815,20 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 		this.skillMin = i;
 	}
 
-	public int getMode() {
+	public WorkTime getMode() {
 		return mode;
 	}
 
-	public void setMode(int i) {
-		this.mode = i;
+	public void setMode(WorkTime wt) {
+		this.mode = wt;
 	}
 
 	@Override
 	public TargetRoll getAllMods(Person tech) {
 		TargetRoll mods = new TargetRoll(getDifficulty(), "difficulty");
-		if (Modes.getModeMod(mode,campaign.getCampaignOptions().isDestroyByMargin()) != 0) {
-			mods.addModifier(Modes.getModeMod(mode,campaign.getCampaignOptions().isDestroyByMargin()), getCurrentModeName());
+		int modeMod = mode.getMod(campaign.getCampaignOptions().isDestroyByMargin());
+		if (modeMod != 0) {
+			mods.addModifier(modeMod, getCurrentModeName());
 		}
 		if(null != unit) {
 			mods.append(unit.getSiteMod());
@@ -880,9 +885,9 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	        }
 	    }
 	    if(isClanTechBase() || (this instanceof MekLocation && this.getUnit() != null && this.getUnit().getEntity().isClan())) {
-	        if (campaign.getPerson(getAssignedTeamId()) == null) {
+	        if (campaign.getPerson(getTeamId()) == null) {
 	            mods.addModifier(2, "clan tech");
-	        } else if (!campaign.getPerson(getAssignedTeamId()).isClanner()) {
+	        } else if (!campaign.getPerson(getTeamId()).isClanner()) {
 	            mods.addModifier(2, "clan tech");
 	        }
 	    }
@@ -914,11 +919,11 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	}
 
 	public String getCurrentModeName() {
-		return Modes.getModeName(mode);
+		return mode.name;
 	}
 
 	@Override
-	public UUID getAssignedTeamId() {
+	public UUID getTeamId() {
 		return teamId;
 	}
 
@@ -935,7 +940,7 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	}
 	
 	public boolean isTeamSalvaging() {
-		return null != getAssignedTeamId() && isTeamSalvaging;
+		return null != getTeamId() && isTeamSalvaging;
 	}
 
 	public void setReserveId(UUID i) {
@@ -948,11 +953,21 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
 	}
 
 	@Override
+    public int getMassRepairOptionType() {
+    	return REPAIR_PART_TYPE.GENERAL;
+    }
+
+	@Override
+    public int getRepairPartType() {
+    	return getMassRepairOptionType();
+    }
+	
+	@Override
 	public void fix() {
 		hits = 0;
 		skillMin = SkillType.EXP_GREEN;
 		shorthandedMod = 0;
-		mode = Modes.MODE_NORMAL;
+		mode = WorkTime.NORMAL;
 	}
 
 	@Override
@@ -1280,5 +1295,135 @@ public abstract class Part implements Serializable, MekHqXmlSerializable, IPartW
     		&& getLocation() == getUnit().getEntity().getLocationFromAbbr(loc);
     }
     
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(getName());
+        sb.append(" "); //$NON-NLS-1$
+        sb.append(getDetails());
+        sb.append(", q: "); //$NON-NLS-1$
+        sb.append(quantity);
+        if(null != unit) {
+            sb.append(", mounted: "); //$NON-NLS-1$
+            sb.append(unit);
+        }
+        return sb.toString();
+    }
+
+	public static String getRepairTypeShortName(int type) {
+		switch (type) {
+    		case Part.REPAIR_PART_TYPE.ARMOR:
+    			return "Armor";
+    			
+    		case Part.REPAIR_PART_TYPE.AMMO:
+    			return "Ammo";
+    			
+    		case Part.REPAIR_PART_TYPE.WEAPON:
+    			return "Weapons";
+    			
+    		case Part.REPAIR_PART_TYPE.GENERAL_LOCATION:
+    			return "Locations";
+    			
+    		case Part.REPAIR_PART_TYPE.ENGINE:
+    			return "Engines";
+    			
+    		case Part.REPAIR_PART_TYPE.GYRO:
+    			return "Gyros";
+    			
+    		case Part.REPAIR_PART_TYPE.ACTUATOR:
+    			return "Actuators";
+    			
+    		case Part.REPAIR_PART_TYPE.ELECTRONICS:
+    			return "Cockpit/Life Support/Sensors";
+    			
+    		default:
+    			return "Other Items";
+		}
+	}
+	
+	public static int findCorrectMassRepairType(Part part) {
+		if (part instanceof EquipmentPart && ((EquipmentPart)part).getType() instanceof WeaponType) {
+			return Part.REPAIR_PART_TYPE.WEAPON;
+		} else {			
+			return part.getMassRepairOptionType();
+		}
+	}
+	
+	public static int findCorrectRepairType(Part part) {
+		if ((part instanceof EquipmentPart && ((EquipmentPart)part).getType() instanceof WeaponType) ||
+				(part instanceof MissingEquipmentPart && ((MissingEquipmentPart)part).getType() instanceof WeaponType)) {
+			return Part.REPAIR_PART_TYPE.WEAPON;
+		} else {
+			if (part instanceof EquipmentPart && ((EquipmentPart)part).getType().hasFlag(MiscType.F_CLUB)) {
+				return Part.REPAIR_PART_TYPE.PHYSICAL_WEAPON;
+			}
+			
+			return part.getRepairPartType();
+		}
+	}
+
+	public static String[] findPartImage(Part part) {
+		String imgBase = null;
+        int repairType = Part.findCorrectRepairType(part);
+        
+        switch (repairType) {
+        	case Part.REPAIR_PART_TYPE.ARMOR:
+        		imgBase = "armor";
+        		break;
+        	case Part.REPAIR_PART_TYPE.AMMO:
+        		imgBase = "ammo";
+        		break;
+        	case Part.REPAIR_PART_TYPE.ACTUATOR:
+        		imgBase = "actuator";
+        		break;
+        	case Part.REPAIR_PART_TYPE.ENGINE:
+        		imgBase = "engine";
+        		break;
+        	case Part.REPAIR_PART_TYPE.ELECTRONICS:
+        		imgBase = "electronics";
+        		break;
+        	case Part.REPAIR_PART_TYPE.HEATSINK:
+        		imgBase = "heatsink";
+        		break;
+        	case Part.REPAIR_PART_TYPE.WEAPON:
+        		EquipmentType equipmentType = null;
+        		
+        		if (part instanceof EquipmentPart) {
+        			equipmentType = ((EquipmentPart)part).getType();
+        		} else if (part instanceof MissingEquipmentPart) {
+        			equipmentType = ((MissingEquipmentPart)part).getType();
+        		}
+
+        		if (null != equipmentType) {
+	        		if (equipmentType.hasFlag(WeaponType.F_LASER)) {
+	        			imgBase = "laser";	
+	        		} else if (equipmentType.hasFlag(WeaponType.F_MISSILE)) {
+	        			imgBase = "missile";	
+	        		} else if (equipmentType.hasFlag(WeaponType.F_BALLISTIC)) {
+	        			imgBase = "ballistic";	
+	        		} else if (equipmentType.hasFlag(WeaponType.F_ARTILLERY)) {
+	        			imgBase = "artillery";	
+	        		}	        		
+        		}
+        		
+        		break;
+        	case Part.REPAIR_PART_TYPE.MEK_LOCATION:
+        		imgBase = "location_mek";
+        		break;
+        	case Part.REPAIR_PART_TYPE.PHYSICAL_WEAPON:
+        		imgBase = "melee";
+        		break;
+        }
+
+        if (null == imgBase) {
+        	imgBase = "equipment";
+        }
+
+
+        String[] imgData = new String[2];
+        imgData[0] = "data/images/misc/repair/";
+        imgData[1] = imgBase;
+
+        return imgData;
+	}
 }
 

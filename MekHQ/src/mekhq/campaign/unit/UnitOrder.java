@@ -26,6 +26,9 @@ import java.io.PrintWriter;
 import java.util.Calendar;
 import java.util.UUID;
 
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import megamek.common.Aero;
 import megamek.common.BattleArmor;
 import megamek.common.ConvFighter;
@@ -50,9 +53,6 @@ import mekhq.campaign.Campaign;
 import mekhq.campaign.parts.Availability;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.work.IAcquisitionWork;
-
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * We use an extension of unit to create a unit order acquisition work
@@ -106,15 +106,9 @@ public class UnitOrder extends Unit implements IAcquisitionWork, MekHqXmlSeriali
     }
 
     @Override
-    public UUID getAssignedTeamId() {
+    public UUID getTeamId() {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public int getMode() {
-        // TODO Auto-generated method stub
-        return 0;
     }
 
     @Override
@@ -339,8 +333,9 @@ public class UnitOrder extends Unit implements IAcquisitionWork, MekHqXmlSeriali
         pw1.println(MekHqXmlUtil.indentStr(indentLvl) + "</unitOrder>");
     }
     
-    public static UnitOrder generateInstanceFromXML(Node wn, Version version) {
+    public static UnitOrder generateInstanceFromXML(Node wn, Campaign c, Version version) {
         UnitOrder retVal = new UnitOrder();
+        retVal.campaign = c;
         
         NodeList nl = wn.getChildNodes();
 

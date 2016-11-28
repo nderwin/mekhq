@@ -78,7 +78,7 @@ public class MissingAmmoBin extends MissingEquipmentPart {
 		if(part instanceof AmmoBin) {
 			EquipmentPart eqpart = (EquipmentPart)part;
 			EquipmentType et = eqpart.getType();
-			return type.equals(et) && ((AmmoBin)part).isOneShot() == oneShot;
+			return type.equals(et) && ((AmmoBin)part).getFullShots() == getFullShots();
 		}
 		return false;
 	}
@@ -146,4 +146,9 @@ public class MissingAmmoBin extends MissingEquipmentPart {
 		}
 		restore();
 	}
+
+    @Override
+    public int getMassRepairOptionType() {
+    	return Part.REPAIR_PART_TYPE.AMMO;
+    }
 }

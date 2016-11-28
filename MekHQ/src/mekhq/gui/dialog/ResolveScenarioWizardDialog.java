@@ -34,10 +34,12 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -58,6 +60,7 @@ import megamek.client.ui.swing.UnitEditorDialog;
 import megamek.client.ui.swing.MechViewPanel;
 import megamek.common.Entity;
 import megamek.common.GunEmplacement;
+import megamek.common.util.EncodeControl;
 import mekhq.Utilities;
 import mekhq.campaign.ResolveScenarioTracker;
 import mekhq.campaign.ResolveScenarioTracker.PersonStatus;
@@ -220,7 +223,7 @@ public class ResolveScenarioWizardDialog extends JDialog {
 
     	cardLayout = new CardLayout();
 
-    	ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ResolveScenarioWizardDialog");
+    	ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ResolveScenarioWizardDialog", new EncodeControl()); //$NON-NLS-1$
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setName("Form"); // NOI18N
 
@@ -272,25 +275,25 @@ public class ResolveScenarioWizardDialog extends JDialog {
         JCheckBox chkTotaled;
         JButton btnViewUnit;
         JButton btnEditUnit;
-        for(UUID id : tracker.getUnitsStatus().keySet()) {
-            UnitStatus status = tracker.getUnitsStatus().get(id);
+        for(Unit unit : tracker.getUnits()) {
+            UnitStatus status = tracker.getUnitsStatus().get(unit.getId());
             ustatuses.add(status);
             nameLbl = new JLabel(status.getDesc());
             lblsUnitName.add(nameLbl);
             chkTotaled = new JCheckBox("");
             chkTotaled.setSelected(status.isTotalLoss());
             chkTotaled.setName(Integer.toString(j));
-            chkTotaled.setActionCommand(id.toString());
+            chkTotaled.setActionCommand(unit.getId().toString());
             chksTotaled.add(chkTotaled);
             chkTotaled.addItemListener(new CheckTotalListener());
             btnViewUnit = new JButton("View Unit");
             btnViewUnit.setEnabled(!status.isTotalLoss());
-            btnViewUnit.setActionCommand(id.toString());
+            btnViewUnit.setActionCommand(unit.getId().toString());
             btnViewUnit.addActionListener(new ViewUnitListener());
             btnsViewUnit.add(btnViewUnit);
             btnEditUnit = new JButton("Edit Unit");
             btnEditUnit.setEnabled(!status.isTotalLoss());
-            btnEditUnit.setActionCommand(id.toString());
+            btnEditUnit.setActionCommand(unit.getId().toString());
             btnEditUnit.setName(Integer.toString(j));
             btnEditUnit.addActionListener(new EditUnitListener());
             btnsEditUnit.add(btnEditUnit);
@@ -302,7 +305,7 @@ public class ResolveScenarioWizardDialog extends JDialog {
             gridBagConstraints.insets = new Insets(5, 5, 0, 0);
             gridBagConstraints.weightx = 0.0;
             j++;
-            if(j == tracker.getUnitsStatus().keySet().size()) {
+            if(j == tracker.getUnits().size()) {
                 gridBagConstraints.weighty = 1.0;
             }
             pnlUnitStatus.add(nameLbl, gridBagConstraints);
@@ -325,7 +328,7 @@ public class ResolveScenarioWizardDialog extends JDialog {
         		tracker.getScenario() instanceof AtBScenario) {
         	pnlAllyStatus.setLayout(new GridBagLayout());
         	gridBagConstraints = new java.awt.GridBagConstraints();
-        	gridBagConstraints.gridx = 1;
+        	gridBagConstraints.gridx = 0;
         	gridBagConstraints.gridy = 1;
         	gridBagConstraints.gridwidth = 1;
         	gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -335,63 +338,27 @@ public class ResolveScenarioWizardDialog extends JDialog {
         	i = 2;
         	j = 0;
         	JCheckBox chkAllyLost;
-        	HashMap<UUID, Unit> allies = new HashMap<UUID, Unit>();
-        	for (Unit unit : tracker.getAlliedUnits()) {
-        		allies.put(unit.getId(), unit);
-        	}
-        	for (UUID id : ((AtBScenario)tracker.getScenario()).getAttachedUnitIds()) {
-        	    Unit unit = allies.get(id);
+        	AtBScenario scen = (AtBScenario)tracker.getScenario();
+        	List<UUID> allyIds = Stream.concat(scen.getAttachedUnitIds().stream(),
+        	        scen.getSurvivalBonusIds().stream())
+        	        .filter(id -> scen.getEntity(id) != null)
+        	        .collect(Collectors.toList());
+        	for (UUID id : allyIds) {
         		j++;
         		chkAllyLost = new JCheckBox();
         		chksAllyLost.add(chkAllyLost);
-        		chkAllyLost.setSelected (null == unit
-        		        || null == unit.getEntity()
-        				|| unit.getEntity().isDestroyed()
-        				|| unit.getEntity().isDoomed());
-        		/* A bit of debugging info
-        		if (!allies.containsKey(id)) {
-        			System.out.println(((AtBScenario)tracker.getScenario()).getEntity(id).getShortName() + " not found among allied units.");
-        		} else if (entity.isDestroyed()) {
-        			System.out.println(entity.getShortName() + " is destroyed.");
-        		} else if (entity.isDoomed()) {
-        			System.out.println(entity.getShortName() + " is doomed.");
-        		}
-				*/
+        		UnitStatus status = tracker.getUnitsStatus().get(id);
+        		chkAllyLost.setSelected( status == null
+        				|| status.isTotalLoss()
+        				|| status.isLikelyCaptured());
         		gridBagConstraints = new java.awt.GridBagConstraints();
         		gridBagConstraints.gridx = 0;
         		gridBagConstraints.gridy = i;
         		gridBagConstraints.gridwidth = 1;
-        		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
+        		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         		gridBagConstraints.insets = new Insets(5, 5, 0, 0);
         		gridBagConstraints.weightx = 0.0;
-        		if (((AtBScenario)tracker.getScenario()).getSurvivalBonusIds().size() == 0 &&
-        				j == ((AtBScenario)tracker.getScenario()).getAttachedUnitIds().size()) {
-        			gridBagConstraints.weighty = 1.0;
-        		}
-        		pnlAllyStatus.add(chkAllyLost, gridBagConstraints);
-        		gridBagConstraints.gridx = 1;
-        		pnlAllyStatus.add(new JLabel(((AtBScenario)tracker.getScenario()).getEntity(id).getShortName()), gridBagConstraints);
-        		i++;
-        	}
-        	j = 0;
-        	for (UUID id : ((AtBScenario)tracker.getScenario()).getSurvivalBonusIds()) {
-           		Unit unit = allies.get(id);
-        		j++;
-        		chkAllyLost = new JCheckBox();
-        		chksAllyLost.add(chkAllyLost);
-        		chkAllyLost.setSelected (null == unit
-        		        || null == unit.getEntity()
-        				|| unit.getEntity().isDestroyed()
-        				|| unit.getEntity().isDoomed());
-
-        		gridBagConstraints = new java.awt.GridBagConstraints();
-        		gridBagConstraints.gridx = 0;
-        		gridBagConstraints.gridy = i;
-        		gridBagConstraints.gridwidth = 1;
-        		gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
-        		gridBagConstraints.insets = new Insets(5, 5, 0, 0);
-        		gridBagConstraints.weightx = 0.0;
-        		if (j == ((AtBScenario)tracker.getScenario()).getSurvivalBonusIds().size()) {
+        		if (j == allyIds.size()) {
         			gridBagConstraints.weighty = 1.0;
         		}
         		pnlAllyStatus.add(chkAllyLost, gridBagConstraints);
@@ -1116,7 +1083,7 @@ public class ResolveScenarioWizardDialog extends JDialog {
     }
 
     private void switchInstructions() {
-    	final ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ResolveScenarioWizardDialog");
+    	final ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ResolveScenarioWizardDialog", new EncodeControl()); //$NON-NLS-1$
     	if(currentPanel.equals(UNITSPANEL)) {
     		txtInstructions.setText(resourceMap.getString("txtInstructions.text.missingunits"));
     	}

@@ -50,7 +50,6 @@ import mekhq.campaign.rating.IUnitRating;
 import mekhq.campaign.unit.Unit;
 import mekhq.campaign.universe.Faction;
 import mekhq.campaign.universe.RandomFactionGenerator;
-import mekhq.campaign.universe.UnitTableData;
 import mekhq.gui.view.LanceAssignmentView;
 
 import org.w3c.dom.Node;
@@ -354,19 +353,25 @@ public class AtBContract extends Contract implements Serializable {
 	public void calculatePaymentMultiplier(Campaign campaign) {
 		int unitRatingMod = campaign.getUnitRatingMod();
 		double multiplier = 1.0;
-		if (unitRatingMod >= IUnitRating.DRAGOON_A){
-			multiplier *= 2.0;
-		}
-		if (unitRatingMod == IUnitRating.DRAGOON_B){
-			multiplier *= 1.5;
-		}
-		if (unitRatingMod == IUnitRating.DRAGOON_D){
-			multiplier *= 0.8;
-		}
-		if (unitRatingMod == IUnitRating.DRAGOON_F){
-			multiplier *= 0.5;
-		}
-		
+		// IntOps reputation factor then Dragoons rating
+        if (campaign.getCampaignOptions().useDragoonRating()
+			&& campaign.getCampaignOptions().getUnitRatingMethod().equals(mekhq.campaign.rating.UnitRatingMethod.CAMPAIGN_OPS)) {
+			multiplier *= (unitRatingMod * .2) + .5;
+		} else {
+			if (unitRatingMod >= IUnitRating.DRAGOON_A){
+                multiplier *= 2.0;
+            }
+            if (unitRatingMod == IUnitRating.DRAGOON_B){
+                multiplier *= 1.5;
+            }
+            if (unitRatingMod == IUnitRating.DRAGOON_D){
+                multiplier *= 0.8;
+            }
+            if (unitRatingMod == IUnitRating.DRAGOON_F){
+                multiplier *= 0.5;
+            }
+        }
+
 		switch (missionType) {
 		case MT_CADREDUTY:
 			multiplier *= 0.8;
@@ -410,7 +415,7 @@ public class AtBContract extends Contract implements Serializable {
 				enemyCode.equals("PIR")) {
 			multiplier *= 1.1;
 		}
-		
+
 		int cmdrStrategy = 0;
 		if (campaign.getFlaggedCommander() != null &&
 				campaign.getFlaggedCommander().getSkill(SkillType.S_STRATEGY) != null) {
@@ -839,11 +844,14 @@ public class AtBContract extends Contract implements Serializable {
 					partsAvailabilityLevel++;
 					break;
 				case 6:
-					text += "Surplus Sale: " +
+					String unit = 
 							c.getUnitMarket().addSingleUnit(c, UnitMarket.MARKET_EMPLOYER,
-									UnitTableData.UNIT_MECH, getEmployerCode(),
+									UnitType.MEK, getEmployerCode(),
 									IUnitRating.DRAGOON_F, 50) +
 									" offered by employer on the <a href='UNIT_MARKET'>unit market</a>";
+					if (unit != null) {
+						text += "Surplus Sale: " + unit;						
+					}
 				}
 				c.addReport(text);
 				break;
@@ -874,7 +882,7 @@ public class AtBContract extends Contract implements Serializable {
 						specialEventScenarioDate);
 				c.addScenario(s, this);
 				if (c.getCampaignOptions().getUsePlanetaryConditions()) {
-					s.setPlanetaryConditions(this);
+					s.setPlanetaryConditions(this, c);
 				}
     			s.setForces(c);
 				specialEventScenarioDate = null;

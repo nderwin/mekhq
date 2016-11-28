@@ -53,6 +53,7 @@ import megamek.common.MechSummary;
 import megamek.common.MechSummaryCache;
 import megamek.common.MechView;
 import megamek.common.loaders.EntityLoadingException;
+import megamek.common.util.EncodeControl;
 import mekhq.Utilities;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.parts.Refit;
@@ -97,7 +98,7 @@ public class ChooseRefitDialog extends javax.swing.JDialog {
     private void initComponents() {
     	
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ChooseRefitDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.ChooseRefitDialog", new EncodeControl()); //$NON-NLS-1$
 
         setTitle(resourceMap.getString("title.text") + " " + unit.getName());
         
@@ -287,7 +288,7 @@ public class ChooseRefitDialog extends javax.swing.JDialog {
 			try {
                 Entity refitEn = new MechFileParser(summary.getSourceFile(), summary.getEntryName()).getEntity();
 				if(null != refitEn) {
-					Refit r = new Refit(unit, refitEn, false);
+					Refit r = new Refit(unit, refitEn, false, false);
 					if(null == r.checkFixable()) {
 						refits.add(r);
 					}

@@ -43,6 +43,7 @@ import megamek.common.WeaponType;
 import megamek.common.options.IOption;
 import megamek.common.options.IOptionGroup;
 import megamek.common.options.PilotOptions;
+import megamek.common.util.EncodeControl;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.personnel.Bloodname;
 import mekhq.campaign.personnel.Person;
@@ -158,7 +159,7 @@ public class CustomizePersonDialog extends javax.swing.JDialog implements Dialog
         btnRandomBloodname = new javax.swing.JButton();
         btnDate = new javax.swing.JButton();
 
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog", new EncodeControl()); //$NON-NLS-1$
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         setTitle(resourceMap.getString("Form.title")); // NOI18N
@@ -653,7 +654,7 @@ public class CustomizePersonDialog extends javax.swing.JDialog implements Dialog
     }
 
     public void refreshSkills() {
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog", new EncodeControl()); //$NON-NLS-1$
         panSkills.removeAll();
         
         JCheckBox chkSkill;
@@ -855,6 +856,14 @@ public class CustomizePersonDialog extends javax.swing.JDialog implements Dialog
             optionComp.setSelected(option.stringValue());
         }
 
+        if ("range_master".equals(option.getName())) { //$NON-NLS-1$
+            optionComp.addValue(Crew.RANGEMASTER_NONE);
+            optionComp.addValue(Crew.RANGEMASTER_MEDIUM);
+            optionComp.addValue(Crew.RANGEMASTER_LONG);
+            optionComp.addValue(Crew.RANGEMASTER_EXTREME);
+            optionComp.setSelected(option.stringValue());
+        }
+
         gridbag.setConstraints(optionComp, c);
         panOptions.add(optionComp);
 
@@ -903,7 +912,7 @@ public class CustomizePersonDialog extends javax.swing.JDialog implements Dialog
     }
     
     private void btnDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDateActionPerformed
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.CustomizePersonDialog", new EncodeControl()); //$NON-NLS-1$
         // show the date chooser
         DateChooser dc = new DateChooser(frame, birthdate);
         // user can eiter choose a date or cancel by closing

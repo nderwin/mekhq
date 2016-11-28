@@ -443,7 +443,7 @@ public class AmmoBin extends EquipmentPart implements IAcquisitionWork {
 	public boolean isSamePartType(Part part) {
     	return  part instanceof AmmoBin
                         && getType().equals( ((AmmoBin)part).getType() )
-                        && ((AmmoBin)part).isOneShot() == oneShot;
+                        && ((AmmoBin)part).getFullShots() == getFullShots();
     }
 
 	@Override
@@ -457,7 +457,7 @@ public class AmmoBin extends EquipmentPart implements IAcquisitionWork {
 		}
 		String toReturn = "<html><font size='2'";
 		String scheduled = "";
-		if (getAssignedTeamId() != null) {
+		if (getTeamId() != null) {
 			scheduled = " (scheduled) ";
 		}
 
@@ -737,4 +737,8 @@ public class AmmoBin extends EquipmentPart implements IAcquisitionWork {
         return true;
     }
 
+    @Override
+    public int getMassRepairOptionType() {
+    	return Part.REPAIR_PART_TYPE.AMMO;
+    }
 }

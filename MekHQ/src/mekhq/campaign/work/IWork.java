@@ -1,6 +1,7 @@
 /*
  * IWork.java
  * 
+ * Copyright (C) 2016 MegaMek team
  * Copyright (c) 2009 Jay Lawson <jaylawson39 at yahoo.com>. All rights reserved.
  * 
  * This file is part of MekHQ.
@@ -25,25 +26,26 @@ import java.util.UUID;
 import megamek.common.TargetRoll;
 import mekhq.campaign.personnel.Person;
 
+public interface IWork {
+    boolean needsFixing();
+    
+    /** @return the base difficulty of this work unit */
+    int getDifficulty();
+    
+    TargetRoll getAllMods(Person p);
+    
+    String succeed();
+    
+    String fail(int rating);
+    
+    /** @return the team UUID assigned to this work unit, or <tt>null</tt> if nobody is working on it */
+    UUID getTeamId();
 
-/**
- * 
- * @author Jay
- */
-public abstract interface IWork {
-
-	public abstract boolean needsFixing();
-	
-	public abstract int getDifficulty();
-	
-	public abstract TargetRoll getAllMods(Person p);
-	
-	public abstract String succeed();
-	
-	public abstract String fail(int rating);
-	
-	public abstract UUID getAssignedTeamId();
-
-	public abstract int getMode();
-	
+    /**
+     * @return the current work time modifier set for this work unit; only override if the work
+     * unit supports more than the default, constant work time
+     */
+    default WorkTime getMode() {
+        return WorkTime.NORMAL;
+    }
 }

@@ -28,17 +28,19 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.UUID;
 
-import megamek.client.RandomUnitGenerator;
 import megamek.common.Compute;
 import megamek.common.Entity;
 import megamek.common.EntityMovementMode;
+import megamek.common.EntityWeightClass;
 import megamek.common.MechFileParser;
 import megamek.common.MechSummary;
 import megamek.common.MechSummaryCache;
 import megamek.common.TargetRoll;
+import megamek.common.UnitType;
 import megamek.common.loaders.EntityLoadingException;
 import mekhq.MekHQ;
 import mekhq.MekHqXmlUtil;
+import mekhq.Utilities;
 import mekhq.Version;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.finances.Transaction;
@@ -47,7 +49,6 @@ import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.rating.IUnitRating;
 import mekhq.campaign.universe.Faction;
 import mekhq.campaign.universe.RandomFactionGenerator;
-import mekhq.campaign.universe.UnitTableData;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -70,7 +71,6 @@ public class PersonnelMarket {
 	/* Alternate types of rolls, set by PersonnelMarketDialog */
 	private boolean paidRecruitment = false;
 	private int paidRecruitType;
-	private boolean shipSearch = false;
 
 	public PersonnelMarket() {
 	}
@@ -101,13 +101,6 @@ public class PersonnelMarket {
 				updated = true;
 			} else {
 				c.addReport("<html><font color=\"red\">Insufficient funds for paid recruitment.</font></html>");
-			}
-		} else  if (shipSearch && c.getCalendar().get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
-			if (c.getFinances().debit(100000, Transaction.C_UNIT,
-					"Ship search", c.getDate())) {
-				doShipSearch(c);
-			} else {
-				c.addReport("<html><font color=\"red\">Insufficient funds for ship search.</font></html>");
 			}
 		} else {
 
@@ -609,14 +602,6 @@ public class PersonnelMarket {
     	paidRecruitment = pr;
     }
 
-    public boolean getShipSearch() {
-    	return shipSearch;
-    }
-
-    public void setShipSearch(boolean ss) {
-    	shipSearch = ss;
-    }
-
     public int getPaidRecruitType() {
     	return paidRecruitType;
     }
@@ -634,6 +619,11 @@ public class PersonnelMarket {
         for (Person p : personnel) {
             p.writeToXml(pw1, indent + 1);
         }
+        if (paidRecruitment) {
+        	pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "<paidRecruitment/>");
+        }
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "paidRecruitType", paidRecruitType);
+        
         for (UUID id : attachedEntities.keySet()) {
             pw1.println(MekHqXmlUtil.indentStr(indent + 1)
                     + "<entity id=\"" + id.toString() + "\">"
@@ -682,6 +672,10 @@ public class PersonnelMarket {
                     if (null != en) {
                     	retVal.attachedEntities.put(id, en);
                     }
+            	} else if (wn2.getNodeName().equalsIgnoreCase("paidRecruitment")) {
+            		retVal.paidRecruitment = true;
+            	} else if (wn2.getNodeName().equalsIgnoreCase("paidRecruitType")) {
+            		retVal.paidRecruitType = Integer.parseInt(wn2.getTextContent());
           		} else  {
             		// Error condition of sorts!
             		// Errr, what should we do here?
@@ -913,38 +907,11 @@ public class PersonnelMarket {
     	return target;
     }
 
-    private void doShipSearch(Campaign c) {
-    	TargetRoll target = getShipSearchTarget(c, paidRecruitType == Person.T_NAVIGATOR);
-		int roll = Compute.d6(2);
-		if (roll < target.getValue()) {
-			c.addReport("Ship search unsuccessful");
-			return;
-		}
-		c.addReport("<a href='PERSONNEL_MARKET'>Ship search successful</a>");
-		Person p = null;
-		p = c.newPerson(paidRecruitType);
-		//TODO: ships available for long-term hire with mos == 0
-		if (null != p) {
-            UUID id = UUID.randomUUID();
-            while (null != personnelIds.get(id)) {
-                id = UUID.randomUUID();
-            }
-            p.setId(id);
-            personnel.add(p);
-            personnelIds.put(id, p);
-           	addRecruitUnit(p, c, true);
- 		}
-    }
-
     private void addRecruitUnit(Person p, Campaign c) {
-    	addRecruitUnit(p, c, false);
-    }
-
-    private void addRecruitUnit(Person p, Campaign c, boolean largeCraft) {
     	int unitType;
     	switch (p.getPrimaryRole()) {
     	case Person.T_MECHWARRIOR:
-    		unitType = UnitTableData.UNIT_MECH;
+    		unitType = UnitType.MEK;
     		break;
     	case Person.T_GVEE_DRIVER:
     	case Person.T_VEE_GUNNER:
@@ -954,85 +921,41 @@ public class PersonnelMarket {
     		if (!c.getCampaignOptions().getAeroRecruitsHaveUnits()) {
     			return;
     		}
-    		unitType = UnitTableData.UNIT_AERO;
-    		break;
-    	case Person.T_SPACE_CREW:
-    	case Person.T_SPACE_GUNNER:
-    	case Person.T_SPACE_PILOT:
-    		if (largeCraft) {
-    			unitType = UnitTableData.UNIT_DROPSHIP;
-    		} else {
-    			return;
-    		}
-    		break;
-    	case Person.T_NAVIGATOR:
-    		if (largeCraft) {
-    			unitType = -1;
-    		} else {
-    			return;
-    		}
+    		unitType = UnitType.AERO;
     		break;
     	case Person.T_INFANTRY:
-    		unitType = UnitTableData.UNIT_INFANTRY;
+    		unitType = UnitType.INFANTRY;
     		break;
     	case Person.T_BA:
-    		unitType = UnitTableData.UNIT_BATTLEARMOR;
+    		unitType = UnitType.BATTLE_ARMOR;
     		break;
     	case Person.T_PROTO_PILOT:
-    		unitType = UnitTableData.UNIT_PROTOMECH;
+    		unitType = UnitType.PROTOMEK;
     		break;
     	default:
     		return;
     	}
 
-    	int weight = 0;
-    	if (unitType >= 0 && unitType <= UnitTableData.UNIT_AERO) {
+    	int weight = -1;
+    	if (unitType == UnitType.MEK
+    			|| unitType == UnitType.TANK
+    			|| unitType == UnitType.AERO) {
 			int roll = Compute.d6(2);
 	    	if (roll < 8) {
 	    		return;
 	    	}
 	    	if (roll < 10) {
-	    		weight = UnitTableData.WT_LIGHT;
+	    		weight = EntityWeightClass.WEIGHT_LIGHT;
 	    	} else if (roll < 12) {
-	    		weight = UnitTableData.WT_MEDIUM;
+	    		weight = EntityWeightClass.WEIGHT_MEDIUM;
 	    	} else {
-	    		weight = UnitTableData.WT_HEAVY;
+	    		weight = EntityWeightClass.WEIGHT_HEAVY;
 	    	}
     	}
     	Entity en = null;
 
     	String faction = getRecruitFaction(c);
-		MechSummary ms = null;
-
-    	if (unitType < 0) {
-    		//TODO: add other JumpShips
-    		String name;
-    		int roll = Compute.d6();
-    		if (roll == 1) {
-    			name = "Scout JumpShip (Standard)";
-    		} else if (roll < 4) {
-    			name = "Merchant Jumpship (Standard)";
-    		} else {
-    			name = "Invader Jumpship (Standard)";
-    		}
-    		ms = MechSummaryCache.getInstance().getMech(name);
-    	} else {
-    		UnitTableData.FactionTables ft = UnitTableData.getInstance().getBestRAT(c.getCampaignOptions().getRATs(),
-    				c.getCalendar().get(Calendar.YEAR),
-    				faction, unitType);
-    		if (null == ft) {
-    			//Most likely proto pilot for IS faction
-    			return;
-    		}
-    		String rat = ft.getTable(unitType, weight, UnitTableData.QUALITY_F);
-    		if (null != rat) {
-    			RandomUnitGenerator.getInstance().setChosenRAT(rat);
-    			ArrayList<MechSummary> msl = RandomUnitGenerator.getInstance().generate(1);
-    			if (msl.size() > 0) {
-    				ms = msl.get(0);
-    			}
-    		}
-    	}
+		MechSummary ms = c.getUnitGenerator().generate(faction, unitType, weight, c.getCalendar().get(Calendar.YEAR), IUnitRating.DRAGOON_F);
     	if (null != ms) {
     		if (Faction.getFaction(faction).isClan() && ms.getName().matches(".*Platoon.*")) {
 				String name = "Clan " + ms.getName().replaceAll("Platoon", "Point");
@@ -1046,6 +969,10 @@ public class PersonnelMarket {
 	            MekHQ.logError("Unable to load entity: " + ms.getSourceFile() + ": " + ms.getEntryName() + ": " + ex.getMessage());
 	            MekHQ.logError(ex);
 			}
+		} else {
+			MekHQ.logError("Personnel market could not find "
+					+ UnitType.getTypeName(unitType) + " for recruit from faction " + faction);
+			return;
 		}
 
 		if (null != en) {
@@ -1118,18 +1045,25 @@ public class PersonnelMarket {
     }
 
     public static String getRecruitFaction(Campaign c) {
-    	if (!c.getFactionCode().equals("MERC")) {
-    		return c.getFactionCode();
-    	}
-    	if (c.getCalendar().get(Calendar.YEAR) > 3055 && Compute.randomInt(20) == 0) {
-    		ArrayList<String> clans = new ArrayList<String>();
-    		for (String f : RandomFactionGenerator.getInstance().getCurrentFactions()) {
-    			if (Faction.getFaction(f).isClan()) {
-    				clans.add(f);
-    			}
-    		}
-    		return clans.get(Compute.randomInt(clans.size()));
-    	}
-    	return RandomFactionGenerator.getInstance().getEmployer();
+        if (c.getFactionCode().equals("MERC")) {
+        	if (c.getCalendar().get(Calendar.YEAR) > 3055 && Compute.randomInt(20) == 0) {
+        		ArrayList<String> clans = new ArrayList<String>();
+        		for (String f : RandomFactionGenerator.getInstance().getCurrentFactions()) {
+        			if (Faction.getFaction(f).isClan()) {
+        				clans.add(f);
+        			}
+        		}
+        		String clan = Utilities.getRandomItem(clans);
+        		if (clan != null) {
+        		    return clan;
+        		}
+        	} else {
+        	    String faction = RandomFactionGenerator.getInstance().getEmployer();
+        	    if (faction != null) {
+        	        return faction;
+        	    }
+        	}
+        }
+        return c.getFactionCode();
     }
 }

@@ -24,7 +24,7 @@ import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.unit.Unit;
 import mekhq.gui.CampaignGUI;
-import mekhq.gui.dialog.PortraitChoiceDialog;
+import mekhq.gui.dialog.ImageChoiceDialog;
 import mekhq.gui.dialog.TextAreaDialog;
 import mekhq.gui.utilities.MenuScroller;
 import mekhq.gui.utilities.StaticChecks;
@@ -114,12 +114,25 @@ public class OrgTreeMouseAdapter extends MouseInputAdapter implements
                 	singleForce.setTechID(tech.getId());
                 	tech.addLogEntry(gui.getCampaign().getDate(), "Assigned to " + singleForce.getFullName());
                 	if (singleForce.getAllUnits() !=null) {
+                	    String cantTech = "";
                 		for (UUID uuid : singleForce.getAllUnits()) {
                 			Unit u = gui.getCampaign().getUnit(uuid);
                 			if (u != null) {
-                				u.setTech(tech.getId());
-                				tech.addTechUnitID(u.getId());
+                			    if (null != u.getTech()) {
+                			        Person oldTech = u.getTech();
+                			        oldTech.removeTechUnitId(u.getId());
+                			    }
+                			    if (tech.canTech(u.getEntity())) {
+                			        u.setTech(tech.getId());
+                                    tech.addTechUnitID(u.getId());
+                			    } else {
+                			        cantTech += tech.getName() + " cannot maintain " + u.getName() + "\n";
+                			    }
                 			}
+                		}
+                		if (cantTech != "") {
+                		    cantTech += "You will need to assign a tech manually.";
+                		    JOptionPane.showMessageDialog(null, cantTech, "Warning", JOptionPane.WARNING_MESSAGE);
                 		}
                 	}
                 	gui.refreshOrganization();
@@ -177,14 +190,17 @@ public class OrgTreeMouseAdapter extends MouseInputAdapter implements
             gui.refreshOverview();
         } else if (command.contains("CHANGE_ICON")) {
             if (null != singleForce) {
-                PortraitChoiceDialog pcd = new PortraitChoiceDialog(
+                ImageChoiceDialog pcd = new ImageChoiceDialog(
                         gui.getFrame(), true, singleForce.getIconCategory(),
                         singleForce.getIconFileName(), gui.getIconPackage()
-                                .getForceIcons());
+                                .getForceIcons(), true);
                 pcd.setVisible(true);
-                singleForce.setIconCategory(pcd.getCategory());
-                singleForce.setIconFileName(pcd.getFileName());
-                gui.refreshOrganization();
+                if (pcd.isChanged()) {
+                    singleForce.setIconCategory(pcd.getCategory());
+                    singleForce.setIconFileName(pcd.getFileName());
+                    singleForce.setIconMap(pcd.getIconMap());
+                    gui.refreshOrganization();
+                }
             }
         } else if (command.contains("CHANGE_NAME")) {
             if (null != singleForce) {
@@ -227,7 +243,7 @@ public class OrgTreeMouseAdapter extends MouseInputAdapter implements
             gui.refreshUnitList();
             gui.refreshOverview();
         } else if (command.contains("REMOVE_LANCE_TECH")) {
-           	if (singleForce.getTechID() != null) {            		
+           	if (singleForce.getTechID() != null) {
     			Person oldTech = gui.getCampaign().getPerson(singleForce.getTechID());
     			oldTech.clearTechUnitIDs();
     			oldTech.addLogEntry(gui.getCampaign().getDate(), "Removed from " + singleForce.getName());
@@ -240,7 +256,7 @@ public class OrgTreeMouseAdapter extends MouseInputAdapter implements
            			}
            		}
     			singleForce.setTechID(null);
-    				
+
     			gui.refreshOrganization();
     			gui.refreshPersonnelList();
                 gui.refreshScenarioList();
@@ -459,7 +475,7 @@ public class OrgTreeMouseAdapter extends MouseInputAdapter implements
                         menu = new JMenu("Add Tech to Force");
                         menu.setEnabled(false);
                         for (Person tech : gui.getCampaign().getTechs()) {
-                        	if (tech.getMaintenanceTimeUsing() == 0) {
+                        	if (tech.getMaintenanceTimeUsing() == 0 && !tech.isEngineer()) {
                         		String skillLvl = "Unknown";
                         		skillLvl = SkillType.getExperienceLevelName(tech.getExperienceLevel(false));
                         		menuItem = new JMenuItem(tech.getFullTitle() + " (" + skillLvl + ", " + tech.getRoleDesc() + ")");

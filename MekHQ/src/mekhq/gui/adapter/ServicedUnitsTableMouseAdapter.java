@@ -17,6 +17,7 @@ import mekhq.campaign.parts.Part;
 import mekhq.campaign.parts.equipment.AmmoBin;
 import mekhq.campaign.unit.Unit;
 import mekhq.gui.CampaignGUI;
+import mekhq.gui.dialog.MassRepairSalvageDialog;
 import mekhq.gui.utilities.MenuScroller;
 import mekhq.gui.utilities.StaticChecks;
 
@@ -106,6 +107,24 @@ public class ServicedUnitsTableMouseAdapter extends MouseInputAdapter
             gui.refreshServicedUnitList();
             gui.refreshUnitList();
             gui.refreshOverview();
+        } else if (command.contains("MASS_REPAIR_SALVAGE")) {
+            Unit unit = null;
+            
+            if ((null != units) && (units.length > 0)) {
+            	unit = units[0];
+            }
+            
+            if (unit.isDeployed()) {
+    			JOptionPane.showMessageDialog(gui.getFrame(),
+    					"Unit is currently deployed and can not be repaired.",
+    					"Unit is deployed", JOptionPane.ERROR_MESSAGE);
+            } else {
+				MassRepairSalvageDialog.performSingleUnitMassRepairOrSalvage(gui, unit);
+	
+				gui.refreshServicedUnitList();
+				gui.refreshUnitList();
+				gui.refreshOverview();
+            }
         } else if (command.equalsIgnoreCase("REMOVE")) {
             for (Unit unit : units) {
                 if (!unit.isDeployed()) {
@@ -246,8 +265,20 @@ public class ServicedUnitsTableMouseAdapter extends MouseInputAdapter
                     menuItem.setEnabled(unit.isAvailable());
                     popup.add(menuItem);
                 }
+                
+                if (!unit.isSelfCrewed() && unit.isAvailable() && !unit.isDeployed()) {
+                	String title = String.format("Mass %s", unit.isSalvage() ? "Salvage" : "Repair");
+                	
+                    menuItem = new JMenuItem(title);
+                    menuItem.setActionCommand("MASS_REPAIR_SALVAGE");
+                    menuItem.addActionListener(this);
+                    menuItem.setEnabled(unit.isAvailable());
+                    popup.add(menuItem);
+                }
+                
                 popup.show(e.getComponent(), e.getX(), e.getY());
             }
         }
     }
+    
 }

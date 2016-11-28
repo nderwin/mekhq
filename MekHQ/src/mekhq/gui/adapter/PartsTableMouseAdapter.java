@@ -15,8 +15,9 @@ import mekhq.campaign.finances.Transaction;
 import mekhq.campaign.parts.AmmoStorage;
 import mekhq.campaign.parts.Armor;
 import mekhq.campaign.parts.Part;
-import mekhq.campaign.work.Modes;
+import mekhq.campaign.work.WorkTime;
 import mekhq.gui.CampaignGUI;
+import mekhq.gui.dialog.MassRepairSalvageDialog;
 import mekhq.gui.dialog.PopupValueChoiceDialog;
 
 public class PartsTableMouseAdapter extends MouseInputAdapter implements
@@ -173,8 +174,13 @@ public class PartsTableMouseAdapter extends MouseInputAdapter implements
             }
         } else if (command.contains("CHANGE_MODE")) {
             String sel = command.split(":")[1];
-            int selected = Integer.parseInt(sel);
-            selectedPart.setMode(selected);
+            selectedPart.setMode(WorkTime.of(sel));
+            gui.refreshPartsList();
+            gui.refreshOverview();
+        } else if (command.contains("MASS_REPAIR")) {
+            MassRepairSalvageDialog dlg = new MassRepairSalvageDialog(gui.getFrame(), true, gui, MassRepairSalvageDialog.MODE.WAREHOUSE);
+            dlg.setVisible(true);
+            
             gui.refreshPartsList();
             gui.refreshOverview();
         }
@@ -313,18 +319,23 @@ public class PartsTableMouseAdapter extends MouseInputAdapter implements
             }
             if (oneSelected && part.needsFixing() && part.isPresent()) {
                 menu = new JMenu("Repair Mode");
-                for (int i = 0; i < Modes.MODE_N; i++) {
-                    cbMenuItem = new JCheckBoxMenuItem(Modes.getModeName(i));
-                    if (part.getMode() == i) {
+                for(WorkTime wt : WorkTime.DEFAULT_TIMES) {
+                    cbMenuItem = new JCheckBoxMenuItem(wt.name);
+                    if (part.getMode() == wt) {
                         cbMenuItem.setSelected(true);
                     } else {
-                        cbMenuItem.setActionCommand("CHANGE_MODE:" + i);
+                        cbMenuItem.setActionCommand("CHANGE_MODE:" + wt.id);
                         cbMenuItem.addActionListener(this);
                     }
                     cbMenuItem.setEnabled(!part.isBeingWorkedOn());
                     menu.add(cbMenuItem);
                 }
                 popup.add(menu);
+                
+                menuItem = new JMenuItem("Mass Repair");
+                menuItem.setActionCommand("MASS_REPAIR");
+                menuItem.addActionListener(this);
+                popup.add(menuItem);
             }
             if (areAllPartsInTransit(parts)) {
                 menuItem = new JMenuItem("Cancel This Delivery");

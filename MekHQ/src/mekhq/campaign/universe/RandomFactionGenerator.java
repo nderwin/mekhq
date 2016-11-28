@@ -37,15 +37,16 @@ import java.util.TreeSet;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import megamek.common.Compute;
-import mekhq.MekHQ;
-import mekhq.campaign.CampaignOptions;
-
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import megamek.common.Compute;
+import mekhq.MekHQ;
+import mekhq.Utilities;
+import mekhq.campaign.CampaignOptions;
 
 /**
  * @author Neoancient
@@ -419,7 +420,7 @@ public class RandomFactionGenerator implements Serializable {
 		borders.clear();
 		currentFactions.clear();
 		for (Planet p : Planets.getInstance().getPlanets().values()) {
-			for (Faction f : p.getCurrentFactions(date)) {
+			for (Faction f : p.getFactionSet(Utilities.getDateTimeDay(date))) {
 				String fName = f.getShortName();
 				if (fName.equals("ABN") ||
 						fName.equals("UND") ||
@@ -474,9 +475,8 @@ public class RandomFactionGenerator implements Serializable {
 		} else if (f.isPeriphery()) {
 			distance = BORDER_RANGE_NEAR_PERIPHERY;
 		}
-		for (String planetKey : Planets.getNearbyPlanets(p, distance)) {
-			for (Faction f2 : Planets.getInstance().getPlanets().
-						get(planetKey).getCurrentFactions(lastUpdate)) {
+		for (Planet planetKey : Planets.getInstance().getNearbyPlanets(p, distance)) {
+			for (Faction f2 : planetKey.getFactionSet(Utilities.getDateTimeDay(lastUpdate))) {
 				String eName = f2.getShortName();
 				if (eName.equals("ABN") ||
 						eName.equals("UND") ||
@@ -563,10 +563,7 @@ public class RandomFactionGenerator implements Serializable {
 	}
 	
 	public String getEmployer() {
-		if (employers.size() > 0) {
-			return employers.get(Compute.randomInt(employers.size()));
-		}
-		return null;
+		return Utilities.getRandomItem(employers);
 	}
 	
 	public String getEnemy(String fName, boolean useRebels) {
@@ -614,7 +611,7 @@ public class RandomFactionGenerator implements Serializable {
 				}
 			}
 			if (enemiesList.size() > 0) {
-				return enemiesList.get(Compute.randomInt(enemiesList.size()));
+				return Utilities.getRandomItem(enemiesList);
 			}
 		}
 		MekHQ.logMessage("Could not find enemy for " + fName);
@@ -674,7 +671,7 @@ public class RandomFactionGenerator implements Serializable {
 	public String getMissionTarget(String attacker, String defender, Date date) {
 		ArrayList<Planet> planetList = getMissionTargetList(attacker, defender, date);
 		if (planetList.size() > 0) {
-			return planetList.get(Compute.randomInt(planetList.size())).getName();
+			return Utilities.getRandomItem(planetList).getId();
 		}
 		return null;
 	}
@@ -714,13 +711,12 @@ public class RandomFactionGenerator implements Serializable {
 		}
 		if (border != null) {
 			for (Planet startingPlanet : border) {
-				for (String planetKey : Planets.getNearbyPlanets(startingPlanet, maxJumps * 30)) {
-					Planet p = Planets.getInstance().getPlanets().get(planetKey);
-					for (Faction f : p.getCurrentFactions(date)) {
+				for (Planet planetKey : Planets.getInstance().getNearbyPlanets(startingPlanet, maxJumps * 30)) {
+					for (Faction f : planetKey.getFactionSet(Utilities.getDateTimeDay(date))) {
 						if (f.getShortName().equals(defender) ||
 								defender.equals("PIR") ||
 								(f.getShortName().equals(attacker) && defender.equals("REB"))) {
-							planetList.add(p);
+							planetList.add(planetKey);
 						}
 					}
 				}

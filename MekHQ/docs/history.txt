@@ -1,6 +1,154 @@
-VERSION HISTORY
-----------------------------------
-v0.3.26-git
+VERSION HISTORY:
+----------------
+v0.41.27-git
++ PR #232: "Advanced Medical" refactor - new medical dialogue, lots of under-the-hood improvements
++ Allowing twins, triplets, quadruplets ... and so on to be born
++ Recording the biological father of children at conception time
++ Issue #243: Pregnant widow can't give birth
++ Fixed bug with force icon layers being misaligned by 1px in both dimensions
++ Issue #220: NPE when updating unit rating and infantry have no troopers
++ Issue #228: Campaign Ops Unit Rating -- Heavy Vee Bays Affecting Display of Light Vee Bays
++ Issue #244: [AtB] A Normal morale enemy gets Base Attack.
++ Issue #245: [AtB] Bonus payments are not made.
++ Issue #246: RAT Generator doesn't seem to generate any VTOLs.
++ Issue #247: GM Tools RAT Roller Will Not Add Dropships.
++ Overhaul of Mass Repair/Salvage and adding Mass Repair to warehouse
++ Issue #239: Be smarter about clearing assignments when removing personnel from units and vice versa.
++ Issue #252: Enable 'remove all personnel' when selecting multiple units in the hangar 
+
+v0.41.26 (2016-11-02 02:00 UTC)
++ Issue #204: AtB generates empty unit markets with traditional RATS
++ Fixed bug with Export to MUL setting deployment round to -1 instead of 0
++ Issue #103: Dragoon Rating (FMM:Rev) Decreases as Dropship Carrying Capacity is Used
++ Converted Interstellar Ops Beta Unit Rating to Campaign Ops Unit Rating to match the released version of the rules
++ Added additional details to both the Dragoons and Campaign Ops Unit rating reports
++ Issue #215: CO Rating showing tech shortage due to infantry
++ Added PR for Range Master support
++ Updated MegaMek.jar to allow building with Range Master support
++ Added PR for Mass Repair and Salvage
++ Added PR for Refurbishment
++ Added PR for Repair task icons
++ New force icon pieces and categories
++ Updated MegaMek.jar and MegaMekLab.jar to 0.41.26
+
+v0.41.25 (2016-10-15 14:40 UTC)
++ Issue #158: Scenario Resolution: ejected+fled pilots lose hits
++ Fixed forcestub save for layered force icons
++ Issue #151: Damaged Small Craft Thruster Shown As Avionics Repair
++ Issue #141: Incorrect Ammo load from unit after refit
++ Bug [#924]: Refits end with incorrect ammo.
++ Issue #192: Replacing Retractable Blade in Campaign
++ Bug [#596]: Parts are impossible to get when they shouldn't be.
++ Issue #77: Dropship refit time never decreases
++ Issue #136: 2x C3 Master Mechs not working properly
++ Updated MegaMek.jar and MegaMekLab.jar to 0.41.25
+
+v0.41.24 (2016-10-06 03:15 UTC)
++ Issue #170: MHQ Unable to Resolve Space Battle with Fighter Squadrons
++ Version matched to MegaMek
++ Refactored PortraitChoiceDialog to be ImageChoiceDialog since it's used for more than one thing
++ Issue #33 [AtB]: All allied units are marked as total loss after battle even if undamaged
++ Issue #30: Dragoons rating tab transportation calculation issue
++ Issue #67: Scenario does not resolve - NPE in scenario resolution isCommander()
++ Issue #83: Megamek options -> Tech level is stuck on Standard
++ Issue #146: Undamaged Units acquire internal damage when loading campaign
++ Added Layered Force Icons - Functionality limited for now, but can be expanded further in the future
++ Fix bug with cancel and exit button in the ImageChoiceDialog
++ Fixed image preview for the layered icons
++ Feature: Log conception and birth in personnel log
++ Fixes #179: Unable to load campaign with custom layered force icon
++ Updated AtB ship search to v2.31; ship search is now available on the Marketplace menu.
+  Closes #177:[ATB] Rolls for Dropship should occur 1 time a month
++ Moved AtB opfor generation tables into data/universe/atbconfig.xml, where they can be customized by the player.
++ Issue #186: Clan battles returning 'No Random Assignment Table found for this faction'
++ Fixed Mac OSX Packaging (Hopefully for good this time!)
++ Updated MegaMek.jar to 0.41.24
++ Updated MegaMekLab.jar to 0.41.24
+
+v0.3.33 (2016-09-20 00:07 UTC)
++ Added AtB preset.
++ Reworked AtB RAT subsystem and added option to use RAT Generator
++ Updated MegaMek.jar to 0.41.23
++ Updated MegaMekLab.jar to 0.1.59
+
+v0.3.32 (2016-08-26 03:00 UTC)
++ Issue #131: Personnel Market update blank
++ Adding Some of the missing AtB Docs
+
+v0.3.31 (2016-07-31 10:00 UTC)
++ Adding an "Inner Sphere at War" hex map overlay to the interstellar panel
++ Issue #120: Hanger->GM Mode->Restore Unit Issues
++ Bug: Packaging of some images didn't happen
++ Bug: Recruited prisoners don't get their "willing to defect" flag cleared
++ Bug: Skill.improve() didn't check for maximum skill level (SkillType.NUM_LEVELS)
++ Feature Request #80: Automated Skill Purchases
++ Bug: Reset Entity.elevation in Campaign.clearGameData
++ Updated MegaMek.jar to 0.41.21
++ Updated MegaMekLab.jar to 0.1.57
+
+v0.3.30 (2016-06-27 02:00 UTC)
++ Issue #110: Unassigned patients no longer get selected automatically
++ Adding planetary icon display to the planet detail view (+ "icon" data entry)
++ Adding HPG network display overlay to the interstellar map panel
++ Issue #29: MekHQ will not load.
++ Issue #69: 3.27 : ATB, allies generated use incorrect skill rating
++ Bug: missing or incorrect values in ratinfo.xml can cause ArrayOutOfBoundsException
++ Updated MegaMek.jar to 0.41.20
++ Updated MegaMekLab.jar to 0.1.56
+
+v0.3.29 (2016-06-05 22:40 UTC)
++ Adding a simple view option to the interstellar map (show/hide "empty" planets)
++ Code cleanup/refactor of the interstellar map panel
++ Issue #96: Null Pointer Exception from Special Mission (Prison Break)
++ Issue #91: Can't assign patients to doctors
++ PR #92: Cleanup of the infirmary panel
++ PR #94: Conception and Birth messages now have names hyperlinked. 
++ Issue #88: Current location displayed as "null"
++ Fixed IO Reputation rating value for experience.
++ Fixed an NPE in hasChildren() when trying to hire new personnel
++ Issue #64: Coolant failures not reset between missions.
++ Issue #63: Unable to edit mission - error about duplicate mission name.
++ Issue #89: AtB - NPE Setting Planetary Conditions
++ Interstellar map panel QoL improvements: Zooming at the middle of the screen
++ PR #95 - AtB Uses Int Ops Reputation Factor when IO rating is used
++ Updated MegaMek.jar to 0.41.19
++ Updated MegaMekLab.jar to 0.1.55
+
+v0.3.28 (2016-04-16 19:30 UTC)
++ Bug #43 / PR #62: Making admins gain their XP less often than once per week if requested,
+                    have that option work independently from AtB.
++ PR #60: UI Enhancement - Show children in person panel
++ Adding two CampaignEvent events: DayEndingEvent (cancellable), NewDayEvent
++ Bug #59: Ancestor Id not set at birth
++ Bug #57: Tech not properly removed when adding a unit to a force that already included a tech.
++ Bug #56: Adding a lance tech would not clear the units from the old techs
++ Bug #55: Assign Tech to lance should not include vessel crewman
++ Bug #1: Ship engineers now show up in refit tech list
++ PR #52: Updating tonnage/mass to use doubles to avoid rounding errors
++ Syntax errors in planetary data fixed
++ Bug [#925]: Issues with reload of MHQ and Settings
++ [AtB] When failure to deploy results in defeat, replace generated entities with stubs.
++ Issue #40: [ATB] 3.25 : Enemy reinforcements incorrectly set to deploy at the start of the game
++ Issue #68: IndexOutOfBoundsException when advancing day
++ Updated MegaMek.jar to 0.41.18
++ Updated MegaMekLab.jar to 0.1.54
+
+v0.3.27 (2016-04-16 00:30 UTC)
++ Updated MegaMek.jar to 0.41.17
++ Updated MegaMekLab.jar to 0.1.53
+
+v0.3.26 (2016-04-10 21:53 UTC)
++ Bug #31: NPE when advancing a day due to people without tech skills having assigned a repair job
++ PR #37: Redesigning the "Parts in use" dialogue to 1. work and 2. have some more useful data to display
++ Raising XP limits for gained XP and abilities, as per SF feature request 354
++ PR #38: Recording "willing to defect" prisoner status,
+          allow to recruit them without resorting to GM tools,
+          allow to easily find them by sorting by rank
++ PR #35: Adding age limiting options to the "Hire in bulk" dialogue
++ Feature: Choose Surname on Marriage
++ PR #9: UI Enhancement - Added Dependents group to Personnel Type menu
++ PR #8: UI Enhancement - Add Spouse to Person Panel
++ PR #34: Make generateRandomCrewWithCombinedSkill() also generate and register the crew's unique IDs
 + Bug: GameOptionsDialog does not match MegaMek's GameOptionsDialog
     This bug was caused by duplicating G.O.D. rather than just implementing MM's
     version of it. I added the one minor thing the MM version needed added to support
@@ -13,6 +161,9 @@ v0.3.26-git
 + Issue #14: Logging Maintenance Rolls Option
 + Cleaned replaced a lot of old manual boolean checks with parseBoolean, more needs done
 + Issue #22: Classpath fix for MM/MML jar files broken by commit ec84325
++ Bug: Added entity.setDeployed(false) to Campaign.clearGameData(Entity)
++ Updated MegaMek.jar to 0.41.16
++ Updated MegaMekLab.jar to 0.1.52
 
 v0.3.25 (2016-02-21 14:15 UTC)
 + Updating MHQ Data files to be in line with MM 41.14 (Multi-commits)

@@ -9,12 +9,11 @@ package mekhq.gui.dialog;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.UUID;
 
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -32,8 +31,8 @@ import javax.swing.table.TableRowSorter;
 import megamek.client.ui.swing.MechViewPanel;
 import megamek.common.Compute;
 import megamek.common.Entity;
-import megamek.common.TargetRoll;
 import megamek.common.util.DirectoryItems;
+import megamek.common.util.EncodeControl;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.finances.Transaction;
 import mekhq.campaign.market.PersonnelMarket;
@@ -72,9 +71,6 @@ public class PersonnelMarketDialog extends JDialog {
     private javax.swing.JRadioButton radioNormalRoll;
     private javax.swing.JRadioButton radioPaidRecruitment;
     private javax.swing.JComboBox<String> comboRecruitType;
-    private javax.swing.JRadioButton radioShipSearch;
-    private javax.swing.JComboBox<String> comboShipType;
-    private javax.swing.JLabel lblShipSearchTarget;
     private javax.swing.JPanel panelOKBtns;
     private javax.swing.JPanel panelMain;
     private javax.swing.JPanel panelFilterBtns;
@@ -112,9 +108,6 @@ public class PersonnelMarketDialog extends JDialog {
         radioNormalRoll = new javax.swing.JRadioButton();
         radioPaidRecruitment = new javax.swing.JRadioButton();
         comboRecruitType = new javax.swing.JComboBox<String>();
-        radioShipSearch = new javax.swing.JRadioButton();
-        comboShipType = new javax.swing.JComboBox<String>();
-        lblShipSearchTarget = new javax.swing.JLabel();
         lblUnitCost = new javax.swing.JLabel();
         panelOKBtns = new javax.swing.JPanel();
         btnHire = new javax.swing.JButton();
@@ -123,7 +116,7 @@ public class PersonnelMarketDialog extends JDialog {
         //choicePersonView = new javax.swing.JComboBox();
         //lblPersonView = new javax.swing.JLabel();
 
-		ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.UnitSelectorDialog");
+		ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.UnitSelectorDialog", new EncodeControl()); //$NON-NLS-1$
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Personnel Market"); // NOI18N
         setName("Form"); // NOI18N
@@ -185,6 +178,15 @@ public class PersonnelMarketDialog extends JDialog {
                 gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
                 panelFilterBtns.add(radioPaidRecruitment, gridBagConstraints);
 
+        		ButtonGroup group = new ButtonGroup();
+        		group.add(radioNormalRoll);
+        		group.add(radioPaidRecruitment);
+                if (personnelMarket.getPaidRecruitment()) {
+                	radioPaidRecruitment.setSelected(true);
+                } else {
+                	radioNormalRoll.setSelected(true);
+                }
+
                 for (int i = 1; i < Person.T_NUM; i++) {
                 	comboRecruitType.addItem(Person.getRoleDesc(i, campaign.getFaction().isClan()));
                 }
@@ -194,51 +196,9 @@ public class PersonnelMarketDialog extends JDialog {
                 gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
                 panelFilterBtns.add(comboRecruitType, gridBagConstraints);
 
-        		radioShipSearch.setText("Search for a ship next week (100,000 C-bills)");
-                gridBagConstraints.gridx = 0;
-                gridBagConstraints.gridy = 3;
-                gridBagConstraints.gridwidth = 2;
-                gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-                panelFilterBtns.add(radioShipSearch, gridBagConstraints);
-                radioShipSearch.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-		                updateShipSearchTarget();
-					}
-                });
-
-                comboShipType.addItem("DropShip");
-                comboShipType.addItem("JumpShip");
-                gridBagConstraints.gridx = 2;
-                gridBagConstraints.gridy = 3;
-                gridBagConstraints.gridwidth = 1;
-                gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-                panelFilterBtns.add(comboShipType, gridBagConstraints);
-                comboShipType.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent arg0) {
-		                updateShipSearchTarget();
-					}
-                });
-
-                gridBagConstraints.gridx = 0;
-                gridBagConstraints.gridy = 4;
-                gridBagConstraints.gridwidth = 3;
-                gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
-                panelFilterBtns.add(lblShipSearchTarget, gridBagConstraints);
-                updateShipSearchTarget();
-
-                javax.swing.ButtonGroup group = new javax.swing.ButtonGroup();
-                group.add(radioNormalRoll);
-                group.add(radioPaidRecruitment);
-                group.add(radioShipSearch);
-
                 if (personnelMarket.getPaidRecruitment()) {
                 	radioPaidRecruitment.setSelected(true);
                 	comboRecruitType.setSelectedIndex(personnelMarket.getPaidRecruitType() - 1);
-                } else if (personnelMarket.getShipSearch()) {
-                	radioShipSearch.setSelected(true);
-                	comboShipType.setSelectedIndex((personnelMarket.getPaidRecruitType() == Person.T_NAVIGATOR)?1:0);
                 } else {
                 	radioNormalRoll.setSelected(true);
                 }
@@ -339,15 +299,6 @@ public class PersonnelMarketDialog extends JDialog {
         pack();
     }
 
-    private void updateShipSearchTarget() {
-		if (radioShipSearch.isSelected()) {
-			TargetRoll target = campaign.getPersonnelMarket().getShipSearchTarget(campaign,
-					comboShipType.getSelectedIndex() == 1);
-			lblShipSearchTarget.setText("Target: " + target.getValueAsString()
-					+ " [" + target.getDesc() + "]");
-		}
-	}
-
 	public Person getPerson() {
 	    return selectedPerson;
 	}
@@ -379,17 +330,19 @@ public class PersonnelMarketDialog extends JDialog {
 	}//GEN-LAST:event_btnHireActionPerformed
 
 	private void addPerson() {
-		Entity en = personnelMarket.getAttachedEntity(selectedPerson);
-		UUID pid = selectedPerson.getId();
-	    if(null != selectedPerson) {
-	    	campaign.addPersonWithoutId(selectedPerson, true);
-			addUnit(en, false);
-	    	personnelMarket.removePerson(selectedPerson);
-    		personnelModel.setData(personnelMarket.getPersonnel());
-			personnelMarket.removeAttachedEntity(pid);
-	    	refreshHqView();
-	    	refreshPersonView();
-	    }
+		if (selectedPerson != null) {
+			Entity en = personnelMarket.getAttachedEntity(selectedPerson);
+			UUID pid = selectedPerson.getId();
+		    if(null != selectedPerson) {
+		    	campaign.addPersonWithoutId(selectedPerson, true);
+				addUnit(en, false);
+		    	personnelMarket.removePerson(selectedPerson);
+	    		personnelModel.setData(personnelMarket.getPersonnel());
+				personnelMarket.removeAttachedEntity(pid);
+		    	refreshHqView();
+		    	refreshPersonView();
+		    }
+		}
 	}
 
 	private void addUnit(Entity en, boolean pay) {
@@ -440,13 +393,8 @@ public class PersonnelMarketDialog extends JDialog {
 	private void btnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCloseActionPerformed
 	    selectedPerson = null;
     	personnelMarket.setPaidRecruitment(radioPaidRecruitment.isSelected());
-    	personnelMarket.setShipSearch(radioShipSearch.isSelected());
     	if (radioPaidRecruitment.isSelected()) {
     		personnelMarket.setPaidRecruitType(comboRecruitType.getSelectedIndex() + 1);
-    	}
-    	if (radioShipSearch.isSelected()) {
-    		personnelMarket.setPaidRecruitType(comboShipType.getSelectedItem().
-    				equals("DropShip")?Person.T_SPACE_PILOT:Person.T_NAVIGATOR);
     	}
 	    setVisible(false);
 	}//GEN-LAST:event_btnCloseActionPerformed
@@ -507,10 +455,7 @@ public class PersonnelMarketDialog extends JDialog {
     	if (null == en) {
     		unitCost = 0;
     	} else {
-    		if (en instanceof megamek.common.Dropship ||
-    				en instanceof megamek.common.Jumpship) {
-    			unitCost = (long)Math.ceil(en.getCost(false));
-    		} else if (!campaign.getCampaignOptions().getUseShareSystem() &&
+    		if (!campaign.getCampaignOptions().getUseShareSystem() &&
     				(en instanceof megamek.common.Mech ||
     						en instanceof megamek.common.Tank ||
     						en instanceof megamek.common.Aero)) {
@@ -540,13 +485,13 @@ public class PersonnelMarketDialog extends JDialog {
              if (Compute.getFullCrewSize(en) == 1) {
             	 name = "Pilot";
              }
-             tabUnit.add(name, new PersonViewPanel(selectedPerson, campaign, portraits));
+             tabUnit.add(name, new PersonViewPanel(selectedPerson, campaign, hqView.getIconPackage()));
              MechViewPanel mvp = new MechViewPanel();
              mvp.setMech(en, true);
              tabUnit.add("Unit", mvp);
              scrollPersonnelView.setViewportView(tabUnit);
          } else {
-        	 scrollPersonnelView.setViewportView(new PersonViewPanel(selectedPerson, campaign, portraits));
+        	 scrollPersonnelView.setViewportView(new PersonViewPanel(selectedPerson, campaign, hqView.getIconPackage()));
          }
  		//This odd code is to make sure that the scrollbar stays at the top
  		//I cant just call it here, because it ends up getting reset somewhere later

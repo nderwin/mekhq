@@ -53,6 +53,7 @@ import javax.swing.SpinnerNumberModel;
 import megamek.client.ui.swing.util.PlayerColors;
 import megamek.common.Player;
 import megamek.common.util.DirectoryItems;
+import megamek.common.util.EncodeControl;
 import mekhq.campaign.Campaign;
 import mekhq.campaign.mission.AtBContract;
 import mekhq.campaign.universe.Faction;
@@ -123,7 +124,7 @@ public class CustomizeAtBContractDialog extends JDialog {
 	}
 
     private void initComponents() {
-        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.NewContractDialog");
+        ResourceBundle resourceMap = ResourceBundle.getBundle("mekhq.resources.NewContractDialog", new EncodeControl()); //$NON-NLS-1$
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setName("Form"); // NOI18N
         setTitle(resourceMap.getString("Form.title"));
@@ -608,8 +609,8 @@ public class CustomizeAtBContractDialog extends JDialog {
     	cbEmployer.removeAllItems();
     	cbEnemy.removeAllItems();
     	if (allFactions) {
-    		cbEmployer.addFactionEntries(Faction.factions.keySet(),	campaign.getEra());
-    		cbEnemy.addFactionEntries(Faction.factions.keySet(),	campaign.getEra());
+    		cbEmployer.addFactionEntries(Faction.getFactionList(),	campaign.getEra());
+    		cbEnemy.addFactionEntries(Faction.getFactionList(),	campaign.getEra());
     	} else {
     		cbEmployer.addFactionEntries(currentFactions, campaign.getEra());
     		cbEnemy.addFactionEntries(currentFactions, campaign.getEra());

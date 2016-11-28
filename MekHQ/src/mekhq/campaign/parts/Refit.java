@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.UUID;
 
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import megamek.common.AmmoType;
 import megamek.common.BattleArmor;
 import megamek.common.BipedMech;
@@ -61,10 +64,6 @@ import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.unit.Unit;
 import mekhq.campaign.work.IAcquisitionWork;
 import mekhq.campaign.work.IPartWork;
-import mekhq.campaign.work.Modes;
-
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  * This object tracks the refit of a given unit into a new unit.
@@ -100,6 +99,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	private long cost;
 	private boolean failedCheck;
 	private boolean customJob;
+	private boolean isRefurbishing;
 	private boolean kitFound;
 	private String fixableString;
 
@@ -122,7 +122,8 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		fixableString = null;
 	}
 
-	public Refit(Unit oUnit, Entity newEn, boolean custom) {
+	public Refit(Unit oUnit, Entity newEn, boolean custom, boolean refurbish) {
+	    isRefurbishing = refurbish;
 		customJob = custom;
 		oldUnit = oUnit;
 		newEntity = newEn;
@@ -233,7 +234,8 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		boolean replacingLocations = false;
 		boolean[] locationHasNewStuff = new boolean[newEntity.locations()];
 		Arrays.fill(locationHasNewStuff, Boolean.FALSE);
-		HashMap<EquipmentType,Integer> ammoNeeded = new HashMap<EquipmentType,Integer>();
+		HashMap<AmmoType,Integer> ammoNeeded = new HashMap<AmmoType,Integer>();
+		HashMap<AmmoType,Integer> ammoRemoved = new HashMap<AmmoType,Integer>();
 		ArrayList<Part> newPartList = new ArrayList<Part>();
 
 		//Step 1: put all of the parts from the current unit into a new arraylist so they can
@@ -376,12 +378,9 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				//shoppingList.add(nPart);
 			}
 			else if(nPart instanceof AmmoBin) {
-				EquipmentType type = ((AmmoBin)nPart).getType();
-				if(null == ammoNeeded.get(type)) {
-					ammoNeeded.put(type, ((AmmoType)((AmmoBin)nPart).getType()).getShots());
-				} else {
-					ammoNeeded.put(type,ammoNeeded.get(type) + ((AmmoType)((AmmoBin)nPart).getType()).getShots());
-				}
+				AmmoType type = (AmmoType)((AmmoBin)nPart).getType();
+				ammoNeeded.merge(type, ((AmmoType)((AmmoBin)nPart).getType()).getShots(),
+				        (a, b) -> a + b);
 				time += 120;
 				//check for ammo bins in storage to avoid the proliferation of infinite ammo bins
 				MissingAmmoBin mab = (MissingAmmoBin)nPart.getMissingPart();
@@ -525,8 +524,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				continue;
 			}
 			if(oPart instanceof AmmoBin) {
-				if(((AmmoBin)oPart).getShotsNeeded() < ((AmmoBin)oPart).getFullShots()) {
+			    int remainingShots = ((AmmoBin)oPart).getFullShots() - ((AmmoBin)oPart).getShotsNeeded();
+				if(remainingShots > 0) {
 					time += 120;
+	                ammoRemoved.merge((AmmoType)((AmmoBin)oPart).getType(), remainingShots,
+	                        (a, b) -> a + b);
 				}
 				continue;
 			}
@@ -559,9 +561,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			newArmorSupplies.setUnit(null);
 		}
 
-		for(EquipmentType type : ammoNeeded.keySet()) {
+		//TODO: use ammo removed from the old unit in the case of changing between full ton and half
+		//ton MG or OS/regular.
+		for(AmmoType type : ammoNeeded.keySet()) {
 			int shotsNeeded = Math.max(ammoNeeded.get(type) - getAmmoAvailable(type), 0);
-			int shotsPerTon = ((AmmoType)type).getShots();
+			int shotsPerTon = type.getShots();
 			cost += type.getCost(newEntity, false, -1) * ((double)shotsNeeded/shotsPerTon);
 		}
 
@@ -632,6 +636,27 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				}
 			}
 		}
+
+		// Now we set the refurbishment values
+        if (isRefurbishing) {
+            refitClass = CLASS_E;
+
+            if (newEntity instanceof megamek.common.Warship || newEntity instanceof megamek.common.SpaceStation) {
+                time = 40320;
+            } else if (newEntity instanceof megamek.common.Dropship || newEntity instanceof megamek.common.Jumpship) {
+                time = 13440;
+            } else if (newEntity instanceof Mech || newEntity instanceof megamek.common.Aero || newEntity instanceof megamek.common.ConvFighter || newEntity instanceof megamek.common.SmallCraft) {
+                time = 6720;
+            } else if (newEntity instanceof BattleArmor || newEntity instanceof megamek.common.Tank || newEntity instanceof megamek.common.Protomech) {
+                time = 3360;
+            } else {
+                time = 1111;
+                MekHQ.logMessage("Unit " + newEntity.getModel() + " did not set its time correctly.");
+            }
+
+            // The cost is equal to 10 percent of the units base value (not modified for quality).
+            cost = (long) (oldUnit.getBuyCost() * .1);
+        }
 	}
 
 	public void begin() throws EntityLoadingException, IOException {
@@ -698,6 +723,13 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		    }
 		}
 
+		if (isRefurbishing) {
+	        if (campaign.buyRefurbishment(this)) {
+	            campaign.addReport("<font color='green'><b>Refurbishment ready to begin</b></font>");
+	        } else {
+	            campaign.addReport("You cannot afford to refurbish " + oldUnit.getEntity().getShortName() + ". Transaction cancelled");
+	        }
+	    }
 	}
 
 	public void reserveNewParts() {
@@ -834,11 +866,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		return existingArmorSupplies;
 	}
 
-	public int getAmmoAvailable(EquipmentType type) {
+	public int getAmmoAvailable(AmmoType type) {
 		for(Part part : oldUnit.campaign.getSpareParts()) {
 			if(part instanceof AmmoStorage) {
 				AmmoStorage a = (AmmoStorage)part;
-				if(a.getType() == type) {
+				if(a.getType().equals(type)) {
 					return a.getShots();
 				}
 			}
@@ -956,6 +988,8 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			if(part instanceof Armor) {
 				//get amounts correct for armor
 				part.updateConditionFromEntity(false);
+			} else if (part instanceof AmmoBin) {
+			    ((AmmoBin)part).loadBin();
 			}
 		}
 		oldUnit.setParts(newParts);
@@ -986,6 +1020,14 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 			oldUnit.addPilotOrSoldier(soldier);
 		}
 		oldUnit.resetPilotAndEntity();
+
+		if (isRefurbishing) {
+	        for (Part p : oldUnit.getParts()) {
+	            if (p.getQuality() != QUALITY_F) {
+	                p.improveQuality();
+	            }
+	        }
+	    }
 	}
 
 	public void saveCustomization() throws EntityLoadingException, IOException {
@@ -1141,20 +1183,26 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	@Override
 	public String succeed() {
 		complete();
-		return "The customization of "+ oldUnit.getEntity().getShortName() + " is complete.";
+		if (isRefurbishing) {
+            return "Refurbishment of " + oldUnit.getEntity().getShortName() + " is complete.";
+        } else {
+            return "The customization of "+ oldUnit.getEntity().getShortName() + " is complete.";
+        }
 	}
 
 	@Override
 	public String fail(int rating) {
 		timeSpent = 0;
 		failedCheck = true;
-		return "The customization of " + oldUnit.getEntity().getShortName() + " will take " + getTimeLeft() + " additional minutes to complete.";
-	}
-
-	@Override
-	public int getMode() {
-		return Modes.MODE_NORMAL;
-	}
+		// Refurbishment doesn't get extra time like standard refits.
+        if (isRefurbishing) {
+            oldUnit.setRefit(null); // Failed roll results in lost time and money
+            return "Refurbishment of " + oldUnit.getEntity().getShortName() + " was unsuccessful";
+        }
+        else {
+            return "The customization of " + oldUnit.getEntity().getShortName() + " will take " + getTimeLeft() + " additional minutes to complete.";
+        }
+    }
 
 	@Override
 	public void resetTimeSpent() {
@@ -1165,6 +1213,8 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	public String getPartName() {
 		if(customJob) {
 			return newEntity.getShortName() + " Customization";
+		} else if (isRefurbishing) {
+		    return newEntity.getShortName() + " Refurbishment";
 		} else {
 			return newEntity.getShortName() + " Refit Kit";
 		}
@@ -1211,7 +1261,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 	}
 
 	@Override
-	public UUID getAssignedTeamId() {
+	public UUID getTeamId() {
 		return assignedTechId;
 	}
 
@@ -1311,6 +1361,8 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 				+ "</customJob>");
 		pw1.println(MekHqXmlUtil.indentStr(indentLvl + 1) + "<kitFound>" + kitFound
 				+ "</kitFound>");
+		pw1.println(MekHqXmlUtil.indentStr(indentLvl + 1) + "<isRefurbishing>" + isRefurbishing
+		        + "</isRefurbishing>");
 		pw1.println(MekHqXmlUtil.indentStr(indentLvl + 1) + "<armorNeeded>" + armorNeeded
 				+ "</armorNeeded>");
 		pw1.println(MekHqXmlUtil.indentStr(indentLvl + 1) + "<sameArmorType>" + sameArmorType
@@ -1402,6 +1454,11 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 						retVal.kitFound = true;
 					else
 						retVal.kitFound = false;
+				} else if (wn2.getNodeName().equalsIgnoreCase("isRefurbishing")) {
+                    if (wn2.getTextContent().equalsIgnoreCase("true"))
+                        retVal.isRefurbishing = true;
+                    else 
+                        retVal.isRefurbishing = false;
 				} else if (wn2.getNodeName().equalsIgnoreCase("armorNeeded")) {
 					retVal.armorNeeded = Integer.parseInt(wn2.getTextContent());
 				} else if (wn2.getNodeName().equalsIgnoreCase("sameArmorType")) {
@@ -1865,4 +1922,7 @@ public class Refit extends Part implements IPartWork, IAcquisitionWork {
 		return EquipmentType.DATE_NONE;
 	}
 
+	public boolean isBeingRefurbished() {
+        return isRefurbishing;
+    }
 }

@@ -23,12 +23,17 @@ package mekhq.campaign;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import megamek.common.TechConstants;
 import mekhq.MekHQ;
 import mekhq.MekHqXmlUtil;
 import mekhq.Utilities;
 import mekhq.campaign.market.PersonnelMarket;
+import mekhq.campaign.parts.Part;
 import mekhq.campaign.personnel.Person;
 import mekhq.campaign.personnel.SkillType;
 import mekhq.campaign.rating.UnitRatingMethod;
@@ -91,6 +96,8 @@ public class CampaignOptions implements Serializable {
     private int maxAcquisitions;
     private boolean useUnofficialProcreation;
     private boolean useUnofficialProcreationNoRelationship;
+    private boolean useParentage;
+    private boolean logConception;
     private boolean useTransfers;
     private boolean capturePrisoners;
     private int defaultPrisonerStatus;
@@ -167,7 +174,8 @@ public class CampaignOptions implements Serializable {
     private int targetIdleXP;
     private int monthsIdleXP;
     private int contractNegotiationXP;
-    private int adminWeeklyXP;
+    private int adminXP;
+    private int adminXPPeriod;
 
     //repair related
     private boolean destroyByMargin;
@@ -229,7 +237,8 @@ public class CampaignOptions implements Serializable {
     private boolean trackOriginalUnit;
     private boolean mercSizeLimited;
     private String[] rats = {"Xotl", "Total Warfare"};
-    private String[] ratsNoEra = {"Xotl", "Total Warfare"};
+    private boolean staticRATs;
+    private boolean ignoreRatEra;
     private int searchRadius;
     private double intensity;
     private boolean variableContractLength;
@@ -237,7 +246,6 @@ public class CampaignOptions implements Serializable {
     private boolean useWeatherConditions;
     private boolean useLightConditions;
     private boolean usePlanetaryConditions;
-    private boolean useAltMapgen;
     private boolean useLeadership;
     private boolean useStrategy;
     private int baseStrategyDeployment;
@@ -251,6 +259,12 @@ public class CampaignOptions implements Serializable {
     private boolean unitMarketReportRefresh;
     private int startGameDelay;
 
+    //Mass Repair/Salvage Options
+    private boolean massRepairUseExtraTime;
+    private boolean massRepairUseRushJob;
+    private boolean massRepairAllowCarryover;
+    private boolean massRepairScrapImpossible;
+    private List<MassRepairOption> massRepairOptions;
 
     public CampaignOptions() {
         clanPriceModifier = 1.0;
@@ -315,8 +329,9 @@ public class CampaignOptions implements Serializable {
         targetIdleXP = 10;
         monthsIdleXP = 2;
         contractNegotiationXP = 0;
-        adminWeeklyXP = 0;
-        unitRatingMethod = UnitRatingMethod.INTERSTELLAR_OPS;
+        adminXP = 0;
+        adminXPPeriod = 1;
+        unitRatingMethod = UnitRatingMethod.CAMPAIGN_OPS;
         waitingPeriod = 7;
         acquisitionSkill = S_TECH;
         acquisitionSupportStaffOnly = true;
@@ -349,6 +364,8 @@ public class CampaignOptions implements Serializable {
         maxAcquisitions = 0;
         useUnofficialProcreation = false;
         useUnofficialProcreationNoRelationship = false;
+        useParentage = false;
+        logConception = false;
         useTransfers = true;
         capturePrisoners = true;
         defaultPrisonerStatus = PRISONER_RANK;
@@ -443,6 +460,17 @@ public class CampaignOptions implements Serializable {
         contractMarketReportRefresh = true;
         unitMarketReportRefresh = true;
         startGameDelay = 500;
+        
+        //Mass Repair/Salvage Options
+        massRepairUseExtraTime = true;
+        massRepairUseRushJob = true;
+        massRepairAllowCarryover = true;
+        massRepairScrapImpossible = false;
+        massRepairOptions = new ArrayList<MassRepairOption>();
+        
+        for (int i = 0; i < MassRepairOption.VALID_REPAIR_TYPES.length; i++) {
+        	massRepairOptions.add(new MassRepairOption(MassRepairOption.VALID_REPAIR_TYPES[i]));
+        }
    }
 
     public UnitRatingMethod getUnitRatingMethod() {
@@ -1008,12 +1036,20 @@ public class CampaignOptions implements Serializable {
         contractNegotiationXP = m;
     }
 
-    public int getAdminWeeklyXP() {
-        return adminWeeklyXP;
+    public int getAdminXP() {
+        return adminXP;
     }
 
-    public void setAdminWeeklyXP(int m) {
-        adminWeeklyXP = m;
+    public void setAdminXP(int m) {
+        adminXP = m;
+    }
+
+    public int getAdminXPPeriod() {
+        return adminXPPeriod;
+    }
+
+    public void setAdminXPPeriod(int m) {
+        adminXPPeriod = m;
     }
 
     public int getWaitingPeriod() {
@@ -1262,6 +1298,22 @@ public class CampaignOptions implements Serializable {
 
     public void setUseUnofficialProcreationNoRelationship(boolean b) {
     	useUnofficialProcreationNoRelationship = b;
+    }
+
+    public boolean useParentage() {
+        return useParentage;
+    }
+
+    public void setUseParentage(boolean b) {
+        useParentage = b;
+    }
+
+    public boolean logConception() {
+        return logConception;
+    }
+
+    public void setLogConception(boolean b) {
+        logConception = b;
     }
 
     public boolean useTransfers() {
@@ -1548,8 +1600,20 @@ public class CampaignOptions implements Serializable {
 		this.rats = rats;
 	}
 
-	public String[] getRATsNoEra() {
-		return ratsNoEra;
+	public boolean useStaticRATs() {
+		return staticRATs;
+	}
+	
+	public void setStaticRATs(boolean staticRATs) {
+		this.staticRATs = staticRATs;
+	}
+	
+	public boolean canIgnoreRatEra() {
+	    return ignoreRatEra;
+	}
+	
+	public void setIgnoreRatEra(boolean ignore) {
+	    ignoreRatEra = ignore;
 	}
 
 	public int getSearchRadius() {
@@ -1606,14 +1670,6 @@ public class CampaignOptions implements Serializable {
 
 	public void setUsePlanetaryConditions(boolean usePlanetaryConditions) {
 		this.usePlanetaryConditions = usePlanetaryConditions;
-	}
-
-	public boolean getUseAltMapgen() {
-		return useAltMapgen;
-	}
-
-	public void setUseAltMapgen(boolean useAltMapgen) {
-		this.useAltMapgen = useAltMapgen;
 	}
 
 	public boolean getUseLeadership() {
@@ -1711,6 +1767,74 @@ public class CampaignOptions implements Serializable {
 	public void setStartGameDelay(int delay) {
 		startGameDelay = delay;
 	}
+	public boolean massRepairUseExtraTime() {
+		return massRepairUseExtraTime;
+	}
+
+	public void setMassRepairUseExtraTime(boolean b) {
+		this.massRepairUseExtraTime = b;
+	}
+
+	public boolean massRepairUseRushJob() {
+		return massRepairUseRushJob;
+	}
+
+	public void setMassRepairUseRushJob(boolean b) {
+		this.massRepairUseRushJob = b;
+	}
+
+	public boolean massRepairAllowCarryover() {
+		return massRepairAllowCarryover;
+	}
+
+	public void setMassRepairAllowCarryover(boolean b) {
+		this.massRepairAllowCarryover = b;
+	}
+
+	public boolean massRepairScrapImpossible() {
+		return massRepairScrapImpossible;
+	}
+
+	public void setMassRepairScrapImpossible(boolean b) {
+		this.massRepairScrapImpossible = b;
+	}
+	
+	public List<MassRepairOption> getMassRepairOptions() {
+		return massRepairOptions;
+	}
+
+	public void setMassRepairOptions(List<MassRepairOption> massRepairOptions) {
+		this.massRepairOptions = massRepairOptions;
+	}
+
+	public void addMassRepairOption(MassRepairOption mro) {
+		if (mro.getType() == -1) {
+			return;
+		}
+		
+		int foundIdx = -1;
+		
+		for (int i = 0; i < massRepairOptions.size(); i++) {
+			if (massRepairOptions.get(i).getType() == mro.getType()) {
+				foundIdx = i;
+				break;
+			}
+		}
+		
+		if (foundIdx == -1) {
+			massRepairOptions.add(mro);
+		} else {
+			massRepairOptions.add(foundIdx, mro);
+			massRepairOptions.remove(foundIdx + 1);
+		}
+		
+		Collections.sort(massRepairOptions, new Comparator<MassRepairOption>() {
+			@Override
+			public int compare(MassRepairOption o1, MassRepairOption o2) {
+				return o1.getType() < o2.getType() ? -1 : 1;
+			}
+		});
+	}
 
 	public void writeToXml(PrintWriter pw1, int indent) {
         pw1.println(MekHqXmlUtil.indentStr(indent) + "<campaignOptions>");
@@ -1762,7 +1886,8 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "targetIdleXP", targetIdleXP);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "monthsIdleXP", monthsIdleXP);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "contractNegotiationXP", contractNegotiationXP);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "adminWeeklyXP", adminWeeklyXP);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "adminWeeklyXP", adminXP);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "adminXPPeriod", adminXPPeriod);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "limitByYear", limitByYear);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "disallowExtinctStuff", disallowExtinctStuff);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "allowClanPurchases", allowClanPurchases);
@@ -1805,6 +1930,8 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "maxAcquisitions", maxAcquisitions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useUnofficialProcreation", useUnofficialProcreation);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useUnofficialProcreationNoRelationship", useUnofficialProcreationNoRelationship);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useParentage", useParentage);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "logConception", logConception);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useTransfers", useTransfers);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "capturePrisoners", capturePrisoners);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "defaultPrisonerStatus", defaultPrisonerStatus);
@@ -1858,7 +1985,6 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useWeatherConditions", useWeatherConditions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useLightConditions", useLightConditions);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "usePlanetaryConditions", usePlanetaryConditions);
-        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useAltMapgen", useAltMapgen);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useLeadership", useLeadership);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "useStrategy", useStrategy);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "baseStrategyDeployment", baseStrategyDeployment);
@@ -1872,6 +1998,31 @@ public class CampaignOptions implements Serializable {
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "unitMarketReportRefresh", unitMarketReportRefresh);
         MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "startGameDelay", startGameDelay);
 
+        //Mass Repair/Salvage Options
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "massRepairUseExtraTime", massRepairUseExtraTime);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "massRepairUseRushJob", massRepairUseRushJob);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "massRepairAllowCarryover", massRepairAllowCarryover);
+        MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 1, "massRepairScrapImpossible", massRepairScrapImpossible);
+        
+        pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "<massRepairOptions>");
+
+        for (int i = 0; i < massRepairOptions.size(); i++) {
+        	MassRepairOption mro = massRepairOptions.get(i);
+        	
+        	pw1.println(MekHqXmlUtil.indentStr(indent + 2) + "<massRepairOption" + i + ">");
+        	
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "type", mro.getType());
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "active", mro.isActive() ? 1 : 0);
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "skillMin", mro.getSkillMin());
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "skillMax", mro.getSkillMax());
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "btnMin", mro.getBthMin());
+        	MekHqXmlUtil.writeSimpleXmlTag(pw1, indent + 3, "btnMax", mro.getBthMax());
+        	
+        	pw1.println(MekHqXmlUtil.indentStr(indent + 2) + "</massRepairOption" + i + ">");
+        }
+        
+        pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "</massRepairOptions>");
+        
         pw1.println(MekHqXmlUtil.indentStr(indent + 1)
                     + "<salaryTypeBase>"
                     + Utilities.printIntegerArray(salaryTypeBase)
@@ -1896,17 +2047,12 @@ public class CampaignOptions implements Serializable {
                 + "<rats>"
                 + MekHqXmlUtil.escape(csv)
                 + "</rats>");
-        csv = "";
-        for (int i = 0; i < ratsNoEra.length; i++) {
-        	csv += ratsNoEra[i];
-        	if (i < ratsNoEra.length - 1) {
-        		csv += ",";
-        	}
+        if (staticRATs) {
+            pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "<staticRATs/>");
         }
-        pw1.println(MekHqXmlUtil.indentStr(indent + 1)
-                + "<ratsNoEra>"
-                + MekHqXmlUtil.escape(csv)
-                + "</ratsNoEra>");
+        if (ignoreRatEra) {
+            pw1.println(MekHqXmlUtil.indentStr(indent + 1) + "<ignoreRatEra/>");
+        }
         pw1.println(MekHqXmlUtil.indentStr(indent) + "</campaignOptions>");
     }
 
@@ -2027,7 +2173,9 @@ public class CampaignOptions implements Serializable {
             } else if (wn2.getNodeName().equalsIgnoreCase("contractNegotiationXP")) {
                 retVal.contractNegotiationXP = Integer.parseInt(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("adminWeeklyXP")) {
-                retVal.adminWeeklyXP = Integer.parseInt(wn2.getTextContent().trim());
+                retVal.adminXP = Integer.parseInt(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("adminXPPeriod")) {
+                retVal.adminXPPeriod = Integer.parseInt(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("waitingPeriod")) {
                 retVal.waitingPeriod = Integer.parseInt(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("healWaitingPeriod")) {
@@ -2123,12 +2271,14 @@ public class CampaignOptions implements Serializable {
                     ("dragoonsRatingMethod")) {
                 if (!wn2.getTextContent().isEmpty() && (wn2.getTextContent() != null)) {
                     UnitRatingMethod method = UnitRatingMethod.getUnitRatingMethod(wn2.getTextContent());
-                    retVal.setUnitRatingMethod((method != null) ? method : UnitRatingMethod.INTERSTELLAR_OPS);
+                    retVal.setUnitRatingMethod((method != null) ? method : UnitRatingMethod.CAMPAIGN_OPS);
                 }
             } else if (wn2.getNodeName().equalsIgnoreCase("usePortraitForType")) {
-                String[] values = wn2.getTextContent().split(",");
+                String[] values = wn2.getTextContent().split(","); //$NON-NLS-1$
                 for (int i = 0; i < values.length; i++) {
-                    retVal.usePortraitForType[i] = Boolean.parseBoolean(wn2.getTextContent().trim());
+                    if(i < retVal.usePortraitForType.length) {
+                        retVal.usePortraitForType[i] = Boolean.parseBoolean(values[i].trim());
+                    }
                 }
             } else if (wn2.getNodeName().equalsIgnoreCase("destroyByMargin")) {
                 retVal.destroyByMargin = Boolean.parseBoolean(wn2.getTextContent().trim());
@@ -2156,6 +2306,10 @@ public class CampaignOptions implements Serializable {
             	retVal.useUnofficialProcreation = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useUnofficialProcreationNoRelationship")) {
             	retVal.useUnofficialProcreationNoRelationship = Boolean.parseBoolean(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("useParentage")) {
+                retVal.useParentage = Boolean.parseBoolean(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("logConception")) {
+                retVal.logConception = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useTransfers")) {
             	retVal.useTransfers = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("capturePrisoners")) {
@@ -2264,8 +2418,6 @@ public class CampaignOptions implements Serializable {
                 retVal.useLightConditions = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("usePlanetaryConditions")) {
                 retVal.usePlanetaryConditions = Boolean.parseBoolean(wn2.getTextContent().trim());
-            } else if (wn2.getNodeName().equalsIgnoreCase("useAltMapgen")) {
-                retVal.useAltMapgen = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useLeadership")) {
                 retVal.useLeadership = Boolean.parseBoolean(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("useStrategy")) {
@@ -2292,13 +2444,153 @@ public class CampaignOptions implements Serializable {
                 retVal.startGameDelay = Integer.parseInt(wn2.getTextContent().trim());
             } else if (wn2.getNodeName().equalsIgnoreCase("rats")) {
             	retVal.rats = MekHqXmlUtil.unEscape(wn2.getTextContent().trim()).split(",");
-            } else if (wn2.getNodeName().equalsIgnoreCase("ratsNoEra")) {
-            	retVal.ratsNoEra = MekHqXmlUtil.unEscape(wn2.getTextContent().trim()).split(",");
+            } else if (wn2.getNodeName().equalsIgnoreCase("staticRATs")) {
+                retVal.staticRATs = true;
+            } else if (wn2.getNodeName().equalsIgnoreCase("ignoreRatEra")) {
+                retVal.ignoreRatEra = true;
+            } else if (wn2.getNodeName().equalsIgnoreCase("massRepairUseExtraTime")) {
+                retVal.massRepairUseExtraTime = Boolean.parseBoolean(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("massRepairUseRushJob")) {
+                retVal.massRepairUseRushJob = Boolean.parseBoolean(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("massRepairAllowCarryover")) {
+                retVal.massRepairAllowCarryover = Boolean.parseBoolean(wn2.getTextContent().trim());
+            } else if (wn2.getNodeName().equalsIgnoreCase("massRepairScrapImpossible")) {
+                retVal.massRepairScrapImpossible = Boolean.parseBoolean(wn2.getTextContent().trim());                
+            } else if (wn2.getNodeName().equalsIgnoreCase("massRepairOptions")) {
+                NodeList mroList = wn2.getChildNodes();
+
+                for (int mroIdx = 0; mroIdx < mroList.getLength(); mroIdx++) {
+                    Node mroNode = mroList.item(mroIdx);
+
+                    if (mroNode.getNodeType() != Node.ELEMENT_NODE) {
+                        continue;
+                    }
+                    
+                    for (int mroTypeIdx = 0; mroTypeIdx < MassRepairOption.VALID_REPAIR_TYPES.length; mroTypeIdx++) {
+                    	if (mroNode.getNodeName().equalsIgnoreCase("massRepairOption" + mroTypeIdx)) {
+                    		
+                    		MassRepairOption mro = new MassRepairOption();
+                    		mro.setType(-1);
+                    		
+                            NodeList mroItemList = mroNode.getChildNodes();
+
+                            for (int mroItemIdx = 0; mroItemIdx < mroItemList.getLength(); mroItemIdx++) {
+                                Node mroItemNode = mroItemList.item(mroItemIdx);
+
+                                if (mroItemNode.getNodeType() != Node.ELEMENT_NODE) {
+                                    continue;
+                                }
+                     
+                                MekHQ.logMessage("---", 5);
+                                MekHQ.logMessage("massRepairOption" + mroTypeIdx + "." + mroItemNode.getNodeName(), 5);
+                                MekHQ.logMessage("\t" + mroItemNode.getTextContent(), 5);
+                                
+                                
+                                if (mroItemNode.getNodeName().equalsIgnoreCase("type")) {
+                                	mro.setType(Integer.parseInt(mroItemNode.getTextContent().trim()));
+                                } else if (mroItemNode.getNodeName().equalsIgnoreCase("active")) {
+                                    mro.setActive(Integer.parseInt(mroItemNode.getTextContent().trim()) == 1);
+                                } else if (mroItemNode.getNodeName().equalsIgnoreCase("skillMin")) {
+                                	mro.setSkillMin(Integer.parseInt(mroItemNode.getTextContent().trim()));
+                                } else if (mroItemNode.getNodeName().equalsIgnoreCase("skillMax")) {
+                                	mro.setSkillMax(Integer.parseInt(mroItemNode.getTextContent().trim()));
+                                } else if (mroItemNode.getNodeName().equalsIgnoreCase("btnMin")) {
+                                	mro.setBthMin(Integer.parseInt(mroItemNode.getTextContent().trim()));
+                                } else if (mroItemNode.getNodeName().equalsIgnoreCase("btnMax")) {
+                                	mro.setBthMax(Integer.parseInt(mroItemNode.getTextContent().trim()));
+                                }
+                            }
+                            
+                            if (mro.getType() != -1) {
+                            	retVal.addMassRepairOption(mro);
+                            }
+                    	}
+                    }                    
+                }            	
             }
         }
 
         MekHQ.logMessage("Load Campaign Options Complete!", 4);
 
         return retVal;
+    }
+    
+    public static class MassRepairOption {
+    	public MassRepairOption() {
+    		
+    	}
+    	
+    	public MassRepairOption(int type) {
+    		this (type, false, SkillType.EXP_ULTRA_GREEN, SkillType.EXP_ELITE, 4, 4);
+    	}
+    	
+    	public MassRepairOption(int type, boolean active, int skillMin, int skillMax, int bthMin, int bthMax) {
+			this.type = type;
+			this.active = active;
+			this.skillMin = skillMin;
+			this.skillMax = skillMax;
+			this.bthMin = bthMin;
+			this.bthMax = bthMax;
+		}
+
+    	public static int[] VALID_REPAIR_TYPES = new int[] { Part.REPAIR_PART_TYPE.ARMOR, Part.REPAIR_PART_TYPE.AMMO, 
+    			Part.REPAIR_PART_TYPE.WEAPON, Part.REPAIR_PART_TYPE.GENERAL_LOCATION, Part.REPAIR_PART_TYPE.ENGINE, 
+    			Part.REPAIR_PART_TYPE.GYRO, Part.REPAIR_PART_TYPE.ACTUATOR, Part.REPAIR_PART_TYPE.ELECTRONICS, 
+    			Part.REPAIR_PART_TYPE.GENERAL };
+    	
+		private int type;
+    	private boolean active = true;
+    	private int skillMin;
+    	private int skillMax;
+    	private int bthMin;
+    	private int bthMax;
+    	
+		public int getType() {
+			return type;
+		}
+		
+		public void setType(int type) {
+			this.type = type;
+		}
+		
+		public boolean isActive() {
+			return active;
+		}
+		
+		public void setActive(boolean active) {
+			this.active = active;
+		}
+		
+		public int getSkillMin() {
+			return skillMin;
+		}
+		
+		public void setSkillMin(int skillMin) {
+			this.skillMin = skillMin;
+		}
+		
+		public int getSkillMax() {
+			return skillMax;
+		}
+		
+		public void setSkillMax(int skillMax) {
+			this.skillMax = skillMax;
+		}
+		
+		public int getBthMin() {
+			return bthMin;
+		}
+		
+		public void setBthMin(int bthMin) {
+			this.bthMin = bthMin;
+		}
+		
+		public int getBthMax() {
+			return bthMax;
+		}
+		
+		public void setBthMax(int bthMax) {
+			this.bthMax = bthMax;
+		}
     }
 }
